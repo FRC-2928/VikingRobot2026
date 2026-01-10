@@ -5,7 +5,7 @@ import org.littletonrobotics.junction.AutoLogOutput;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.networktables.*;
 import edu.wpi.first.units.Units;
-import edu.wpi.first.units.measure.*;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -43,7 +43,7 @@ public class Limelight {
 
 	// Horizontal Offset From Crosshair To Target (LL1: -27 degrees to 27 degrees | LL2: -29.8 to 29.8 degrees)
 	//@AutoLogOutput(key = "Limelight/Horizontal Offset")
-	public Angle getTargetHorizontalOffset() { return Units.Degrees.of(this.nt.getEntry("tx").getDouble(0)); }
+	public Angle getTargetHorizontalOffset() { return  Units.Degrees.of(this.nt.getEntry("tx").getDouble(0)); }
 
 	// Vertical Offset From Crosshair To Target (LL1: -20.5 degrees to 20.5 degrees | LL2: -24.85 to 24.85 degrees)
 	//@AutoLogOutput(key = "Limelight/Vertical Offset")
