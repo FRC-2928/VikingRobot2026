@@ -6,6 +6,7 @@ import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.DriverStation;
 
 import java.util.Arrays;
+import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
@@ -33,6 +34,7 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.commands.drivetrain.JoystickDrive;
+import frc.robot.oi.DriverOI;
 import frc.robot.subsystems.SwerveModule.Place;
 import frc.robot.vision.Limelight;
 import frc.robot.vision.LimelightHelpers.PoseEstimate;
@@ -75,16 +77,16 @@ public class Drivetrain extends SubsystemBase {
 	public final SwerveModule[] modules = new SwerveModule[4]; // FL, FR, BL, BR
 
 	public final SwerveDriveKinematics kinematics = Constants.Drivetrain.kinematics;
-	public final SwerveDrivePoseEstimator est;
+	private final SwerveDrivePoseEstimator mEstimator;
 	public final Limelight limelightNote = new Limelight("limelight-note");
 	public final Limelight limelightShooter = new Limelight("limelight-shooter");
 	public final Limelight limelightRear = new Limelight("limelight-rear");
-	public final Limelight limelight = new Limelight("limelight");
+	private final Limelight limelight = new Limelight("limelight");
 
-	public final JoystickDrive joystickDrive = new JoystickDrive(this);
+	public final JoystickDrive mJoystickDrive;
 	private Rotation2d joystickFOROffset;
 	public ChassisSpeeds joystickSpeeds = new ChassisSpeeds();
-	public AutoFactory autoFactory;
+	private AutoFactory mAutoFactory;
 	// Choreo PID controllers have to be created in our code
 	private final PIDController xController = new PIDController(5, 0.0, 0);
     private final PIDController yController = new PIDController(5, 0.0, 0);
@@ -107,7 +109,7 @@ public class Drivetrain extends SubsystemBase {
               1),
           Constants.Drivetrain.kinematics.getModules());
 
-	public Drivetrain() {
+	public Drivetrain(DriverOI driverOI, final Supplier<String> driveModeSupplier) {
 		this.gyro = switch(Constants.mode) {
 		case REAL -> new GyroIOReal();
 		case REPLAY -> new GyroIO() {
@@ -117,12 +119,14 @@ public class Drivetrain extends SubsystemBase {
 		default -> throw new Error();
 		};
 
+		mJoystickDrive = new JoystickDrive(this, driverOI, driveModeSupplier);
+
 		this.modules[0] = new SwerveModule(Place.FrontLeft);
 		this.modules[1] = new SwerveModule(Place.FrontRight);
 		this.modules[2] = new SwerveModule(Place.BackLeft);
 		this.modules[3] = new SwerveModule(Place.BackRight);
 
-		this.est = new SwerveDrivePoseEstimator(
+		this.mEstimator = new SwerveDrivePoseEstimator(
 			this.kinematics,
 			new Rotation2d(this.gyroInputs.yawPosition),
 			this.modulePositions(),
@@ -153,8 +157,8 @@ public class Drivetrain extends SubsystemBase {
 		PathPlannerLogging.setLogCurrentPoseCallback(pose -> Logger.recordOutput("Drivetrain/Auto/CurrentPose", pose));
 		PathPlannerLogging.setLogTargetPoseCallback(pose -> Logger.recordOutput("Drivetrain/Auto/DesiredPose", pose));
 
-		autoFactory = new AutoFactory(
-            this.est::getEstimatedPosition, // A function that returns the current robot pose
+		mAutoFactory = new AutoFactory(
+            this.mEstimator::getEstimatedPosition, // A function that returns the current robot pose
             this::reset, // A function that resets the current robot pose to the provided Pose2d
             this::controlSwerveSample, // The drive subsystem trajectory follower 
             true, // If alliance flipping should be enabled 
@@ -162,6 +166,19 @@ public class Drivetrain extends SubsystemBase {
         );
 
 		headingController.enableContinuousInput(-Math.PI, Math.PI);
+	}
+
+	public AutoFactory getAutoFactory() {
+		return mAutoFactory;
+	}
+
+	public SwerveDrivePoseEstimator getPoseEstimator() {
+		return mEstimator;
+	}
+
+	public Limelight getLimelight(String name) {
+		// TODO: eventually get the limelights by their names rather than individual getters...
+		return limelight;
 	}
 
 	public void control(ChassisSpeeds speeds) {
@@ -227,13 +244,13 @@ public class Drivetrain extends SubsystemBase {
 	}
 
 	public void reset(final Pose2d newPose) {
-		this.est.resetPosition(new Rotation2d(this.gyroInputs.yawPosition), this.modulePositions(), newPose);
+		mEstimator.resetPosition(new Rotation2d(this.gyroInputs.yawPosition), this.modulePositions(), newPose);
 		this.limelight.setIMUMode(1);
 		this.limelight.setRobotOrientation(newPose.getRotation().getMeasure());
 	}
 
 	public void setAngle(final Angle angle){
-		this.reset(new Pose2d(this.est.getEstimatedPosition().getTranslation(), new Rotation2d(angle)));
+		this.reset(new Pose2d(mEstimator.getEstimatedPosition().getTranslation(), new Rotation2d(angle)));
 	}
 
 	@AutoLogOutput
@@ -265,7 +282,7 @@ public class Drivetrain extends SubsystemBase {
 	}
 
 	public Pose2d getEstimatedPosition(){
-		return this.est.getEstimatedPosition();
+		return mEstimator.getEstimatedPosition();
 	}
 
 	@Override
@@ -281,7 +298,7 @@ public class Drivetrain extends SubsystemBase {
 		}
 
 		// Update the odometry pose
-		this.est.update(new Rotation2d(this.gyroInputs.yawPosition), this.modulePositions());
+		mEstimator.update(new Rotation2d(this.gyroInputs.yawPosition), this.modulePositions());
 
 		// Add vision measurements to pos est with megatag 2
 		PoseEstimate mt2 = this.limelight.getPoseMegatag2();
@@ -300,15 +317,15 @@ public class Drivetrain extends SubsystemBase {
 	
 			Logger.recordOutput("Drivetrain/doRejectUpdate", doRejectUpdate);
 			if(!doRejectUpdate) {
-				est.setVisionMeasurementStdDevs(VecBuilder.fill(.7,.7,9999999));
-				est.addVisionMeasurement(
+				mEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(.7,.7,9999999));
+				mEstimator.addVisionMeasurement(
 					mt2.pose,
 					mt2.timestampSeconds);
 			}
 		}
 
 		Logger.recordOutput("Drivetrain/LimelightNotePose", this.limelightNote.getPose2d());
-		Logger.recordOutput("Drivetrain/Pose", this.est.getEstimatedPosition());
+		Logger.recordOutput("Drivetrain/Pose", mEstimator.getEstimatedPosition());
 		Logger.recordOutput("Drivetrain/Imumode", limelight.getImuMode());
 		PoseEstimate mt1 = this.limelight.getPoseMegatag1();
 		if (mt1 != null) {
@@ -321,7 +338,7 @@ public class Drivetrain extends SubsystemBase {
 		if(this.limelight.hasValidTargets() && mt1 != null){
 			this.setAngle(mt1.pose.getRotation().getMeasure());
 		}
-		// this.limelight.setRobotOrientation(this.est.getEstimatedPosition().getRotation().getMeasure()); 
+		// this.limelight.setRobotOrientation(mEstimator.getEstimatedPosition().getRotation().getMeasure()); 
 	}
 	public void seedLimelightImu(){
 		disabledPeriodic();

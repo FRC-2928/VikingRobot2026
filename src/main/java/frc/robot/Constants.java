@@ -2,6 +2,7 @@ package frc.robot;
 
 import org.littletonrobotics.junction.Logger;
 
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.AudioConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.SlotConfigs;
@@ -94,7 +95,7 @@ public class Constants {
 		}
 
 		public static final class CTRE {
-			public static final String bus = "canivore";
+			public static final CANBus bus = new CANBus("canivore");
 
 			public static final int pigeon = 0;
 
@@ -190,19 +191,19 @@ public class Constants {
 		public static final Angle swerveFrontRightOffset = Units.Rotations.of(-0.38671875);
 		public static final Translation2d swerveFrontRightTranslation = new Translation2d(
 			Constants.Drivetrain.wheelBase,
-			Constants.Drivetrain.trackWidth.negate()
+			Constants.Drivetrain.trackWidth.unaryMinus()
 		);
 		// public static final Angle swerveBackLeftOffset = Units.Rotations.of(-0.136474609375);
 		public static final Angle swerveBackLeftOffset = Units.Rotations.of(-0.19384765625);
 		public static final Translation2d swerveBackLeftTranslation = new Translation2d(
-			Constants.Drivetrain.wheelBase.negate(),
+			Constants.Drivetrain.wheelBase.unaryMinus(),
 			Constants.Drivetrain.trackWidth
 		);
 		// public static final Angle swerveBackRightOffset = Units.Rotations.of(-0.4404296875);
 		public static final Angle swerveBackRightOffset = Units.Rotations.of(-0.404296875);
 		public static final Translation2d swerveBackRightTranslation = new Translation2d(
-			Constants.Drivetrain.wheelBase.negate(),
-			Constants.Drivetrain.trackWidth.negate()
+			Constants.Drivetrain.wheelBase.unaryMinus(),
+			Constants.Drivetrain.trackWidth.unaryMinus()
 		);
 
 		public static final SwerveDriveKinematics kinematics = new SwerveDriveKinematics(
@@ -230,8 +231,8 @@ public class Constants {
 						* Math.PI
 						* Math
 							.hypot(
-								Drivetrain.trackWidth.divide(2).in(Units.Meters),
-								Drivetrain.wheelBase.divide(2).in(Units.Meters)
+								Drivetrain.trackWidth.div(2).in(Units.Meters),
+								Drivetrain.wheelBase.div(2).in(Units.Meters)
 							))
 			);
 	}

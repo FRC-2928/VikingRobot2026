@@ -1,6 +1,9 @@
 package frc.robot.commands.drivetrain;
 
+import java.util.function.Supplier;
+
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ProfiledPIDController;
@@ -19,11 +22,12 @@ import frc.robot.oi.DriverOI;
 import frc.robot.subsystems.Drivetrain;
 
 public class JoystickDrive extends Command {
-	public JoystickDrive(final Drivetrain drivetrain) {
-		this.drivetrain = drivetrain;
+	public JoystickDrive(final Drivetrain drivetrain, final DriverOI oi, final Supplier<String> driveModeSupplier) {
+		mDrivetrain = drivetrain;
+		mDriverOI = oi;
+		mDriveModeSupplier = driveModeSupplier;
 
-		this.addRequirements(this.drivetrain);
-
+		this.addRequirements(mDrivetrain);
 		this.absoluteController.enableContinuousInput(-0.5, 0.5);
 	}
 
@@ -35,8 +39,9 @@ public class JoystickDrive extends Command {
 		return chooser;
 	}
 
-	public final Drivetrain drivetrain;
-	public final DriverOI oi = Robot.cont.driverOI;
+	public final Drivetrain mDrivetrain;
+	public final DriverOI mDriverOI;
+	private final Supplier<String> mDriveModeSupplier;
 
 	public double forMagnitude = 0.5;
 	private final ProfiledPIDController absoluteController = Constants.Drivetrain.absoluteRotationPID
@@ -44,9 +49,9 @@ public class JoystickDrive extends Command {
 
 	@Override
 	public void execute() {
-		final ChassisSpeeds robotOrientedSpeeds = drivetrain.fod(speeds(), drivetrain.getFieldOrientedAngle());
+		final ChassisSpeeds robotOrientedSpeeds = mDrivetrain.fod(speeds(), mDrivetrain.getFieldOrientedAngle());
 
-		drivetrain.control(robotOrientedSpeeds);
+		mDrivetrain.control(robotOrientedSpeeds);
 	}
 
 	// Returns the Field-oriented ChassisSpeeds based on the joystick inputs
@@ -60,8 +65,8 @@ public class JoystickDrive extends Command {
 	// Returns the translation (X and Y) component from the joystick
 	private Translation2d translation() {
 		// get inputs, apply deadbands
-		final double axial = -MathUtil.applyDeadband(this.oi.driveAxial.get(), 0.25); // Negate b/c joystick Y is inverted from field X
-		final double lateral = -MathUtil.applyDeadband(this.oi.driveLateral.get(), 0.25); // Negate b/c joystick X is inverted from field Y
+		final double axial = -MathUtil.applyDeadband(mDriverOI.driveAxial.get(), 0.25); // Negate b/c joystick Y is inverted from field X
+		final double lateral = -MathUtil.applyDeadband(mDriverOI.driveLateral.get(), 0.25); // Negate b/c joystick X is inverted from field Y
 		Logger.recordOutput("Drivetrain/JoystickDrive/Axial", axial);
 		Logger.recordOutput("Drivetrain/JoystickDrive/Lateral", lateral);
 
@@ -80,13 +85,13 @@ public class JoystickDrive extends Command {
 	private AngularVelocity theta() {
 		double theta = 0;
 
-		final String selectedDriveMode = Robot.cont.getDriveMode();
+		final String selectedDriveMode = mDriveModeSupplier.get();
 		if("Swerve Drive".equals(selectedDriveMode)) {
-			theta = MathUtil.applyDeadband(-this.oi.driveFORX.get(), 0.075); // Negate this b/c joystick X is inverted from robot rotation
+			theta = MathUtil.applyDeadband(-mDriverOI.driveFORX.get(), 0.075); // Negate this b/c joystick X is inverted from robot rotation
 		} else {
 			// Joystick Right Axis
-			final double rotX = this.oi.driveFORX.get();
-			final double rotY = this.oi.driveFORY.get();
+			final double rotX = mDriverOI.driveFORX.get();
+			final double rotY = mDriverOI.driveFORY.get();
 
 			// This will determine the rotation speed based on how far the joystick is moved.
 			this.forMagnitude = Math.hypot(rotX, rotY);
@@ -99,7 +104,7 @@ public class JoystickDrive extends Command {
 			if (doRotateRobot) {
 				forTarget = Units.Radians.of(-Math.atan2(rotX, rotY));
 				Logger.recordOutput("JoystickDrive/AbsoluteRotation/Target", forTarget);
-				final double measurement = this.drivetrain.getFieldOrientedAngle().in(Units.Rotations);
+				final double measurement = mDrivetrain.getFieldOrientedAngle().in(Units.Rotations);
 				final double setpoint = forTarget.in(Units.Rotations);
 				
 				theta = MathUtil.applyDeadband(
