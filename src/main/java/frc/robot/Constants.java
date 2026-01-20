@@ -16,11 +16,11 @@ import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
-import edu.wpi.first.units.Units;
 public class Constants {
 	private static Mode currentMode() {
 		if(Robot.isReal()) return Mode.REAL;
@@ -110,7 +110,8 @@ public class Constants {
 			public static final int swerveBackRightAzimuth = 1; 
 			public static final int swerveBackRightDrive = 2;
 
-			public static final int shooterPivot = 12;
+			public static final int uptake = 1; // TODO: find a good place for uptake and hood
+			public static final int hood = 1; 
 			public static final int shooterFlywheelA = 1;
 			public static final int shooterFlywheelB = 4;
 
