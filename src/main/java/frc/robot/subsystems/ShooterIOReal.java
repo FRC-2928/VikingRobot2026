@@ -6,7 +6,6 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
 
 public class ShooterIOReal implements ShooterIO {
@@ -14,7 +13,7 @@ public class ShooterIOReal implements ShooterIO {
 		this.velocityA = this.flywheelA.getRotorVelocity();
 		this.velocityB = this.flywheelB.getRotorVelocity();
 
-		SmartDashboard.putData("SysId", );
+		
 	}
 
 	// 5-6 motors max
