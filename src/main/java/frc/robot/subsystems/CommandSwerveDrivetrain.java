@@ -12,8 +12,11 @@ import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -23,8 +26,9 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-
+import frc.robot.Constants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
+import frc.robot.lib.BLine.FollowPath;
 
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements
@@ -49,6 +53,14 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
     private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization = new SwerveRequest.SysIdSwerveSteerGains();
     private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization = new SwerveRequest.SysIdSwerveRotation();
+    private FollowPath.Builder pathBuilder;
+    private final PIDController xController = new PIDController(5, 0.0, 0);
+    private final PIDController headingController = new PIDController(5, 0.0, 0.2);
+    private final SwerveDrivePoseEstimator mEstimator;
+    public final GyroIO gyro;
+    private final SwerveModulePosition[] modulePositions = {new SwerveModulePosition()};
+	public final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
+
 
     /* SysId routine for characterizing translation. This is used to find PID gains for the drive motors. */
     private final SysIdRoutine m_sysIdRoutineTranslation = new SysIdRoutine(
@@ -125,12 +137,43 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public CommandSwerveDrivetrain(
         SwerveDrivetrainConstants drivetrainConstants,
         SwerveModuleConstants<?, ?, ?>... modules
+        
     ) {
         super(drivetrainConstants, modules);
         if (Utils.isSimulation()) {
             startSimThread();
         }
+        this.gyro = switch(Constants.mode) {
+		case REAL -> new GyroIOReal();
+		case REPLAY -> new GyroIO() {
+			
+		};
+		case SIM -> new GyroIOReal();
+		default -> throw new Error();
+		};
+        this.mEstimator = new SwerveDrivePoseEstimator(
+			Constants.Drivetrain.kinematics,
+			new Rotation2d(this.gyroInputs.yawPosition),
+			new SwerveModulePosition[],
+			new Pose2d()
+		);
+        // Create a reusable builder with your robot's configuration
+		pathBuilder = new FollowPath.Builder(
+			this,                      // The drive subsystem to require
+			this.mEstimator::getEstimatedPosition,             // Supplier for current robot pose
+			this::getCurrentChassisSpeeds,    // Supplier for current speeds
+			this::control,               // Consumer to drive the robot
+			xController,    // Translation PID
+			headingController,    // Rotation PID
+			//TODO: Figure this out
+			new PIDController(2.0, 0.0, 0.0)     // Cross-track PID
+		).withDefaultShouldFlip()                // Auto-flip for red alliance
+		.withPoseReset(this::reset);  // Reset odometry at path start
+
     }
+    public FollowPath.Builder getPathBuilder() {
+		return pathBuilder;
+	}
 
     /**
      * Constructs a CTRE SwerveDrivetrain using the specified constants.
@@ -239,8 +282,17 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 m_hasAppliedOperatorPerspective = true;
             });
         }
+        this.gyro.updateInputs(this.gyroInputs);
+
     }
 
+    public void reset(final Pose2d newPose, SwerveModulePosition[] modulePositions) {
+		mEstimator.resetPosition(new Rotation2d(this.gyroInputs.yawPosition), modulePositions, newPose);
+	}
+
+    public void updateEstimator(SwerveModulePosition[] modulePositions) {
+        mEstimator.update(new Rotation2d(this.gyroInputs.yawPosition), modulePositions);
+    }
     private void startSimThread() {
         m_lastSimTime = Utils.getCurrentTimeSeconds();
 

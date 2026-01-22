@@ -22,6 +22,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.*;
 import frc.robot.commands.drivetrain.CenterLimelight;
 import frc.robot.commands.drivetrain.VoltageRampCommand;
+import frc.robot.lib.BLine.Path;
+import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Drivetrain;
 
 public final class Autonomous {
@@ -29,6 +31,21 @@ public final class Autonomous {
 		final SendableChooser<Command> chooser = new SendableChooser<>();
 		AutoFactory autoFactory = factory;
 
+		// Set global constraints before creating any paths
+		Path.setDefaultGlobalConstraints(new Path.DefaultGlobalConstraints(
+			Constants.Drivetrain.maxVelocity.in(Units.MetersPerSecond),    // maxVelocityMetersPerSec
+			//TODO: Find acutal values
+			12.0,   // maxAccelerationMetersPerSec2
+			Constants.Drivetrain.maxAngularVelocity.in(Units.DegreesPerSecond),    // maxVelocityDegPerSec
+			860,    // maxAccelerationDegPerSec2
+			0.03,   // endTranslationToleranceMeters
+			2.0,    // endRotationToleranceDeg
+			0.2     // intermediateHandoffRadiusMeters
+		));
+
+		chooser
+			.addOption("[Bline] Forward Back", 
+			Commands.sequence(drivetrain.getPathBuilder().build(new Path("forwardBack"))));
 		chooser
 			.addOption(
 				"[Test] Forward Back",
@@ -53,7 +70,10 @@ public final class Autonomous {
 		chooser.addOption("[testing] voltage ramp", new VoltageRampCommand(drivetrain));
 		return chooser;
 	}
-
+	
+	public static Command bLineForwardBack(CommandSwerveDrivetrain drivetrain){
+		return Commands.sequence(drivetrain.getPathBuilder().build(new Path("forwardBack")));
+	}
 	public static AutoChooser getChoreoAutoChooser(AutoFactory factory, Drivetrain drivetrain) {
 		final AutoChooser choreoChooser = new AutoChooser();
 		AutoFactory autoFactory = factory;
@@ -72,6 +92,8 @@ public final class Autonomous {
 			Commands.deadline(new WaitCommand(2), CenterLimelight.CenterLimelightD(drivetrain))
 			// Robot.cont.drivetrain.haltCommand()
 		));
+
+
 
 		choreoChooser.addCmd("SimpleScore", () -> Commands.sequence(autoFactory.trajectoryCmd("SimpleScore")));
 
