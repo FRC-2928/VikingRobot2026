@@ -44,6 +44,7 @@ public class Telemetry {
     /* Robot swerve drive state */
     private final NetworkTable driveStateTable = inst.getTable("DriveState");
     private final StructPublisher<Pose2d> drivePose = driveStateTable.getStructTopic("Pose", Pose2d.struct).publish();
+    public Pose2d drivePosePublish;
     private final StructPublisher<ChassisSpeeds> driveSpeeds = driveStateTable.getStructTopic("Speeds", ChassisSpeeds.struct).publish();
     private final StructArrayPublisher<SwerveModuleState> driveModuleStates = driveStateTable.getStructArrayTopic("ModuleStates", SwerveModuleState.struct).publish();
     private final StructArrayPublisher<SwerveModuleState> driveModuleTargets = driveStateTable.getStructArrayTopic("ModuleTargets", SwerveModuleState.struct).publish();
@@ -88,6 +89,7 @@ public class Telemetry {
     public void telemeterize(SwerveDriveState state) {
         /* Telemeterize the swerve drive state */
         drivePose.set(state.Pose);
+        drivePosePublish = state.Pose;
         driveSpeeds.set(state.Speeds);
         driveModuleStates.set(state.ModuleStates);
         driveModuleTargets.set(state.ModuleTargets);

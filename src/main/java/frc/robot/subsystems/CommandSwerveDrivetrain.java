@@ -5,6 +5,9 @@ import static edu.wpi.first.units.Units.*;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import org.littletonrobotics.junction.Logger;
+
+import com.ctre.phoenix.Util;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
@@ -12,13 +15,16 @@ import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
@@ -27,8 +33,13 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
+import frc.robot.Robot;
+import frc.robot.RobotContainer;
+import frc.robot.Telemetry;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.lib.BLine.FollowPath;
+import frc.robot.vision.Limelight;
+import frc.robot.vision.LimelightHelpers.PoseEstimate;
 
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements
@@ -58,8 +69,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private final PIDController headingController = new PIDController(5, 0.0, 0.2);
     private final SwerveDrivePoseEstimator mEstimator;
     public final GyroIO gyro;
-    private final SwerveModulePosition[] modulePositions = {new SwerveModulePosition()};
+    // private final SwerveModulePosition[] modulePositions = {new SwerveModulePosition()};
 	public final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
+    //TODO: name might be limelight-reverse idk
+    private final Limelight limelight = new Limelight("limelight");
 
 
     /* SysId routine for characterizing translation. This is used to find PID gains for the drive motors. */
@@ -154,15 +167,15 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         this.mEstimator = new SwerveDrivePoseEstimator(
 			Constants.Drivetrain.kinematics,
 			new Rotation2d(this.gyroInputs.yawPosition),
-			new SwerveModulePosition[],
+			super.clone().moduleStates,
 			new Pose2d()
 		);
         // Create a reusable builder with your robot's configuration
 		pathBuilder = new FollowPath.Builder(
 			this,                      // The drive subsystem to require
-			this.mEstimator::getEstimatedPosition,             // Supplier for current robot pose
+			this::getCurrentPosition,             // Supplier for current robot pose
 			this::getCurrentChassisSpeeds,    // Supplier for current speeds
-			this::control,               // Consumer to drive the robot
+			this::setControl,               // Consumer to drive the robot
 			xController,    // Translation PID
 			headingController,    // Rotation PID
 			//TODO: Figure this out
@@ -173,6 +186,21 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
     public FollowPath.Builder getPathBuilder() {
 		return pathBuilder;
+	}
+
+    public Pose2d getCurrentPosition(){
+       return RobotContainer.logger.drivePosePublish;
+    }
+
+    public void control(ChassisSpeeds speeds) {
+		// NOTE: The speeds provided must be robot-relative, else the robot will go the wrong way
+		Logger.recordOutput("Drivetrain/DemandedChassisSpeedsROD", speeds);
+
+		// Discretize is used to compensate for swerve mechanics.
+		// When the robot is translating while rotating, the motion is actually along an arc, but ChassisSpeeds is representing linear movement.
+		// So, it figures out what arc movement gets the robot to the correct spot after 1 program loop based on the provided ChassisSpeeds.
+		speeds = ChassisSpeeds.discretize(speeds, 0.02);
+		super.setControl(Constants.Drivetrain.kinematics.toSwerveR(speeds));
 	}
 
     /**
@@ -282,6 +310,28 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 m_hasAppliedOperatorPerspective = true;
             });
         }
+
+        PoseEstimate mt2 = this.limelight.getPoseMegatag2();
+		if(mt2 != null) {
+			Logger.recordOutput("Drivetrain/poseMegatag", mt2.pose);
+			boolean doRejectUpdate = false;
+
+			// if our angular velocity is greater than 720 degrees per second, ignore vision updates
+			if(Math.abs(this.gyroInputs.yawVelocityRadPerSec.in(Units.DegreesPerSecond)) > 720) {
+				doRejectUpdate = true;
+			}
+
+			if(mt2.tagCount == 0) {
+				doRejectUpdate = true;
+			}
+
+			Logger.recordOutput("Drivetrain/doRejectUpdate", doRejectUpdate);
+			if(!doRejectUpdate) {
+				mEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(.7, .7, 9999999));
+				mEstimator.addVisionMeasurement(mt2.pose, mt2.timestampSeconds);
+			}
+		}
+
         this.gyro.updateInputs(this.gyroInputs);
 
     }
