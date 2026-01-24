@@ -6,16 +6,12 @@ public interface ClimberIO {
 	@AutoLog
 	public class ClimberIOInputs {
 		public double position; //may not need to maintain the postion
-		public boolean home;
+		public boolean home; //boolean for the home postion of the motor
 	}
 
-	public default void set(final double position) {}
+	public default void set(final double position) {} //set the position of the climb arm
 
-	public default void override(final double dutyCycle) {}
+	public default void updateInputs(final ClimberIOInputs inputs) {} //updates the positon value and home boolean
 
-	public default void offset(final double offset) {}
-
-	public default void updateInputs(final ClimberIOInputs inputs) {}
-
-	public default void periodic() {}
+	public default void periodic() {} //runs periodically
 }
