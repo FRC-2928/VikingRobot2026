@@ -13,12 +13,13 @@
 
 package frc.robot.subsystems;
 
-import com.ctre.phoenix6.StatusCode;
-
 import org.littletonrobotics.junction.AutoLog;
 
+import com.ctre.phoenix6.StatusCode;
+
 import edu.wpi.first.units.Units;
-import edu.wpi.first.units.measure.*;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
 
 public interface GyroIO {
     @AutoLog

@@ -6,14 +6,13 @@ package frc.robot;
 
 import java.io.FileNotFoundException;
 
-import com.ctre.phoenix6.HootAutoReplay;
-
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
-import edu.wpi.first.units.Units;
+import com.ctre.phoenix6.HootAutoReplay;
+
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;

@@ -1,11 +1,11 @@
 package frc.robot;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.AudioConfigs;
 import com.ctre.phoenix6.configs.SlotConfigs;
 import com.pathplanner.lib.config.PIDConstants;
-
-import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
@@ -246,6 +246,27 @@ public class Constants {
     }
 
     public static class Shooter {
+        public static final class FlywheelConfiguration {
+            public static final FlywheelConfiguration yellowFairlane =
+                    new FlywheelConfiguration(Units.RotationsPerSecond.of(30), Units.RotationsPerSecond.of(27), 0.3);
+            public static final FlywheelConfiguration greenBane =
+                    new FlywheelConfiguration(Units.RotationsPerSecond.of(40), Units.RotationsPerSecond.of(37), 0.60);
+
+            public FlywheelConfiguration(
+                    final AngularVelocity flywheelVelocity,
+                    final AngularVelocity flywheelVelocityThreshold,
+                    final double ampPower) {
+                this.speakerVelocity = flywheelVelocity;
+                this.speakerVelocityThreshold = flywheelVelocityThreshold;
+                this.ampPower = ampPower;
+            }
+
+            public final AngularVelocity speakerVelocity;
+            public final AngularVelocity speakerVelocityThreshold;
+
+            public final double ampPower;
+        }
+
         private Shooter() {
             throw new IllegalCallerException("Cannot instantiate `Constants.Shooter`");
         }
