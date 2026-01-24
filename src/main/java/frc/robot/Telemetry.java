@@ -19,17 +19,20 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
+import frc.robot.subsystems.CommandSwerveDrivetrain;
 
 public class Telemetry {
     private final double MaxSpeed;
+    private CommandSwerveDrivetrain drivetrain;
 
     /**
      * Construct a telemetry object, with the specified max speed of the robot
      * 
      * @param maxSpeed Maximum speed in meters per second
      */
-    public Telemetry(double maxSpeed) {
+    public Telemetry(double maxSpeed, CommandSwerveDrivetrain drivetrain) {
         MaxSpeed = maxSpeed;
+        this.drivetrain = drivetrain;
         SignalLogger.start();
 
         /* Set up the module state Mechanism2d telemetry */
@@ -119,5 +122,9 @@ public class Telemetry {
             m_moduleDirections[i].setAngle(state.ModuleStates[i].angle);
             m_moduleSpeeds[i].setLength(state.ModuleStates[i].speedMetersPerSecond / (2 * MaxSpeed));
         }
+
+        // Setting drivetrain current values to match the telemetry
+        drivetrain.setCurrentChassisSpeeds(state.Speeds);
+        drivetrain.setCurrentPose2D(state.Pose);
     }
 }

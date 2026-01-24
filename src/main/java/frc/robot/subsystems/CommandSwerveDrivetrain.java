@@ -11,6 +11,7 @@ import com.ctre.phoenix.Util;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
+import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
@@ -20,6 +21,7 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N1;
@@ -67,12 +69,14 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private FollowPath.Builder pathBuilder;
     private final PIDController xController = new PIDController(5, 0.0, 0);
     private final PIDController headingController = new PIDController(5, 0.0, 0.2);
-    private final SwerveDrivePoseEstimator mEstimator;
     public final GyroIO gyro;
     // private final SwerveModulePosition[] modulePositions = {new SwerveModulePosition()};
 	public final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
-    //TODO: name might be limelight-reverse idk
-    private final Limelight limelight = new Limelight("limelight");
+    private final SwerveRequest.ApplyRobotSpeeds applyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds()
+        .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
+    private ChassisSpeeds currentChassisSpeeds = new ChassisSpeeds();
+    private Pose2d currentPose2D = new Pose2d();
+    public final Limelight limelight = new Limelight("limelight-reverse");
 
 
     /* SysId routine for characterizing translation. This is used to find PID gains for the drive motors. */
@@ -156,52 +160,27 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         if (Utils.isSimulation()) {
             startSimThread();
         }
-        this.gyro = switch(Constants.mode) {
-		case REAL -> new GyroIOReal();
-		case REPLAY -> new GyroIO() {
-			
-		};
-		case SIM -> new GyroIOReal();
-		default -> throw new Error();
-		};
-        this.mEstimator = new SwerveDrivePoseEstimator(
-			Constants.Drivetrain.kinematics,
-			new Rotation2d(this.gyroInputs.yawPosition),
-			super.clone().moduleStates,
-			new Pose2d()
-		);
+        this.gyro =new GyroIOReal();
         // Create a reusable builder with your robot's configuration
 		pathBuilder = new FollowPath.Builder(
 			this,                      // The drive subsystem to require
-			this::getCurrentPosition,             // Supplier for current robot pose
-			this::getCurrentChassisSpeeds,    // Supplier for current speeds
-			this::setControl,               // Consumer to drive the robot
+            () -> this.currentPose2D,    // Supplier for current robot pose
+			() -> this.currentChassisSpeeds,    // Supplier for current speeds
+			this::controlRobotDrivetrainAutonomus,               // Consumer to drive the robot
 			xController,    // Translation PID
 			headingController,    // Rotation PID
 			//TODO: Figure this out
 			new PIDController(2.0, 0.0, 0.0)     // Cross-track PID
-		).withDefaultShouldFlip()                // Auto-flip for red alliance
-		.withPoseReset(this::reset);  // Reset odometry at path start
+		).withDefaultShouldFlip();                // Auto-flip for red alliance
+		//.withPoseReset(this::reset);  // Reset odometry at path start
 
     }
     public FollowPath.Builder getPathBuilder() {
 		return pathBuilder;
 	}
 
-    public Pose2d getCurrentPosition(){
-       return RobotContainer.logger.drivePosePublish;
-    }
 
-    public void control(ChassisSpeeds speeds) {
-		// NOTE: The speeds provided must be robot-relative, else the robot will go the wrong way
-		Logger.recordOutput("Drivetrain/DemandedChassisSpeedsROD", speeds);
 
-		// Discretize is used to compensate for swerve mechanics.
-		// When the robot is translating while rotating, the motion is actually along an arc, but ChassisSpeeds is representing linear movement.
-		// So, it figures out what arc movement gets the robot to the correct spot after 1 program loop based on the provided ChassisSpeeds.
-		speeds = ChassisSpeeds.discretize(speeds, 0.02);
-		super.setControl(Constants.Drivetrain.kinematics.toSwerveR(speeds));
-	}
 
     /**
      * Constructs a CTRE SwerveDrivetrain using the specified constants.
@@ -225,6 +204,19 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         if (Utils.isSimulation()) {
             startSimThread();
         }
+                this.gyro =new GyroIOReal();
+        // Create a reusable builder with your robot's configuration
+		pathBuilder = new FollowPath.Builder(
+			this,                      // The drive subsystem to require
+            () -> this.currentPose2D,    // Supplier for current robot pose
+			() -> this.currentChassisSpeeds,    // Supplier for current speeds
+			this::controlRobotDrivetrainAutonomus,               // Consumer to drive the robot
+			xController,    // Translation PID
+			headingController,    // Rotation PID
+			//TODO: Figure this out
+			new PIDController(2.0, 0.0, 0.0)     // Cross-track PID
+		).withDefaultShouldFlip();                // Auto-flip for red alliance
+		//.withPoseReset(this::reset);  // Reset odometry at path start
     }
 
     /**
@@ -257,6 +249,20 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         if (Utils.isSimulation()) {
             startSimThread();
         }
+
+        this.gyro =new GyroIOReal();
+        // Create a reusable builder with your robot's configuration
+		pathBuilder = new FollowPath.Builder(
+			this,                      // The drive subsystem to require
+            () -> this.currentPose2D,    // Supplier for current robot pose
+			() -> this.currentChassisSpeeds,    // Supplier for current speeds
+			this::controlRobotDrivetrainAutonomus,               // Consumer to drive the robot
+			xController,    // Translation PID
+			headingController,    // Rotation PID
+			//TODO: Figure this out
+			new PIDController(2.0, 0.0, 0.0)     // Cross-track PID
+		).withDefaultShouldFlip();                // Auto-flip for red alliance
+		//.withPoseReset(this::reset);  // Reset odometry at path start
     }
 
     /**
@@ -267,6 +273,20 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      */
     public Command applyRequest(Supplier<SwerveRequest> request) {
         return run(() -> this.setControl(request.get()));
+    }
+
+    public void controlRobotDrivetrainAutonomus(ChassisSpeeds chassisSpeeds){
+        this.setControl(
+                applyRobotSpeeds.withSpeeds(chassisSpeeds) // Apply the given chasis speed to the drivetrain
+            );
+    }
+
+    public void setCurrentChassisSpeeds(ChassisSpeeds newChassisSpeeds)
+    {
+        this.currentChassisSpeeds = newChassisSpeeds;
+    }
+    public void setCurrentPose2D(Pose2d newPose2D){
+        this.currentPose2D = newPose2D;
     }
 
     /**
@@ -327,8 +347,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
 			Logger.recordOutput("Drivetrain/doRejectUpdate", doRejectUpdate);
 			if(!doRejectUpdate) {
-				mEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(.7, .7, 9999999));
-				mEstimator.addVisionMeasurement(mt2.pose, mt2.timestampSeconds);
+				this.setVisionMeasurementStdDevs(VecBuilder.fill(.7, .7, 9999999));
+				this.addVisionMeasurement(mt2.pose, mt2.timestampSeconds);
 			}
 		}
 
@@ -336,13 +356,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     }
 
-    public void reset(final Pose2d newPose, SwerveModulePosition[] modulePositions) {
-		mEstimator.resetPosition(new Rotation2d(this.gyroInputs.yawPosition), modulePositions, newPose);
-	}
-
-    public void updateEstimator(SwerveModulePosition[] modulePositions) {
-        mEstimator.update(new Rotation2d(this.gyroInputs.yawPosition), modulePositions);
-    }
     private void startSimThread() {
         m_lastSimTime = Utils.getCurrentTimeSeconds();
 
