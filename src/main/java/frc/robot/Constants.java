@@ -216,8 +216,8 @@ public class Constants {
                 new Translation2d(Constants.Drivetrain.wheelBase.unaryMinus(), Constants.Drivetrain.trackWidth);
         // public static final Angle swerveBackRightOffset = Units.Rotations.of(-0.4404296875);
         public static final Angle swerveBackRightOffset = Units.Rotations.of(-0.404296875);
-        public static final Translation2d swerveBackRightTranslation = new Translation2d(
-                Constants.Drivetrain.wheelBase.unaryMinus(), Constants.Drivetrain.trackWidth.unaryMinus());
+        public static final Translation2d swerveBackRightTranslation =
+                new Translation2d(Constants.Drivetrain.wheelBase.unaryMinus(), Constants.Drivetrain.trackWidth.unaryMinus());
 
         public static final SwerveDriveKinematics kinematics = new SwerveDriveKinematics(
                 Constants.Drivetrain.swerveFrontLeftTranslation,
