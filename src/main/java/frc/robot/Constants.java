@@ -1,13 +1,13 @@
 package frc.robot;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.AudioConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.SlotConfigs;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.pathplanner.lib.config.PIDConstants;
-
-import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
@@ -209,15 +209,15 @@ public class Constants {
         // public static final Angle swerveFrontRightOffset = Units.Rotations.of(-0.150146484375);
         public static final Angle swerveFrontRightOffset = Units.Rotations.of(-0.38671875);
         public static final Translation2d swerveFrontRightTranslation =
-                new Translation2d(Constants.Drivetrain.wheelBase, Constants.Drivetrain.trackWidth.negate());
+                new Translation2d(Constants.Drivetrain.wheelBase, Constants.Drivetrain.trackWidth.unaryMinus());
         // public static final Angle swerveBackLeftOffset = Units.Rotations.of(-0.136474609375);
         public static final Angle swerveBackLeftOffset = Units.Rotations.of(-0.19384765625);
         public static final Translation2d swerveBackLeftTranslation =
-                new Translation2d(Constants.Drivetrain.wheelBase.negate(), Constants.Drivetrain.trackWidth);
+                new Translation2d(Constants.Drivetrain.wheelBase.unaryMinus(), Constants.Drivetrain.trackWidth);
         // public static final Angle swerveBackRightOffset = Units.Rotations.of(-0.4404296875);
         public static final Angle swerveBackRightOffset = Units.Rotations.of(-0.404296875);
         public static final Translation2d swerveBackRightTranslation =
-                new Translation2d(Constants.Drivetrain.wheelBase.negate(), Constants.Drivetrain.trackWidth.negate());
+                new Translation2d(Constants.Drivetrain.wheelBase.unaryMinus(), Constants.Drivetrain.trackWidth.unaryMinus());
 
         public static final SwerveDriveKinematics kinematics = new SwerveDriveKinematics(
                 Constants.Drivetrain.swerveFrontLeftTranslation,
@@ -241,8 +241,8 @@ public class Constants {
                         / (2
                                 * Math.PI
                                 * Math.hypot(
-                                        Drivetrain.trackWidth.divide(2).in(Units.Meters),
-                                        Drivetrain.wheelBase.divide(2).in(Units.Meters))));
+                                        Drivetrain.trackWidth.div(2).in(Units.Meters),
+                                        Drivetrain.wheelBase.div(2).in(Units.Meters))));
     }
 
     public static class Shooter {
