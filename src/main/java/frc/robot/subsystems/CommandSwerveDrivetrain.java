@@ -176,8 +176,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 			headingController,    // Rotation PID
 			//TODO: Figure this out
 			new PIDController(2.0, 0.0, 0.0)     // Cross-track PID
-		).withDefaultShouldFlip();                // Auto-flip for red alliance
-		//.withPoseReset(this::reset);  // Reset odometry at path start
+		).withDefaultShouldFlip()                // Auto-flip for red alliance
+		.withPoseReset(this::resetPose);  // Reset odometry at path start
 
     }
     public FollowPath.Builder getPathBuilder() {
@@ -290,6 +290,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     {
         this.currentChassisSpeeds = newChassisSpeeds;
     }
+
     public void setCurrentPose2D(Pose2d newPose2D){
         this.currentPose2D = newPose2D;
     }
