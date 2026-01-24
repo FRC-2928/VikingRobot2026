@@ -10,12 +10,15 @@ import com.pathplanner.lib.commands.PathfindingCommand;
 
 import com.ctre.phoenix6.HootAutoReplay;
 
+import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
+
+import java.io.FileNotFoundException;
 
 import org.littletonrobotics.conduit.ConduitApi;
 import org.littletonrobotics.junction.LogFileUtil;
@@ -37,6 +40,9 @@ public class Robot extends LoggedRobot {
         .withJoystickReplay();
 
     public Robot() {
+        Logger.addDataReceiver(new WPILOGWriter());
+        Logger.addDataReceiver(new NT4Publisher());
+        Logger.start();
         mRobotContainer = new RobotContainer();
     }
 
@@ -44,6 +50,15 @@ public class Robot extends LoggedRobot {
     public void robotPeriodic() {
         m_timeAndJoystickReplay.update();
         CommandScheduler.getInstance().run(); 
+        try {
+            if(Tuning.publishData.get()){
+                // TODO PUT IN REAL VALUES!!!!
+                Tuning.writeToCSV(Tuning.hoodAngle.get(), Tuning.releaseVelocity.get(), Units.Inches.of(0));
+                Tuning.publishData.set(false);
+            }
+        } catch(FileNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

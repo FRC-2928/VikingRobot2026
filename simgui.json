@@ -2,8 +2,13 @@
   "NTProvider": {
     "types": {
       "/FMSInfo": "FMSInfo",
+      "/Pose": "Field2d",
       "/SmartDashboard/Auto Choices": "String Chooser",
-      "/SmartDashboard/Autonomous Routine": "String Chooser"
+      "/SmartDashboard/Autonomous Routine": "String Chooser",
+      "/SmartDashboard/Module 0": "Mechanism2d",
+      "/SmartDashboard/Module 1": "Mechanism2d",
+      "/SmartDashboard/Module 2": "Mechanism2d",
+      "/SmartDashboard/Module 3": "Mechanism2d"
     },
     "windows": {
       "/SmartDashboard/Autonomous Routine": {

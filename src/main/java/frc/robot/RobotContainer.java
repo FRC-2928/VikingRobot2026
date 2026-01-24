@@ -37,6 +37,14 @@ public class RobotContainer {
 
     public RobotContainer() {
         configureBindings();
+        // Tuning.hoodAngle.set(0);
+        try {
+            if (Tuning.flywheelVelocity != null) {
+                Tuning.flywheelVelocity.get(); // try to load tuning controls if available
+            }
+        } catch (RuntimeException ignored) {
+            // NetworkTables / logger not ready yet — ignore
+        } // load the class to put the tuning controls on the dashboard
     }
 
     private void configureBindings() {
