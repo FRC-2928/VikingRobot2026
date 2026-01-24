@@ -18,6 +18,11 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
+import frc.robot.utils.ShooterDataCollector;
+import frc.robot.utils.ShooterDataCollectorIO;
+import frc.robot.utils.ShooterDataCollectorIOReal;
+import frc.robot.utils.ShooterLookupTableBuilder;
+
 public class Robot extends LoggedRobot {
 	public static Robot instance;
 	public static RobotContainer cont;
@@ -26,6 +31,9 @@ public class Robot extends LoggedRobot {
 
 	public RobotContainer container;
 
+	// Shooter data collection
+	private ShooterLookupTableBuilder shooterDataBuilder;
+	private ShooterDataCollector shooterDataCollector;
 
 	public Robot() {
 		super();
@@ -62,6 +70,16 @@ public class Robot extends LoggedRobot {
 	public void robotInit() {
 		// PathfindingCommand.warmupCommand().schedule();
 		cont.drivetrain.limelight.setIMUMode(1);
+
+		// Initialize shooter data collection
+		shooterDataBuilder = new ShooterLookupTableBuilder();
+		shooterDataBuilder.initialize();
+
+		// Use real IO for robot hardware, could use sim IO for simulation
+		ShooterDataCollectorIO io = new ShooterDataCollectorIOReal();
+		shooterDataCollector = new ShooterDataCollector(shooterDataBuilder, io);
+
+		System.out.println("Shooter data collection system ready!");
 	}
 
 	@Override
@@ -69,6 +87,9 @@ public class Robot extends LoggedRobot {
 		CommandScheduler.getInstance().run();
 		LoggedPowerDistribution.getInstance(Constants.CAN.Misc.pdh, ModuleType.kRev);
 		cont.drivetrain.limelight.setRobotOrientation(cont.drivetrain.est.getEstimatedPosition().getRotation().getMeasure()); 
+
+		// Update shooter data collector (checks for dashboard input)
+		shooterDataCollector.periodic();
 	}
 
 	// DISABLED //
