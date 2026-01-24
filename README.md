@@ -1,2 +1,2 @@
-# *HOTPANTS*
-This is *HOTPANTS*, it's pretty fast. Hotpants is our test robot. It was initially made to try out swerve, but now it is used for just about anything.
+# Pølserull
+This is *Pølserull*, it's pretty fast. *Pølserull* is our 2026 FRC robot. Pølserull mean "hot dog roller" in Norwegian, because of the hot dog roller we use to feed *fuel* into the shooter.
