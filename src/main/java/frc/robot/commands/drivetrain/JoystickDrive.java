@@ -19,98 +19,101 @@ import frc.robot.oi.DriverOI;
 import frc.robot.subsystems.Drivetrain;
 
 public class JoystickDrive extends Command {
-	public JoystickDrive(final Drivetrain drivetrain) {
-		this.drivetrain = drivetrain;
+    public JoystickDrive(final Drivetrain drivetrain) {
+        this.drivetrain = drivetrain;
 
-		this.addRequirements(this.drivetrain);
+        this.addRequirements(this.drivetrain);
 
-		this.absoluteController.enableContinuousInput(-0.5, 0.5);
-	}
+        this.absoluteController.enableContinuousInput(-0.5, 0.5);
+    }
 
-	public static SendableChooser<String> createDriveModeChooser() {
-		final SendableChooser<String> chooser = new SendableChooser<>();
-		chooser.addOption("Swerve Drive", "Swerve Drive");
-		chooser.addOption("Field Oriented", "Field Oriented");
-		chooser.setDefaultOption("Swerve Drive", "Swerve Drive");
-		return chooser;
-	}
+    public static SendableChooser<String> createDriveModeChooser() {
+        final SendableChooser<String> chooser = new SendableChooser<>();
+        chooser.addOption("Swerve Drive", "Swerve Drive");
+        chooser.addOption("Field Oriented", "Field Oriented");
+        chooser.setDefaultOption("Swerve Drive", "Swerve Drive");
+        return chooser;
+    }
 
-	public final Drivetrain drivetrain;
-	public final DriverOI oi = Robot.cont.driverOI;
+    public final Drivetrain drivetrain;
+    public final DriverOI oi = Robot.cont.driverOI;
 
-	public double forMagnitude = 0.5;
-	private final ProfiledPIDController absoluteController = Constants.Drivetrain.absoluteRotationPID
-		.createProfiledController(Constants.Drivetrain.absoluteRotationConstraints);
+    public double forMagnitude = 0.5;
+    private final ProfiledPIDController absoluteController =
+            Constants.Drivetrain.absoluteRotationPID.createProfiledController(
+                    Constants.Drivetrain.absoluteRotationConstraints);
 
-	@Override
-	public void execute() {
-		final ChassisSpeeds robotOrientedSpeeds = drivetrain.fod(speeds(), drivetrain.getFieldOrientedAngle());
+    @Override
+    public void execute() {
+        final ChassisSpeeds robotOrientedSpeeds = drivetrain.fod(speeds(), drivetrain.getFieldOrientedAngle());
 
-		drivetrain.control(robotOrientedSpeeds);
-	}
+        drivetrain.control(robotOrientedSpeeds);
+    }
 
-	// Returns the Field-oriented ChassisSpeeds based on the joystick inputs
-	public ChassisSpeeds speeds() {
-		if(DriverStation.isAutonomous()) return new ChassisSpeeds();
+    // Returns the Field-oriented ChassisSpeeds based on the joystick inputs
+    public ChassisSpeeds speeds() {
+        if (DriverStation.isAutonomous()) return new ChassisSpeeds();
 
-		final Translation2d translation = this.translation();
-		return new ChassisSpeeds(translation.getX(), translation.getY(), this.theta().in(Units.RadiansPerSecond));
-	}
+        final Translation2d translation = this.translation();
+        return new ChassisSpeeds(
+                translation.getX(), translation.getY(), this.theta().in(Units.RadiansPerSecond));
+    }
 
-	// Returns the translation (X and Y) component from the joystick
-	private Translation2d translation() {
-		// get inputs, apply deadbands
-		final double axial = -MathUtil.applyDeadband(this.oi.driveAxial.get(), 0.25); // Negate b/c joystick Y is inverted from field X
-		final double lateral = -MathUtil.applyDeadband(this.oi.driveLateral.get(), 0.25); // Negate b/c joystick X is inverted from field Y
-		Logger.recordOutput("Drivetrain/JoystickDrive/Axial", axial);
-		Logger.recordOutput("Drivetrain/JoystickDrive/Lateral", lateral);
+    // Returns the translation (X and Y) component from the joystick
+    private Translation2d translation() {
+        // get inputs, apply deadbands
+        final double axial = -MathUtil.applyDeadband(
+                this.oi.driveAxial.get(), 0.25); // Negate b/c joystick Y is inverted from field X
+        final double lateral = -MathUtil.applyDeadband(
+                this.oi.driveLateral.get(), 0.25); // Negate b/c joystick X is inverted from field Y
+        Logger.recordOutput("Drivetrain/JoystickDrive/Axial", axial);
+        Logger.recordOutput("Drivetrain/JoystickDrive/Lateral", lateral);
 
-		// Calculate the move magnitude
-		final double magnitude = Math.hypot(axial, lateral); // get length and normalize
-		final double desaturationFactor = Math.max(magnitude, 1.0); // guarantees the output is between -1 and 1
+        // Calculate the move magnitude
+        final double magnitude = Math.hypot(axial, lateral); // get length and normalize
+        final double desaturationFactor = Math.max(magnitude, 1.0); // guarantees the output is between -1 and 1
 
-		// Convert to m/s
-		final LinearVelocity vx = Constants.Drivetrain.maxVelocity.times(axial / desaturationFactor);
-		final LinearVelocity vy = Constants.Drivetrain.maxVelocity.times(lateral / desaturationFactor);
+        // Convert to m/s
+        final LinearVelocity vx = Constants.Drivetrain.maxVelocity.times(axial / desaturationFactor);
+        final LinearVelocity vy = Constants.Drivetrain.maxVelocity.times(lateral / desaturationFactor);
 
-		return new Translation2d(vx.in(Units.MetersPerSecond), vy.in(Units.MetersPerSecond));
-	}
+        return new Translation2d(vx.in(Units.MetersPerSecond), vy.in(Units.MetersPerSecond));
+    }
 
-	// Returns the rotation component from the joystick
-	private AngularVelocity theta() {
-		double theta = 0;
+    // Returns the rotation component from the joystick
+    private AngularVelocity theta() {
+        double theta = 0;
 
-		final String selectedDriveMode = Robot.cont.getDriveMode();
-		if("Swerve Drive".equals(selectedDriveMode)) {
-			theta = MathUtil.applyDeadband(-this.oi.driveFORX.get(), 0.075); // Negate this b/c joystick X is inverted from robot rotation
-		} else {
-			// Joystick Right Axis
-			final double rotX = this.oi.driveFORX.get();
-			final double rotY = this.oi.driveFORY.get();
+        final String selectedDriveMode = Robot.cont.getDriveMode();
+        if ("Swerve Drive".equals(selectedDriveMode)) {
+            theta = MathUtil.applyDeadband(
+                    -this.oi.driveFORX.get(), 0.075); // Negate this b/c joystick X is inverted from robot rotation
+        } else {
+            // Joystick Right Axis
+            final double rotX = this.oi.driveFORX.get();
+            final double rotY = this.oi.driveFORY.get();
 
-			// This will determine the rotation speed based on how far the joystick is moved.
-			this.forMagnitude = Math.hypot(rotX, rotY);
-			Logger.recordOutput("JoystickDrive/AbsoluteRotation/Magnitude", this.forMagnitude);
+            // This will determine the rotation speed based on how far the joystick is moved.
+            this.forMagnitude = Math.hypot(rotX, rotY);
+            Logger.recordOutput("JoystickDrive/AbsoluteRotation/Magnitude", this.forMagnitude);
 
-			// Get a new rotation target if right joystick values are beyond the deadband.
-			// Otherwise, we'll keep the old one.
-			final boolean doRotateRobot = this.forMagnitude > 0.5;
-			Angle forTarget = Units.Radians.zero();
-			if (doRotateRobot) {
-				forTarget = Units.Radians.of(-Math.atan2(rotX, rotY));
-				Logger.recordOutput("JoystickDrive/AbsoluteRotation/Target", forTarget);
-				final double measurement = this.drivetrain.getFieldOrientedAngle().in(Units.Rotations);
-				final double setpoint = forTarget.in(Units.Rotations);
-				
-				theta = MathUtil.applyDeadband(
-					this.absoluteController.calculate(measurement, setpoint),
-					0.075
-				);
-			}
+            // Get a new rotation target if right joystick values are beyond the deadband.
+            // Otherwise, we'll keep the old one.
+            final boolean doRotateRobot = this.forMagnitude > 0.5;
+            Angle forTarget = Units.Radians.zero();
+            if (doRotateRobot) {
+                forTarget = Units.Radians.of(-Math.atan2(rotX, rotY));
+                Logger.recordOutput("JoystickDrive/AbsoluteRotation/Target", forTarget);
+                final double measurement =
+                        this.drivetrain.getFieldOrientedAngle().in(Units.Rotations);
+                final double setpoint = forTarget.in(Units.Rotations);
 
-			this.forMagnitude = this.forMagnitude * 0.5 + 0.5;
-		}
+                theta = MathUtil.applyDeadband(this.absoluteController.calculate(measurement, setpoint), 0.075);
+            }
 
-		return Constants.Drivetrain.maxAngularVelocity.times(theta * this.forMagnitude);
-	}
+            this.forMagnitude = this.forMagnitude * 0.5 + 0.5;
+        }
+
+        return Constants.Drivetrain.maxAngularVelocity.times(theta * this.forMagnitude);
+    }
 }

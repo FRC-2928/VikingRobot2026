@@ -27,9 +27,9 @@ public class ShooterIOReal implements ShooterIO {
 	private final TalonFX uptake = new TalonFX(Constants.CAN.CTRE.uptake, Constants.CAN.CTRE.bus); // Kraken x44 // TODO: Determine if this is a TalonFX or TalonSRX
 	private final TalonFX hood = new TalonFX(Constants.CAN.CTRE.hood, Constants.CAN.CTRE.bus); // Kraken x44
 
-	private StatusSignal<Angle> hoodAngle;
-	private StatusSignal<AngularVelocity> velocityA;
-	private StatusSignal<AngularVelocity> velocityB;
+    private StatusSignal<Angle> hoodAngle;
+    private StatusSignal<AngularVelocity> velocityA;
+    private StatusSignal<AngularVelocity> velocityB;
 
 	// Rotates the hood to change angle of fuel shooting
 	public void rotateHood() {
