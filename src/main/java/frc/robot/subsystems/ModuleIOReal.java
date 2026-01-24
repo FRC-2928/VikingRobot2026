@@ -26,6 +26,7 @@ import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.CANcoder;
+import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -38,13 +39,12 @@ import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.Constants;
 import frc.robot.Robot;
 import frc.robot.subsystems.SwerveModule.Place;
-import frc.robot.utils.STalonFX;
 
 public class ModuleIOReal implements ModuleIO {
 	public final Place place;
 
-	public final STalonFX drive;
-	public final STalonFX azimuth;
+	public final TalonFX drive;
+	public final TalonFX azimuth;
 	public final CANcoder cancoder;
 
 	public final StatusSignal<Angle> drivePosition;
@@ -62,26 +62,26 @@ public class ModuleIOReal implements ModuleIO {
 
 		switch(this.place) {
 		case FrontLeft:
-			this.azimuth = new STalonFX(Constants.CAN.CTRE.swerveFrontLeftAzimuth, Constants.CAN.CTRE.bus);
-			this.drive = new STalonFX(Constants.CAN.CTRE.swerveFrontLeftDrive, Constants.CAN.CTRE.bus);
+			this.azimuth = new TalonFX(Constants.CAN.CTRE.swerveFrontLeftAzimuth, Constants.CAN.CTRE.bus);
+			this.drive = new TalonFX(Constants.CAN.CTRE.swerveFrontLeftDrive, Constants.CAN.CTRE.bus);
 			this.cancoder = new CANcoder(Constants.CAN.CTRE.swerveFrontLeftAzimuth, Constants.CAN.CTRE.bus);
 			this.absoluteEncoderOffset = Constants.Drivetrain.swerveFrontLeftOffset;
 			break;
 		case FrontRight:
-			this.azimuth = new STalonFX(Constants.CAN.CTRE.swerveFrontRightAzimuth, Constants.CAN.CTRE.bus);
-			this.drive = new STalonFX(Constants.CAN.CTRE.swerveFrontRightDrive, Constants.CAN.CTRE.bus);
+			this.azimuth = new TalonFX(Constants.CAN.CTRE.swerveFrontRightAzimuth, Constants.CAN.CTRE.bus);
+			this.drive = new TalonFX(Constants.CAN.CTRE.swerveFrontRightDrive, Constants.CAN.CTRE.bus);
 			this.cancoder = new CANcoder(Constants.CAN.CTRE.swerveFrontRightAzimuth, Constants.CAN.CTRE.bus);
 			this.absoluteEncoderOffset = Constants.Drivetrain.swerveFrontRightOffset;
 			break;
 		case BackRight:
-			this.azimuth = new STalonFX(Constants.CAN.CTRE.swerveBackRightAzimuth, Constants.CAN.CTRE.bus);
-			this.drive = new STalonFX(Constants.CAN.CTRE.swerveBackRightDrive, Constants.CAN.CTRE.bus);
+			this.azimuth = new TalonFX(Constants.CAN.CTRE.swerveBackRightAzimuth, Constants.CAN.CTRE.bus);
+			this.drive = new TalonFX(Constants.CAN.CTRE.swerveBackRightDrive, Constants.CAN.CTRE.bus);
 			this.cancoder = new CANcoder(Constants.CAN.CTRE.swerveBackRightAzimuth, Constants.CAN.CTRE.bus);
 			this.absoluteEncoderOffset = Constants.Drivetrain.swerveBackRightOffset;
 			break;
 		case BackLeft:
-			this.azimuth = new STalonFX(Constants.CAN.CTRE.swerveBackLeftAzimuth, Constants.CAN.CTRE.bus);
-			this.drive = new STalonFX(Constants.CAN.CTRE.swerveBackLeftDrive, Constants.CAN.CTRE.bus);
+			this.azimuth = new TalonFX(Constants.CAN.CTRE.swerveBackLeftAzimuth, Constants.CAN.CTRE.bus);
+			this.drive = new TalonFX(Constants.CAN.CTRE.swerveBackLeftDrive, Constants.CAN.CTRE.bus);
 			this.cancoder = new CANcoder(Constants.CAN.CTRE.swerveBackLeftAzimuth, Constants.CAN.CTRE.bus);
 			this.absoluteEncoderOffset = Constants.Drivetrain.swerveBackLeftOffset;
 			break;

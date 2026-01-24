@@ -2,6 +2,7 @@ package frc.robot;
 
 import org.littletonrobotics.junction.Logger;
 
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.AudioConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.SlotConfigs;
@@ -94,7 +95,7 @@ public class Constants {
 		}
 
 		public static final class CTRE {
-			public static final String bus = "canivore";
+			public static final CANBus bus = new CANBus("canivore");
 
 			public static final int pigeon = 0;
 

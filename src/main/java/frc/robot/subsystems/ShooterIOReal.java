@@ -12,7 +12,6 @@ public class ShooterIOReal implements ShooterIO {
 	public ShooterIOReal(final Shooter shooter) {
 		this.velocityA = this.flywheelA.getRotorVelocity();
 		this.velocityB = this.flywheelB.getRotorVelocity();
-
 		
 	}
 
@@ -28,9 +27,9 @@ public class ShooterIOReal implements ShooterIO {
 	private final TalonFX uptake = new TalonFX(Constants.CAN.CTRE.uptake, Constants.CAN.CTRE.bus); // TODO: Determine if this is a TalonFX or TalonSRX
 	private final TalonFX hood = new TalonFX(Constants.CAN.CTRE.hood, Constants.CAN.CTRE.bus);
 
-	public final StatusSignal<Angle> hoodAngle;
-	public final StatusSignal<AngularVelocity> velocityA;
-	public final StatusSignal<AngularVelocity> velocityB;
+	private StatusSignal<Angle> hoodAngle;
+	private StatusSignal<AngularVelocity> velocityA;
+	private StatusSignal<AngularVelocity> velocityB;
 
 
 
