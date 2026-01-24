@@ -122,7 +122,8 @@ spotless {
             exclude '**/build/**', '**/build-*/**', '**/bin/**'
       }
       toggleOffOn()
-      googleJavaFormat()
+      palantirJavaFormat()
+      importOrder('java', 'javax', 'com', 'org')
       removeUnusedImports()
       trimTrailingWhitespace()
       endWithNewline()
