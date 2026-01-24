@@ -25,29 +25,32 @@ import frc.robot.Constants;
 
 /** IO implementation for Pigeon2 */
 public class GyroIOReal implements GyroIO {
-	private final Pigeon2 pigeon = new Pigeon2(Constants.CAN.CTRE.pigeon, Constants.CAN.CTRE.bus);
-	private final StatusSignal<Angle> yaw = this.pigeon.getYaw();
-	private final StatusSignal<AngularVelocity> yawVelocity = this.pigeon.getAngularVelocityZWorld();
+    private final Pigeon2 pigeon = new Pigeon2(Constants.CAN.CTRE.pigeon, Constants.CAN.CTRE.bus);
+    private final StatusSignal<Angle> yaw = this.pigeon.getYaw();
+    private final StatusSignal<AngularVelocity> yawVelocity = this.pigeon.getAngularVelocityZWorld();
 
-	public GyroIOReal() {
-		this.pigeon.getConfigurator().apply(new Pigeon2Configuration());
-		this.pigeon.getConfigurator().setYaw(0);
-		this.yaw.setUpdateFrequency(100);
-		this.yawVelocity.setUpdateFrequency(100);
-		this.pigeon.optimizeBusUtilization();
-	}
+    public GyroIOReal() {
+        this.pigeon.getConfigurator().apply(new Pigeon2Configuration());
+        this.pigeon.getConfigurator().setYaw(0);
+        this.yaw.setUpdateFrequency(100);
+        this.yawVelocity.setUpdateFrequency(100);
+        this.pigeon.optimizeBusUtilization();
+    }
 
-	@Override
-	public void updateInputs(final GyroIOInputs inputs) {
-		inputs.connected = StatusCode.OK.equals(BaseStatusSignal.refreshAll(this.yaw, this.yawVelocity));
-		inputs.yawPosition = Units.Degrees.of(this.yaw.getValueAsDouble());
-		inputs.yawVelocityRadPerSec = Units.DegreesPerSecond.of(this.yawVelocity.getValueAsDouble());
-	}
+    @Override
+    public void updateInputs(final GyroIOInputs inputs) {
+        inputs.connected = StatusCode.OK.equals(BaseStatusSignal.refreshAll(this.yaw, this.yawVelocity));
+        inputs.yawPosition = Units.Degrees.of(this.yaw.getValueAsDouble());
+        inputs.yawVelocityRadPerSec = Units.DegreesPerSecond.of(this.yawVelocity.getValueAsDouble());
+    }
 
-	@Override
-	public void setYaw(Angle yaw){
-		this.pigeon.setYaw(yaw.in(Units.Degrees));
-	}
-	@Override
-	public void reset() { this.pigeon.reset(); }
+    @Override
+    public void setYaw(Angle yaw) {
+        this.pigeon.setYaw(yaw.in(Units.Degrees));
+    }
+
+    @Override
+    public void reset() {
+        this.pigeon.reset();
+    }
 }

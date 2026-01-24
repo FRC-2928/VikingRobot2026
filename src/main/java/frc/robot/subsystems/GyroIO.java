@@ -13,21 +13,22 @@
 
 package frc.robot.subsystems;
 
+import org.littletonrobotics.junction.AutoLog;
+
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.*;
 
-import org.littletonrobotics.junction.AutoLog;
-
 public interface GyroIO {
-	@AutoLog
-	public static class GyroIOInputs {
-		public boolean connected = false;
-		public Angle yawPosition = Units.Rotations.zero();
-		public AngularVelocity yawVelocityRadPerSec = Units.RotationsPerSecond.zero();
-	}
+    @AutoLog
+    public static class GyroIOInputs {
+        public boolean connected = false;
+        public Angle yawPosition = Units.Rotations.zero();
+        public AngularVelocity yawVelocityRadPerSec = Units.RotationsPerSecond.zero();
+    }
 
-	public default void updateInputs(final GyroIOInputs inputs) {}
+    public default void updateInputs(final GyroIOInputs inputs) {}
 
-	public default void reset() {}
-	public default void setYaw(Angle yaw){}
+    public default void reset() {}
+
+    public default void setYaw(Angle yaw) {}
 }

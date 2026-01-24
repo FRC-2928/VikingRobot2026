@@ -5,11 +5,17 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Robot;
 
 public class TestDrive extends Command {
-	public TestDrive() { this.addRequirements(Robot.cont.drivetrain); }
+    public TestDrive() {
+        this.addRequirements(Robot.cont.drivetrain);
+    }
 
-	@Override
-	public void execute() { Robot.cont.drivetrain.control(new ChassisSpeeds(2, 0, 0)); }
+    @Override
+    public void execute() {
+        Robot.cont.drivetrain.control(new ChassisSpeeds(2, 0, 0));
+    }
 
-	@Override
-	public void end(final boolean interrupted) { Robot.cont.drivetrain.halt(); }
+    @Override
+    public void end(final boolean interrupted) {
+        Robot.cont.drivetrain.halt();
+    }
 }
