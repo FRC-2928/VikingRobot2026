@@ -1,0 +1,63 @@
+{
+  "comment": "Sample Elastic Dashboard layout for Shooter Data Collection",
+  "widgets": [
+    {
+      "title": "Distance (m)",
+      "type": "Number",
+      "topic": "ShooterData/distance_m",
+      "properties": {
+        "min": 0,
+        "max": 10,
+        "step": 0.1
+      }
+    },
+    {
+      "title": "Velocity (RPS)",
+      "type": "Number",
+      "topic": "ShooterData/velocity_rps",
+      "properties": {
+        "min": 0,
+        "max": 100,
+        "step": 0.5
+      }
+    },
+    {
+      "title": "Hood Angle (deg)",
+      "type": "Number",
+      "topic": "ShooterData/hood_angle_deg",
+      "properties": {
+        "min": 0,
+        "max": 90,
+        "step": 0.5
+      }
+    },
+    {
+      "title": "Shot Successful?",
+      "type": "Toggle Button",
+      "topic": "ShooterData/successful"
+    },
+    {
+      "title": "Notes",
+      "type": "Text View",
+      "topic": "ShooterData/notes"
+    },
+    {
+      "title": "RECORD DATA",
+      "type": "Toggle Button",
+      "topic": "ShooterData/record_trigger",
+      "properties": {
+        "colorWhenTrue": "#00FF00",
+        "colorWhenFalse": "#FF0000"
+      }
+    },
+    {
+      "title": "Recording Status",
+      "type": "Boolean Box",
+      "topic": "ShooterData/recording_status",
+      "properties": {
+        "colorWhenTrue": "#00FF00",
+        "colorWhenFalse": "#808080"
+      }
+    }
+  ]
+}

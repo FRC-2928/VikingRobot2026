@@ -7,8 +7,8 @@ import edu.wpi.first.units.Units;
 public final class Tuning {
 	private Tuning() { throw new IllegalCallerException("Cannot instantiate `Tuning`"); }
 
-	public static final LoggedNetworkNumber intakeSpeed = new LoggedNetworkNumber
-		("Tuning/SpeedIntakePercent",
+	public static final LoggedNetworkNumber intakeSpeed = new LoggedNetworkNumber(
+		"Tuning/SpeedIntakePercent",
 		.8);
 
 	public static final LoggedNetworkNumber flywheelVelocity = new LoggedNetworkNumber(
