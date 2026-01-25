@@ -50,6 +50,7 @@ public class Robot extends LoggedRobot {
     public void robotPeriodic() {
         m_timeAndJoystickReplay.update();
         CommandScheduler.getInstance().run(); 
+        mRobotContainer.drivetrain.limelight.setThrottleRate(isEnabled() ? 0 : 100);
         try {
             if(Tuning.publishData.get()){
                 // TODO PUT IN REAL VALUES!!!!
