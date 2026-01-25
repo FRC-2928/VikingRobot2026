@@ -1,25 +1,28 @@
 package frc.robot.commands.drivetrain;
 
 import frc.robot.Robot;
+import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Drivetrain;
 import edu.wpi.first.wpilibj2.command.Command;
 
 public class VoltageRampCommand extends Command {
-	public VoltageRampCommand(Drivetrain drivetrain) {
+	public VoltageRampCommand(Drivetrain oldDrivetrain, CommandSwerveDrivetrain drivetrain) {
+		mOldDrivetrain = oldDrivetrain;
 		mDrivetrain = drivetrain;
 		this.addRequirements(mDrivetrain);
 		VoltageRampCommand.voltage = 0;
 	}
 
 	private static double voltage;
-	private Drivetrain mDrivetrain;
+	private Drivetrain mOldDrivetrain;
+	private CommandSwerveDrivetrain mDrivetrain;
 
 	@Override
 	public void initialize() { VoltageRampCommand.voltage = 0; }
 
 	@Override
 	public void execute() {
-		mDrivetrain.runCharacterization(VoltageRampCommand.voltage);
+		mOldDrivetrain.runCharacterization(VoltageRampCommand.voltage);
 		VoltageRampCommand.voltage += 0.005;
 	}
 

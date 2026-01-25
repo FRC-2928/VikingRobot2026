@@ -27,7 +27,7 @@ import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Drivetrain;
 
 public final class Autonomous {
-	public static SendableChooser<Command> createAutonomousChooser(AutoFactory factory, Drivetrain drivetrain) {
+	public static SendableChooser<Command> createAutonomousChooser(AutoFactory factory, CommandSwerveDrivetrain drivetrain) {
 		final SendableChooser<Command> chooser = new SendableChooser<>();
 		AutoFactory autoFactory = factory;
 
@@ -67,14 +67,14 @@ public final class Autonomous {
 			new CenterLimelight(drivetrain)
 		);
 		
-		chooser.addOption("[testing] voltage ramp", new VoltageRampCommand(drivetrain));
+		chooser.addOption("[testing] voltage ramp", new VoltageRampCommand(null, drivetrain));
 		return chooser;
 	}
 	
 	public static Command bLineForwardBack(CommandSwerveDrivetrain drivetrain){
 		return Commands.sequence(drivetrain.getPathBuilder().build(new Path("forwardBack")));
 	}
-	public static AutoChooser getChoreoAutoChooser(AutoFactory factory, Drivetrain drivetrain) {
+	public static AutoChooser getChoreoAutoChooser(AutoFactory factory, CommandSwerveDrivetrain drivetrain) {
 		final AutoChooser choreoChooser = new AutoChooser();
 		AutoFactory autoFactory = factory;
 
@@ -100,13 +100,13 @@ public final class Autonomous {
 		return choreoChooser;
 	}
 
-	public static Command setInitialPose(final String name, Drivetrain drivetrain) {
+	public static Command setInitialPose(final String name, CommandSwerveDrivetrain drivetrain) {
 		final Optional<Trajectory<SwerveSample>> traj = Choreo.loadTrajectory(name);
 		// try {
 			final Pose2d initial = traj.get().getPoses()[0];
 
 			return Commands.runOnce(() -> {
-				drivetrain.reset(initial);
+				drivetrain.resetPose(initial);
 
 				Logger.recordOutput("Drivetrain/Auto/x0", initial.getX());
 				Logger.recordOutput("Drivetrain/Auto/y0", initial.getY());

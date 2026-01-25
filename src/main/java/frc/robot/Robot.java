@@ -47,6 +47,11 @@ public class Robot extends LoggedRobot {
     }
 
     @Override
+    public void robotInit() {
+        mRobotContainer.drivetrain.limelight.setIMUMode(1);
+    }
+
+    @Override
     public void robotPeriodic() {
         m_timeAndJoystickReplay.update();
         CommandScheduler.getInstance().run(); 
@@ -60,13 +65,20 @@ public class Robot extends LoggedRobot {
         } catch(FileNotFoundException e) {
             e.printStackTrace();
         }
+        mRobotContainer.drivetrain.limelight.setRobotOrientation(
+            mRobotContainer.drivetrain.getCurrentPose2D().getRotation().getMeasure()
+        );
     }
 
     @Override
-    public void disabledInit() {}
+    public void disabledInit() {
+        mRobotContainer.drivetrain.limelight.setIMUMode(1);
+    }
 
     @Override
-    public void disabledPeriodic() {}
+    public void disabledPeriodic() {
+        mRobotContainer.drivetrain.disabledPeriodic();
+    }
 
     @Override
     public void disabledExit() {}
@@ -81,7 +93,9 @@ public class Robot extends LoggedRobot {
     }
 
     @Override
-    public void autonomousPeriodic() {}
+    public void autonomousPeriodic() {
+        mRobotContainer.drivetrain.limelight.setIMUMode(2);
+    }
 
     @Override
     public void autonomousExit() {}

@@ -20,6 +20,7 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
 import frc.robot.Robot;
+import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Drivetrain;
 
 /* You should consider using the more terse Command factories API instead https://docs.wpilib.org/en/stable/docs/software/commandbased/organizing-command-based.html#defining-commands */
@@ -44,9 +45,9 @@ public class CenterLimelight extends Command {
   private Pose3d tagPose;
   private List<Integer> tagsToCheck;
   private final static List<Integer> reefTags = List.of(6,7,8,9,10,11,17,18,19,20,21,22);
-  private final Drivetrain mDrivetrain;
+  private final CommandSwerveDrivetrain mDrivetrain;
   
-  public CenterLimelight(Drivetrain drivetrain) {
+  public CenterLimelight(CommandSwerveDrivetrain drivetrain) {
       mDrivetrain = drivetrain;
       // Use addRequirements() here to declare subsystem dependencies.
       this.addRequirements(drivetrain);
@@ -60,41 +61,41 @@ public class CenterLimelight extends Command {
       this.tagsToCheck = new ArrayList<>();  
     }
 
-    public static CenterLimelight CenterLimelightLeft(Drivetrain drivetrain){
+    public static CenterLimelight CenterLimelightLeft(CommandSwerveDrivetrain drivetrain){
       return new CenterLimelight(Units.Feet.of(0),Units.Inches.of(-6.5), reefTags, drivetrain);
     }
-    public static CenterLimelight CenterLimelightRight(Drivetrain drivetrain){
+    public static CenterLimelight CenterLimelightRight(CommandSwerveDrivetrain drivetrain){
       return new CenterLimelight(Units.Feet.of(0),Units.Inches.of(6.5), reefTags, drivetrain);
     }
-    public static CenterLimelight CenterLimelightRightRotated(Drivetrain drivetrain){
+    public static CenterLimelight CenterLimelightRightRotated(CommandSwerveDrivetrain drivetrain){
       // return new CenterLimelight(Units.Feet.of(0).plus(Constants.Drivetrain.halfRobotWidthBumpersOn),Units.Inches.of(6.5).plus(Constants.Drivetrain.halfRobotWidthBumpersOn), Units.Degrees.of(45), reefTags);
       return new CenterLimelight(Units.Feet.of(0),Units.Inches.of(6.5), Units.Degrees.of(180), reefTags, drivetrain);
     }
-    public static CenterLimelight CenterLimelightCenter(Drivetrain drivetrain){
+    public static CenterLimelight CenterLimelightCenter(CommandSwerveDrivetrain drivetrain){
       return new CenterLimelight(Units.Feet.of(0),Units.Inches.of(0), reefTags, drivetrain);
     }
 
-    public static CenterLimelight CenterLimelightC(Drivetrain drivetrain){
+    public static CenterLimelight CenterLimelightC(CommandSwerveDrivetrain drivetrain){
       return new CenterLimelight(Units.Inches.of(10),Units.Inches.of(-6.5), List.of(8, 17), drivetrain);
     }
 
-    public static CenterLimelight CenterLimelightD(Drivetrain drivetrain){
+    public static CenterLimelight CenterLimelightD(CommandSwerveDrivetrain drivetrain){
       return new CenterLimelight(Units.Inches.of(10),Units.Inches.of(6.5), List.of(8, 17), drivetrain);
     }
 
-    public static CenterLimelight CenterLimelightF(Drivetrain drivetrain){
+    public static CenterLimelight CenterLimelightF(CommandSwerveDrivetrain drivetrain){
       return new CenterLimelight(Units.Inches.of(10),Units.Inches.of(6.5), List.of(9, 22), drivetrain);
     }
 
-    public static CenterLimelight CenterLimelightB1Reverse(Drivetrain drivetrain) {
+    public static CenterLimelight CenterLimelightB1Reverse(CommandSwerveDrivetrain drivetrain) {
       return new CenterLimelight(Units.Inches.of(10),Units.Inches.of(-15), Units.Radians.of(Math.PI), List.of(2, 12), drivetrain);
     }
 
-    public static CenterLimelight CenterLimelightB2Reverse(Drivetrain drivetrain) {
+    public static CenterLimelight CenterLimelightB2Reverse(CommandSwerveDrivetrain drivetrain) {
       return new CenterLimelight(Units.Inches.of(10),Units.Inches.of(-8), Units.Radians.of(Math.PI), List.of(2, 12), drivetrain);
     }
 
-  public CenterLimelight(Distance offsetX, Distance offsetY, final List<Integer> tagsToCheck, Drivetrain drivetrain) {
+  public CenterLimelight(Distance offsetX, Distance offsetY, final List<Integer> tagsToCheck, CommandSwerveDrivetrain drivetrain) {
     this(offsetX, offsetY, Units.Radians.of(0), tagsToCheck, drivetrain);
     // this.addRequirements(Robot.cont.drivetrain);
     // this.offsetX = offsetX.plus(halfRobotWidth);
@@ -106,7 +107,7 @@ public class CenterLimelight extends Command {
     // this.centerRotaionPid.enableContinuousInput(-Math.PI, Math.PI);
     // this.tagsToCheck = tagsToCheck;
   }
-  public CenterLimelight(Distance offsetX, Distance offsetY, Angle offsetTheta, final List<Integer> tagsToCheck, Drivetrain drivetrain) {
+  public CenterLimelight(Distance offsetX, Distance offsetY, Angle offsetTheta, final List<Integer> tagsToCheck, CommandSwerveDrivetrain drivetrain) {
     mDrivetrain = drivetrain;
     this.addRequirements(mDrivetrain);
     this.offsetX = offsetX.plus(Constants.Drivetrain.halfRobotWidthBumpersOn);
@@ -129,7 +130,7 @@ public class CenterLimelight extends Command {
     double smallst = Double.MAX_VALUE;
     tagPose = Constants.FIELD_LAYOUT.getTagPose(17).get();
     for(int tag : tagsToCheck) {
-      Pose2d distance = Constants.FIELD_LAYOUT.getTagPose(tag).get().toPose2d().relativeTo(mDrivetrain.getPoseEstimator().getEstimatedPosition());
+      Pose2d distance = Constants.FIELD_LAYOUT.getTagPose(tag).get().toPose2d().relativeTo(mDrivetrain.getCurrentPose2D());
       if(Math.hypot(distance.getX(), distance.getY()) < smallst){
           tagPose = Constants.FIELD_LAYOUT.getTagPose(tag).get();
           smallst = Math.hypot(distance.getX(), distance.getY());
@@ -140,7 +141,7 @@ public class CenterLimelight extends Command {
 
   @Override
   public void execute() {
-    Pose2d robotPose = mDrivetrain.getPoseEstimator().getEstimatedPosition();
+    Pose2d robotPose = mDrivetrain.getCurrentPose2D();
     robotPoseTagspace = robotPose.relativeTo(tagPose.toPose2d());
     tagPoseRobotspace = tagPose.toPose2d().relativeTo(robotPose);
     // xSpeed = tagPoseRobotspace.getX();
@@ -158,7 +159,7 @@ public class CenterLimelight extends Command {
     double ySpeedRotated = xSpeedPid * Math.sin(offsetTheta.in(Units.Radians)) + ySpeedPid * Math.cos(offsetTheta.in(Units.Radians));
     thetaPid  = centerRotaionPid.calculate(thetaSpeed,offsetTheta.in(Units.Radians));
     mDrivetrain
-        .control(
+        .controlRobotDrivetrainAutonomus(
               new ChassisSpeeds(
                 xSpeedRotated,
                 ySpeedRotated,
@@ -166,7 +167,7 @@ public class CenterLimelight extends Command {
               )
     );
 
-    var limelight = mDrivetrain.getLimelight("limelight");
+    var limelight = mDrivetrain.limelight;
     Logger.recordOutput("Drivetrain/Auto/XSpeed", xSpeed);
     Logger.recordOutput("Drivetrain/Auto/YSpeed",  ySpeed);
     Logger.recordOutput("Drivetrain/Auto/Center Is Finished", false);
@@ -178,7 +179,7 @@ public class CenterLimelight extends Command {
     Logger.recordOutput("Drivetrain/Auto/tagPoseRobotSpace", tagPoseRobotspace);
     Logger.recordOutput("Drivetrain/Auto/thetaSpeed", thetaSpeed);
     Logger.recordOutput("Drivetrain/Auto/thetaPid", thetaPid);
-    Logger.recordOutput("Drivetrain/Auto/estRotation", mDrivetrain.getPoseEstimator().getEstimatedPosition().getRotation());
+    Logger.recordOutput("Drivetrain/Auto/estRotation", mDrivetrain.getCurrentPose2D().getRotation());
     Logger.recordOutput("Drivetrain/Auto/offsetX", offsetX);
     Logger.recordOutput("Drivetrain/Auto/offsetTheta", offsetTheta.in(Units.Radians));
   }

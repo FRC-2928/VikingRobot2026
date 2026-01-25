@@ -13,10 +13,12 @@ import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.pathplanner.lib.auto.AutoBuilder;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveModule;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
+import choreo.auto.AutoFactory;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
@@ -72,6 +74,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization = new SwerveRequest.SysIdSwerveSteerGains();
     private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization = new SwerveRequest.SysIdSwerveRotation();
     private FollowPath.Builder pathBuilder;
+    private AutoFactory autoFactory;
     private final PIDController xController = new PIDController(5, 0.0, 0);
     private final PIDController headingController = new PIDController(5, 0.0, 0.2);
     public final GyroIO gyro;
@@ -82,6 +85,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private ChassisSpeeds currentChassisSpeeds = new ChassisSpeeds();
     private Pose2d currentPose2D = new Pose2d();
     public final Limelight limelight = new Limelight("limelight");
+
+    // Choreo PID controllers have to be created in our code
+    private final PIDController choreoXController = new PIDController(5, 0, 0);
+    private final PIDController choreoYController = new PIDController(5, 0, 0);
+    private final PIDController choreoHeadingController = new PIDController(5, 0, 0.2);
 
 
     /* SysId routine for characterizing translation. This is used to find PID gains for the drive motors. */
@@ -166,25 +174,15 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             startSimThread();
         }
         this.gyro =new GyroIOReal();
-        // Create a reusable builder with your robot's configuration
-		pathBuilder = new FollowPath.Builder(
-			this,                      // The drive subsystem to require
-            () -> this.currentPose2D,    // Supplier for current robot pose
-			() -> this.currentChassisSpeeds,    // Supplier for current speeds
-			this::controlRobotDrivetrainAutonomus,               // Consumer to drive the robot
-			xController,    // Translation PID
-			headingController,    // Rotation PID
-			//TODO: Figure this out
-			new PIDController(2.0, 0.0, 0.0)     // Cross-track PID
-		).withDefaultShouldFlip()                // Auto-flip for red alliance
-		.withPoseReset(this::resetPose);  // Reset odometry at path start
-
+        // B-Line path builder
+		pathBuilder = initializeFollowPathBuilder();
+        autoFactory = initializeChoreoAutoFactory();
+        headingController.enableContinuousInput(-Math.PI, Math.PI);
     }
+
     public FollowPath.Builder getPathBuilder() {
 		return pathBuilder;
 	}
-
-
 
 
     /**
@@ -210,18 +208,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             startSimThread();
         }
                 this.gyro =new GyroIOReal();
-        // Create a reusable builder with your robot's configuration
-		pathBuilder = new FollowPath.Builder(
-			this,                      // The drive subsystem to require
-            () -> this.currentPose2D,    // Supplier for current robot pose
-			() -> this.currentChassisSpeeds,    // Supplier for current speeds
-			this::controlRobotDrivetrainAutonomus,               // Consumer to drive the robot
-			xController,    // Translation PID
-			headingController,    // Rotation PID
-			//TODO: Figure this out
-			new PIDController(2.0, 0.0, 0.0)     // Cross-track PID
-		).withDefaultShouldFlip()                // Auto-flip for red alliance
-		.withPoseReset(this::resetPose);  // Reset odometry at path start
+        // B-Line path builder
+		pathBuilder = initializeFollowPathBuilder();
+        autoFactory = initializeChoreoAutoFactory();
+        headingController.enableContinuousInput(-Math.PI, Math.PI);
     }
 
     /**
@@ -256,8 +246,15 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         }
 
         this.gyro =new GyroIOReal();
-        // Create a reusable builder with your robot's configuration
-		pathBuilder = new FollowPath.Builder(
+        // B-Line path builder
+		pathBuilder = initializeFollowPathBuilder();
+        autoFactory = initializeChoreoAutoFactory();
+        headingController.enableContinuousInput(-Math.PI, Math.PI);
+    }
+
+    // Create a reusable builder with your robot's configuration
+    private FollowPath.Builder initializeFollowPathBuilder() {
+        return new FollowPath.Builder(
 			this,                      // The drive subsystem to require
             () -> this.currentPose2D,    // Supplier for current robot pose
 			() -> this.currentChassisSpeeds,    // Supplier for current speeds
@@ -268,6 +265,16 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 			new PIDController(2.0, 0.0, 0.0)     // Cross-track PID
 		).withDefaultShouldFlip()                // Auto-flip for red alliance
 		.withPoseReset(this::resetPose);  // Reset odometry at path start
+    }
+
+    private AutoFactory initializeChoreoAutoFactory() {
+        return new AutoFactory(
+            this::getCurrentPose2D, 
+            this::resetPose, 
+            this::controlRobotDrivetrainAutonomus, 
+            true, 
+            this
+        );
     }
 
     /**
@@ -282,8 +289,14 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     public void controlRobotDrivetrainAutonomus(ChassisSpeeds chassisSpeeds){
         this.setControl(
-                applyRobotSpeeds.withSpeeds(chassisSpeeds) // Apply the given chassis speed to the drivetrain
-            );
+            applyRobotSpeeds.withSpeeds(chassisSpeeds) // Apply the given chassis speed to the drivetrain
+        );
+    }
+
+    public void halt() {
+        this.setControl(
+            applyRobotSpeeds.withSpeeds(new ChassisSpeeds()) // Apply the given chassis speed to the drivetrain
+        );
     }
 
     public void setCurrentChassisSpeeds(ChassisSpeeds newChassisSpeeds)
@@ -293,6 +306,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     public void setCurrentPose2D(Pose2d newPose2D){
         this.currentPose2D = newPose2D;
+    }
+
+    public Pose2d getCurrentPose2D() {
+        return this.currentPose2D;
     }
 
     /**
@@ -356,14 +373,17 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 				this.setVisionMeasurementStdDevs(VecBuilder.fill(.7, .7, 9999999));
 				this.addVisionMeasurement(mt2.pose, mt2.timestampSeconds);
 			}
-		} else {
-            System.out.println("no ll pose why");
-        }
+		}
 
         this.gyro.updateInputs(this.gyroInputs);
-            
-
     }
+
+    public void disabledPeriodic() {
+		PoseEstimate mt1 = this.limelight.getPoseMegatag1();
+		if(this.limelight.hasValidTargets() && mt1 != null) {
+            this.resetRotation(mt1.pose.getRotation());
+		}
+	}
 
     private void startSimThread() {
         m_lastSimTime = Utils.getCurrentTimeSeconds();
