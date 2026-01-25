@@ -2,8 +2,8 @@
   "path_elements": [
     {
       "type": "translation",
-      "x_meters": 1.9891393188854494,
-      "y_meters": 2.0543034055727567,
+      "x_meters": 2.0,
+      "y_meters": 2.0,
       "intermediate_handoff_radius_meters": 0.2
     },
     {
@@ -24,5 +24,14 @@
       "y_meters": 2.0,
       "intermediate_handoff_radius_meters": 0.2
     }
-  ]
+  ],
+  "constraints": {
+    "max_velocity_meters_per_sec": [
+      {
+        "value": 0.0,
+        "start_ordinal": 0,
+        "end_ordinal": 0
+      }
+    ]
+  }
 }

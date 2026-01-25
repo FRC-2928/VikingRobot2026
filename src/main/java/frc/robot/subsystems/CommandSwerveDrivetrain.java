@@ -46,7 +46,7 @@ import frc.robot.Tuning;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.lib.BLine.FollowPath;
 import frc.robot.vision.Limelight;
-import frc.robot.vision.LimelightHelpers.PoseEstimate;
+import frc.robot.LimelightHelpers.PoseEstimate;
 
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements
@@ -81,7 +81,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
     private ChassisSpeeds currentChassisSpeeds = new ChassisSpeeds();
     private Pose2d currentPose2D = new Pose2d();
-    public final Limelight limelight = new Limelight("limelight-reverse");
+    public final Limelight limelight = new Limelight("limelight");
 
 
     /* SysId routine for characterizing translation. This is used to find PID gains for the drive motors. */
@@ -338,25 +338,27 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         }
 
         PoseEstimate mt2 = this.limelight.getPoseMegatag2();
-		if(mt2 != null) {
+		if (mt2 != null) {
 			Logger.recordOutput("Drivetrain/poseMegatag", mt2.pose);
-			boolean doRejectUpdate = false;
+			boolean rejectUpdate = false;
 
 			// if our angular velocity is greater than 720 degrees per second, ignore vision updates
-			if(Math.abs(this.gyroInputs.yawVelocityRadPerSec.in(Units.DegreesPerSecond)) > 720) {
-				doRejectUpdate = true;
+			if (Math.abs(this.gyroInputs.yawVelocityRadPerSec.in(Units.DegreesPerSecond)) > 720) {
+				rejectUpdate = true;
 			}
 
-			if(mt2.tagCount == 0) {
-				doRejectUpdate = true;
+			if (mt2.tagCount == 0) {
+				rejectUpdate = true;
 			}
 
-			Logger.recordOutput("Drivetrain/doRejectUpdate", doRejectUpdate);
-			if(!doRejectUpdate) {
+			Logger.recordOutput("Drivetrain/RejectUpdate", rejectUpdate);
+			if (!rejectUpdate) {
 				this.setVisionMeasurementStdDevs(VecBuilder.fill(.7, .7, 9999999));
 				this.addVisionMeasurement(mt2.pose, mt2.timestampSeconds);
 			}
-		}
+		} else {
+            System.out.println("no ll pose why");
+        }
 
         this.gyro.updateInputs(this.gyroInputs);
             

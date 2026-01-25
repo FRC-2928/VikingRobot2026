@@ -9,9 +9,10 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
-import frc.robot.vision.LimelightHelpers.LimelightResults;
-import frc.robot.vision.LimelightHelpers.PoseEstimate;
-import frc.robot.vision.LimelightHelpers.RawFiducial;
+import frc.robot.LimelightHelpers;
+import frc.robot.LimelightHelpers.LimelightResults;
+import frc.robot.LimelightHelpers.PoseEstimate;
+import frc.robot.LimelightHelpers.RawFiducial;
 
 public class Limelight {
 	public final NetworkTable nt;
