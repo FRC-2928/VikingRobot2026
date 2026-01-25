@@ -220,8 +220,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 			headingController,    // Rotation PID
 			//TODO: Figure this out
 			new PIDController(2.0, 0.0, 0.0)     // Cross-track PID
-		).withDefaultShouldFlip();                // Auto-flip for red alliance
-		//.withPoseReset(this::reset);  // Reset odometry at path start
+		).withDefaultShouldFlip()                // Auto-flip for red alliance
+		.withPoseReset(this::resetPose);  // Reset odometry at path start
     }
 
     /**
@@ -266,8 +266,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 			headingController,    // Rotation PID
 			//TODO: Figure this out
 			new PIDController(2.0, 0.0, 0.0)     // Cross-track PID
-		).withDefaultShouldFlip();                // Auto-flip for red alliance
-		//.withPoseReset(this::reset);  // Reset odometry at path start
+		).withDefaultShouldFlip()                // Auto-flip for red alliance
+		.withPoseReset(this::resetPose);  // Reset odometry at path start
     }
 
     /**
@@ -282,7 +282,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     public void controlRobotDrivetrainAutonomus(ChassisSpeeds chassisSpeeds){
         this.setControl(
-                applyRobotSpeeds.withSpeeds(chassisSpeeds) // Apply the given chasis speed to the drivetrain
+                applyRobotSpeeds.withSpeeds(chassisSpeeds) // Apply the given chassis speed to the drivetrain
             );
     }
 
@@ -363,13 +363,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     }
 
-    // public void reset(final Pose2d newPose, SwerveModulePosition[] modulePositions) {
-	// 	this.resetPosition(new Rotation2d(this.gyroInputs.yawPosition), modulePositions, newPose);
-	// }
-
-    // public void updateEstimator(SwerveModulePosition[] modulePositions) {
-    //     mEstimator.update(new Rotation2d(this.gyroInputs.yawPosition), modulePositions);
-    // }
     private void startSimThread() {
         m_lastSimTime = Utils.getCurrentTimeSeconds();
 
