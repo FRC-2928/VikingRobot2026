@@ -10,6 +10,7 @@ import frc.robot.Constants.Mode;
 import frc.robot.commands.drivetrain.LockWheels;
 import frc.robot.commands.drivetrain.RunIntake;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.Intake;
 
 public class DriverOI extends BaseOI {
     public DriverOI(final CommandXboxController controller) {
@@ -27,11 +28,7 @@ public class DriverOI extends BaseOI {
         }
         this.manualRotation = this.controller.rightStick();
 
-        this.ceneterReefLeft = this.controller.leftBumper();
-        this.ceneterReefRight = this.controller.rightBumper();
         this.intake = this.controller.b();
-
-        this.ferry = this.controller.rightBumper();
 
         this.resetFOD = this.controller.y();
 
@@ -49,8 +46,6 @@ public class DriverOI extends BaseOI {
     public final Supplier<Double> driveFORY;
     public final Trigger manualRotation;
 
-    public final Trigger ceneterReefLeft;
-    public final Trigger ceneterReefRight;
     public final Trigger intake;
 
     public final Trigger lockWheels;
@@ -60,16 +55,14 @@ public class DriverOI extends BaseOI {
     public final List<Integer> proccesorTags = List.of(3, 16);
     public final List<Integer> humanStationTags = List.of(1, 2, 12, 13);
     public final List<Integer> bargeTags = List.of(4, 5, 14, 15);
-    public final Trigger ferry;
     public final Trigger resetAngle;
 
-    public void configureControls() {
+    public void configureControls(Intake intake) {
+
         this.lockWheels.whileTrue(new LockWheels(mDrivetrain, this));
-        // this.resetFOD.onTrue(new InstantCommand(mDrivetrain::resetAngle));
-        this.intake.whileTrue(new RunIntake());
+        // this.resetFOD.onTrue(new InstantCommand(Robot.cont.drivetrain::resetAngle));
+        this.intake.whileTrue(new RunIntake(intake));
         // this.resetAngle.whileTrue(new RunCommand(Robot.cont.drivetrain::seedLimelightImu));
         // this.resetAngle.whileFalse(new RunCommand(Robot.cont.drivetrain::setImuMode2));
-        // this.ceneterReefLeft.whileTrue(CenterLimelight.CenterLimelightLeft());
-        // this.ceneterReefRight.whileTrue(CenterLimelight.CenterLimelightRightRotated());
     }
 }

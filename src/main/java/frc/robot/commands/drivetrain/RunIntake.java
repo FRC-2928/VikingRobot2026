@@ -6,7 +6,8 @@ package frc.robot.commands.drivetrain;
 
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.units.Units;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.Intake;
 
@@ -15,8 +16,8 @@ public class RunIntake extends Command {
     private Intake intake;
     // public double speed;
 
-    public RunIntake() {
-        intake = new Intake();
+    public RunIntake(Intake intake) {
+        this.intake = intake;
         this.addRequirements(intake);
         // this.speed = Tuning.intakeSpeed.get();
     }
@@ -28,15 +29,16 @@ public class RunIntake extends Command {
     // Called every time the scheduler runs while the command is scheduled.
     @Override
     public void execute() {
-        double speed = 0;
+        // double speed = Tuning.intakeSpeed.get();
+        AngularVelocity speed = Units.RotationsPerSecond.of(10);
         Logger.recordOutput("Intake/Speed", speed);
-        intake.runIntake(MathUtil.clamp(speed, -1, 1));
+        intake.intakeIO.setSpeed(speed);
     }
 
     // Called once the command ends or is interrupted.
     @Override
     public void end(boolean interrupted) {
-        intake.runIntake(0);
+        intake.intakeIO.setSpeed(Units.RotationsPerSecond.of(0));
     }
 
     // Returns true when the command should end.
