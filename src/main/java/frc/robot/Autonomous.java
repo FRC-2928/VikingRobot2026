@@ -22,17 +22,35 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.*;
 import frc.robot.commands.drivetrain.CenterLimelight;
 import frc.robot.commands.drivetrain.VoltageRampCommand;
+import frc.robot.lib.BLine.Path;
+import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.Drivetrain;
 
 public final class Autonomous {
-	public static SendableChooser<Command> createAutonomousChooser() {
+	public static SendableChooser<Command> createAutonomousChooser(AutoFactory factory, CommandSwerveDrivetrain drivetrain) {
 		final SendableChooser<Command> chooser = new SendableChooser<>();
-		AutoFactory autoFactory = Robot.cont.drivetrain.autoFactory;
+		AutoFactory autoFactory = factory;
 
+		// Set global constraints before creating any paths
+		Path.setDefaultGlobalConstraints(new Path.DefaultGlobalConstraints(
+			Constants.Drivetrain.maxVelocity.in(Units.MetersPerSecond),    // maxVelocityMetersPerSec
+			//TODO: Find acutal values
+			12.0,   // maxAccelerationMetersPerSec2
+			Constants.Drivetrain.maxAngularVelocity.in(Units.DegreesPerSecond),    // maxVelocityDegPerSec
+			860,    // maxAccelerationDegPerSec2
+			0.03,   // endTranslationToleranceMeters
+			2.0,    // endRotationToleranceDeg
+			0.2     // intermediateHandoffRadiusMeters
+		));
+
+		chooser
+			.addOption("[Bline] Forward Back", 
+			Commands.sequence(drivetrain.getPathBuilder().build(new Path("forwardBack"))));
 		chooser
 			.addOption(
 				"[Test] Forward Back",
 				new SequentialCommandGroup(
-					Autonomous.setInitialPose("forwardBack"),
+					Autonomous.setInitialPose("forwardBack", drivetrain),
 					Autonomous.path("forwardBack")
 				)
 			);
@@ -40,51 +58,55 @@ public final class Autonomous {
 			.addOption(
 				"[Test] Forward Back Choreo",
 				new SequentialCommandGroup(
-					Autonomous.setInitialPose("forwardBack"),
+					Autonomous.setInitialPose("forwardBack", drivetrain),
 					autoFactory.trajectoryCmd("forwardBack")
 				)
 			);
 
 		chooser.addOption("Center On Limelight", 
-			new CenterLimelight()
+			new CenterLimelight(drivetrain)
 		);
 		
-		chooser.addOption("[testing] voltage ramp", new VoltageRampCommand());
+		chooser.addOption("[testing] voltage ramp", new VoltageRampCommand(null, drivetrain));
 		return chooser;
 	}
-
-	public static AutoChooser getChoreoAutoChooser() {
+	
+	public static Command bLineForwardBack(CommandSwerveDrivetrain drivetrain){
+		return Commands.sequence(drivetrain.getPathBuilder().build(new Path("forwardBack")));
+	}
+	public static AutoChooser getChoreoAutoChooser(AutoFactory factory, CommandSwerveDrivetrain drivetrain) {
 		final AutoChooser choreoChooser = new AutoChooser();
-		AutoFactory autoFactory = Robot.cont.drivetrain.autoFactory;
+		AutoFactory autoFactory = factory;
 
 		choreoChooser.addCmd("SimpleFromRight", () -> Commands.sequence(
 			// autoFactory.resetOdometry("SimpleFromRight"),
 			autoFactory.trajectoryCmd("StartToF"),
-			Commands.deadline(new WaitCommand(2), CenterLimelight.CenterLimelightF()),
+			Commands.deadline(new WaitCommand(2), CenterLimelight.CenterLimelightF(drivetrain)),
 			autoFactory.trajectoryCmd("FToB2Reverse"),
-			Commands.deadline(new WaitCommand(2), CenterLimelight.CenterLimelightB2Reverse()),
+			Commands.deadline(new WaitCommand(2), CenterLimelight.CenterLimelightB2Reverse(drivetrain)),
 			autoFactory.trajectoryCmd("B1ReverseToC"),
-			Commands.deadline(new WaitCommand(2), CenterLimelight.CenterLimelightC()),
+			Commands.deadline(new WaitCommand(2), CenterLimelight.CenterLimelightC(drivetrain)),
 			autoFactory.trajectoryCmd("CToB1Reverse"),
-			Commands.deadline(new WaitCommand(2), CenterLimelight.CenterLimelightB2Reverse()),
+			Commands.deadline(new WaitCommand(2), CenterLimelight.CenterLimelightB2Reverse(drivetrain)),
 			autoFactory.trajectoryCmd("B1ReverseToD"),
-			Commands.deadline(new WaitCommand(2), CenterLimelight.CenterLimelightD())
+			Commands.deadline(new WaitCommand(2), CenterLimelight.CenterLimelightD(drivetrain))
 			// Robot.cont.drivetrain.haltCommand()
 		));
+
+
 
 		choreoChooser.addCmd("SimpleScore", () -> Commands.sequence(autoFactory.trajectoryCmd("SimpleScore")));
 
 		return choreoChooser;
 	}
 
-	public static Command setInitialPose(final String name) {
+	public static Command setInitialPose(final String name, CommandSwerveDrivetrain drivetrain) {
 		final Optional<Trajectory<SwerveSample>> traj = Choreo.loadTrajectory(name);
 		// try {
 			final Pose2d initial = traj.get().getPoses()[0];
 
 			return Commands.runOnce(() -> {
-				Robot.cont.drivetrain.reset(initial);
-				
+				drivetrain.resetPose(initial);
 
 				Logger.recordOutput("Drivetrain/Auto/x0", initial.getX());
 				Logger.recordOutput("Drivetrain/Auto/y0", initial.getY());

@@ -1,52 +1,51 @@
 package frc.robot;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
+
+import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 import edu.wpi.first.units.Units;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.LinearVelocity;
+
+import edu.wpi.first.wpilibj.Filesystem;
 
 public final class Tuning {
 	private Tuning() { throw new IllegalCallerException("Cannot instantiate `Tuning`"); }
 
-	public static final LoggedNetworkNumber intakeSpeed = new LoggedNetworkNumber
-		("Tuning/SpeedIntakePercent",
-		.8);
-
 	public static final LoggedNetworkNumber flywheelVelocity = new LoggedNetworkNumber(
 		"Tuning/FlywheelSpeed",
-		Constants.Shooter.flywheels.speakerVelocity.in(Units.RotationsPerSecond)
-	);
-	public static final LoggedNetworkNumber flywheelVelocityThreshold = new LoggedNetworkNumber(
-		"Tuning/FlywheelSpeedThreshold",
-		Constants.Shooter.flywheels.speakerVelocityThreshold.in(Units.RotationsPerSecond)
+		0
 	);
 
-	public static final LoggedNetworkNumber ampAngle = new LoggedNetworkNumber(
-		"Tuning/AmpAngle",
-		Constants.Shooter.shootAmp.in(Units.Degrees)
-	);
-	public static final LoggedNetworkNumber ampPower = new LoggedNetworkNumber(
-		"Tuning/AmpPower",
-		Constants.Shooter.flywheels.ampPower
-	);
-	public static final LoggedNetworkNumber drivetrainP = new LoggedNetworkNumber(
-		"Tuning/Drivetrain P",
-		0.15
-	);
-	public static final LoggedNetworkNumber shootSpeakerPivotThreshold = new LoggedNetworkNumber(
-		"Tuning/ShootSpeakerPivotThreshold",
-		1.25
-	);
-	public static final LoggedNetworkNumber shootSpeakerExponent = new LoggedNetworkNumber(
-		"Tuning/ShootSpeakerExponent",
-		1
+	public static final LoggedNetworkNumber hoodAngle = new LoggedNetworkNumber(
+		"Tuning/HoodAngle",
+		Constants.Shooter.hoodAngle.in(Units.Degrees)
 	);
 
-	public static final LoggedNetworkNumber ferryAngle = new LoggedNetworkNumber(
-		"Tuning/FerryAngle",
-		Constants.Shooter.shootFerry.in(Units.Degrees)
+	public static final LoggedNetworkNumber releaseVelocity = new LoggedNetworkNumber(
+		"Tuning/releaseVelocity",
+		Constants.Shooter.releaseVelocity.in(Units.InchesPerSecond)
 	);
-	public static final LoggedNetworkNumber subAngle = new LoggedNetworkNumber(
-		"Tuning/SubAngle",
-		Constants.Shooter.shootSub.in(Units.Degrees)
+
+	public static final LoggedNetworkBoolean publishData = new LoggedNetworkBoolean(
+		"Tuning/PublishData", 
+		false
 	);
+
+	public static void writeToCSV(double hAngle, double rVelocity, Distance distanceFromTarget) throws FileNotFoundException{
+		File csvOutputFile = new File(Filesystem.getOperatingDirectory().getAbsolutePath()+"/ShootingTuner.csv");
+		Boolean fileExists = csvOutputFile.exists();
+		try (PrintWriter pw = new PrintWriter(new FileOutputStream(csvOutputFile, true))) {
+			if(!fileExists) { 
+				pw.println("hoodAngle, releaseVelocity, distanceFromTarget");
+			}
+			pw.append(String.format(" %f, %f, %f \n", hAngle, rVelocity, distanceFromTarget.in(Units.Inches)));
+		}
+	}
 }

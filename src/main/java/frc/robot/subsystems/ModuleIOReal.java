@@ -26,6 +26,7 @@ import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.CANcoder;
+import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -37,14 +38,14 @@ import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.Constants;
 import frc.robot.Robot;
+import frc.robot.oi.OperatorOI;
 import frc.robot.subsystems.SwerveModule.Place;
-import frc.robot.utils.STalonFX;
 
 public class ModuleIOReal implements ModuleIO {
 	public final Place place;
 
-	public final STalonFX drive;
-	public final STalonFX azimuth;
+	public final TalonFX drive;
+	public final TalonFX azimuth;
 	public final CANcoder cancoder;
 
 	public final StatusSignal<Angle> drivePosition;
@@ -55,6 +56,8 @@ public class ModuleIOReal implements ModuleIO {
 
 	public final StatusSignal<Angle> angle;
 
+	private OperatorOI mOperatorOI;  // TODO: this needs to be instantiated before use
+
 	public final Angle absoluteEncoderOffset;
 
 	public ModuleIOReal(final SwerveModule module) {
@@ -62,26 +65,26 @@ public class ModuleIOReal implements ModuleIO {
 
 		switch(this.place) {
 		case FrontLeft:
-			this.azimuth = new STalonFX(Constants.CAN.CTRE.swerveFrontLeftAzimuth, Constants.CAN.CTRE.bus);
-			this.drive = new STalonFX(Constants.CAN.CTRE.swerveFrontLeftDrive, Constants.CAN.CTRE.bus);
+			this.azimuth = new TalonFX(Constants.CAN.CTRE.swerveFrontLeftAzimuth, Constants.CAN.CTRE.bus);
+			this.drive = new TalonFX(Constants.CAN.CTRE.swerveFrontLeftDrive, Constants.CAN.CTRE.bus);
 			this.cancoder = new CANcoder(Constants.CAN.CTRE.swerveFrontLeftAzimuth, Constants.CAN.CTRE.bus);
 			this.absoluteEncoderOffset = Constants.Drivetrain.swerveFrontLeftOffset;
 			break;
 		case FrontRight:
-			this.azimuth = new STalonFX(Constants.CAN.CTRE.swerveFrontRightAzimuth, Constants.CAN.CTRE.bus);
-			this.drive = new STalonFX(Constants.CAN.CTRE.swerveFrontRightDrive, Constants.CAN.CTRE.bus);
+			this.azimuth = new TalonFX(Constants.CAN.CTRE.swerveFrontRightAzimuth, Constants.CAN.CTRE.bus);
+			this.drive = new TalonFX(Constants.CAN.CTRE.swerveFrontRightDrive, Constants.CAN.CTRE.bus);
 			this.cancoder = new CANcoder(Constants.CAN.CTRE.swerveFrontRightAzimuth, Constants.CAN.CTRE.bus);
 			this.absoluteEncoderOffset = Constants.Drivetrain.swerveFrontRightOffset;
 			break;
 		case BackRight:
-			this.azimuth = new STalonFX(Constants.CAN.CTRE.swerveBackRightAzimuth, Constants.CAN.CTRE.bus);
-			this.drive = new STalonFX(Constants.CAN.CTRE.swerveBackRightDrive, Constants.CAN.CTRE.bus);
+			this.azimuth = new TalonFX(Constants.CAN.CTRE.swerveBackRightAzimuth, Constants.CAN.CTRE.bus);
+			this.drive = new TalonFX(Constants.CAN.CTRE.swerveBackRightDrive, Constants.CAN.CTRE.bus);
 			this.cancoder = new CANcoder(Constants.CAN.CTRE.swerveBackRightAzimuth, Constants.CAN.CTRE.bus);
 			this.absoluteEncoderOffset = Constants.Drivetrain.swerveBackRightOffset;
 			break;
 		case BackLeft:
-			this.azimuth = new STalonFX(Constants.CAN.CTRE.swerveBackLeftAzimuth, Constants.CAN.CTRE.bus);
-			this.drive = new STalonFX(Constants.CAN.CTRE.swerveBackLeftDrive, Constants.CAN.CTRE.bus);
+			this.azimuth = new TalonFX(Constants.CAN.CTRE.swerveBackLeftAzimuth, Constants.CAN.CTRE.bus);
+			this.drive = new TalonFX(Constants.CAN.CTRE.swerveBackLeftDrive, Constants.CAN.CTRE.bus);
 			this.cancoder = new CANcoder(Constants.CAN.CTRE.swerveBackLeftAzimuth, Constants.CAN.CTRE.bus);
 			this.absoluteEncoderOffset = Constants.Drivetrain.swerveBackLeftOffset;
 			break;
@@ -178,7 +181,7 @@ public class ModuleIOReal implements ModuleIO {
 	@Override
 	public void setDriveVoltage(final double volts) {
 		this.drive.setControl(new VoltageOut(volts).withEnableFOC(
-			Robot.cont.operatorOI.foc.getAsBoolean() || DriverStation.isAutonomous()));
+			mOperatorOI.foc.getAsBoolean() || DriverStation.isAutonomous()));
 	}
 
 	@Override
@@ -206,7 +209,7 @@ public class ModuleIOReal implements ModuleIO {
 
 		inputs.drivePosition = Units.Rotations
 			.of(this.drivePosition.getValueAsDouble())
-			.divide(Constants.Drivetrain.driveGearRatio);
+			.div(Constants.Drivetrain.driveGearRatio);
 		inputs.driveVelocity = Units.MetersPerSecond
 			.of(this.driveVelocity.getValueAsDouble());
 		inputs.driveCurrent = Units.Amps.of(this.driveCurrent.getValueAsDouble());

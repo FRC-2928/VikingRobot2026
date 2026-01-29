@@ -31,7 +31,7 @@ public class RunIntake extends Command {
     // Called every time the scheduler runs while the command is scheduled.
     @Override
     public void execute() {
-        double speed = Tuning.intakeSpeed.get();
+        double speed = 0; 
         Logger.recordOutput("Intake/Speed", speed);
         intake.runIntake(MathUtil.clamp(speed, -1, 1));
     }
