@@ -130,5 +130,6 @@ public class Telemetry {
         // Setting drivetrain current values to match the telemetry
         drivetrain.setCurrentChassisSpeeds(state.Speeds);
         drivetrain.setCurrentPose2D(state.Pose);
+        drivetrain.setCurrentModulePostions(state.ModulePositions);
     }
 }
