@@ -1,63 +1,121 @@
 {
-  "comment": "Sample Elastic Dashboard layout for Shooter Data Collection",
-  "widgets": [
+  "tabs": [
     {
-      "title": "Distance (m)",
-      "type": "Number",
-      "topic": "ShooterData/distance_m",
-      "properties": {
-        "min": 0,
-        "max": 10,
-        "step": 0.1
-      }
-    },
-    {
-      "title": "Velocity (RPS)",
-      "type": "Number",
-      "topic": "ShooterData/velocity_rps",
-      "properties": {
-        "min": 0,
-        "max": 100,
-        "step": 0.5
-      }
-    },
-    {
-      "title": "Hood Angle (deg)",
-      "type": "Number",
-      "topic": "ShooterData/hood_angle_deg",
-      "properties": {
-        "min": 0,
-        "max": 90,
-        "step": 0.5
-      }
-    },
-    {
-      "title": "Shot Successful?",
-      "type": "Toggle Button",
-      "topic": "ShooterData/successful"
-    },
-    {
-      "title": "Notes",
-      "type": "Text View",
-      "topic": "ShooterData/notes"
-    },
-    {
-      "title": "RECORD DATA",
-      "type": "Toggle Button",
-      "topic": "ShooterData/record_trigger",
-      "properties": {
-        "colorWhenTrue": "#00FF00",
-        "colorWhenFalse": "#FF0000"
-      }
-    },
-    {
-      "title": "Recording Status",
-      "type": "Boolean Box",
-      "topic": "ShooterData/recording_status",
-      "properties": {
-        "colorWhenTrue": "#00FF00",
-        "colorWhenFalse": "#808080"
-      }
+      "name": "Shooter Data Collection",
+      "containers": [
+        {
+          "title": "Shooter Data Input",
+          "type": "grid",
+          "layout": {
+            "numberOfColumns": 3,
+            "numberOfRows": 3
+          },
+          "children": [
+            {
+              "title": "Distance (m)",
+              "type": "Number Slider",
+              "properties": {
+                "Topic": "/ShooterData/distance_m",
+                "Min": 0.0,
+                "Max": 10.0,
+                "Block increment": 0.1
+              },
+              "layout": {
+                "column": 0,
+                "row": 0,
+                "width": 1,
+                "height": 1
+              }
+            },
+            {
+              "title": "Velocity (RPS)",
+              "type": "Number Slider",
+              "properties": {
+                "Topic": "/ShooterData/velocity_rps",
+                "Min": 0.0,
+                "Max": 100.0,
+                "Block increment": 0.5
+              },
+              "layout": {
+                "column": 1,
+                "row": 0,
+                "width": 1,
+                "height": 1
+              }
+            },
+            {
+              "title": "Hood Angle (deg)",
+              "type": "Number Slider",
+              "properties": {
+                "Topic": "/ShooterData/hood_angle_deg",
+                "Min": 0.0,
+                "Max": 90.0,
+                "Block increment": 0.5
+              },
+              "layout": {
+                "column": 2,
+                "row": 0,
+                "width": 1,
+                "height": 1
+              }
+            },
+            {
+              "title": "Shot Successful?",
+              "type": "Toggle Switch",
+              "properties": {
+                "Topic": "/ShooterData/successful"
+              },
+              "layout": {
+                "column": 0,
+                "row": 1,
+                "width": 1,
+                "height": 1
+              }
+            },
+            {
+              "title": "Notes",
+              "type": "Text View",
+              "properties": {
+                "Topic": "/ShooterData/notes"
+              },
+              "layout": {
+                "column": 1,
+                "row": 1,
+                "width": 2,
+                "height": 1
+              }
+            },
+            {
+              "title": "RECORD DATA",
+              "type": "Toggle Button",
+              "properties": {
+                "Topic": "/ShooterData/record_trigger"
+              },
+              "layout": {
+                "column": 0,
+                "row": 2,
+                "width": 2,
+                "height": 1
+              }
+            },
+            {
+              "title": "Recording",
+              "type": "Boolean Box",
+              "properties": {
+                "Topic": "/ShooterData/recording_status",
+                "True color": "#00FF00",
+                "False color": "#808080"
+              },
+              "layout": {
+                "column": 2,
+                "row": 2,
+                "width": 1,
+                "height": 1
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }

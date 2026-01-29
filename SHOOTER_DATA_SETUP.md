@@ -23,34 +23,44 @@ Just deploy your code as normal. The system is already integrated.
 
 ### Step 2: Set Up Elastic Dashboard
 
-Add these widgets to your Elastic dashboard (or import `elastic_dashboard_layout.json`):
+**Option A: Import the Layout (Easiest)**
 
-1. **Number Input** - Topic: `ShooterData/distance_m`
+1. Open Elastic Dashboard
+2. Go to File → Open Layout
+3. Select `elastic_dashboard_layout.json` from your project root
+4. The "Shooter Data Collection" tab will be created with all widgets configured
+
+**Option B: Manual Setup**
+
+Add these widgets manually to your Elastic dashboard:
+
+1. **Number Slider** - Topic: `/ShooterData/distance_m`
    - Label: "Distance (m)"
-   - Min: 0, Max: 10, Step: 0.1
+   - Min: 0, Max: 10, Block increment: 0.1
 
-2. **Number Input** - Topic: `ShooterData/velocity_rps`
+2. **Number Slider** - Topic: `/ShooterData/velocity_rps`
    - Label: "Velocity (RPS)"
-   - Min: 0, Max: 100, Step: 0.5
+   - Min: 0, Max: 100, Block increment: 0.5
 
-3. **Number Input** - Topic: `ShooterData/hood_angle_deg`
+3. **Number Slider** - Topic: `/ShooterData/hood_angle_deg`
    - Label: "Hood Angle (deg)"
-   - Min: 0, Max: 90, Step: 0.5
+   - Min: 0, Max: 90, Block increment: 0.5
 
-4. **Toggle Button** - Topic: `ShooterData/successful`
+4. **Toggle Switch** - Topic: `/ShooterData/successful`
    - Label: "Shot Successful?"
 
-5. **Text View** - Topic: `ShooterData/notes`
+5. **Text View** - Topic: `/ShooterData/notes`
    - Label: "Notes"
 
-6. **Toggle Button** - Topic: `ShooterData/record_trigger`
+6. **Toggle Button** - Topic: `/ShooterData/record_trigger`
    - Label: "RECORD DATA"
-   - Color when true: Green
-   - Color when false: Red
 
-7. **Boolean Box** - Topic: `ShooterData/recording_status`
-   - Label: "Recording Status"
-   - Shows green flash when data is saved
+7. **Boolean Box** - Topic: `/ShooterData/recording_status`
+   - Label: "Recording"
+   - True color: Green (#00FF00)
+   - False color: Gray (#808080)
+
+**Important:** Make sure to include the leading `/` in topic names!
 
 ### Step 3: Collect Data
 
@@ -145,8 +155,15 @@ controller.a().onTrue(
 
 **Dashboard not showing topics?**
 - Make sure robot code is deployed and running
-- Check NetworkTables connection
-- Restart Elastic dashboard
+- Topics are published on initialization - check console for "ShooterData NetworkTables topics published"
+- Check NetworkTables connection in Elastic (should show connected)
+- Restart Elastic dashboard if needed
+- Make sure topic names include the leading `/` (e.g., `/ShooterData/distance_m`)
+
+**Can't import the layout JSON?**
+- Make sure you're using Elastic Dashboard (not Shuffleboard or Glass)
+- Try File → Open Layout and select the JSON file
+- If import fails, add widgets manually using the topic names listed above
 
 **Data not saving?**
 - Check console output for error messages
