@@ -7,9 +7,9 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
-import frc.robot.subsystems.Drivetrain;
 import frc.robot.commands.drivetrain.LockWheels;
 import frc.robot.commands.drivetrain.RunIntake;
+import frc.robot.subsystems.CommandSwerveDrivetrain;
 
 public class DriverOI extends BaseOI {
 	public DriverOI(final CommandXboxController controller) {
@@ -40,7 +40,7 @@ public class DriverOI extends BaseOI {
 		this.lockWheels = this.controller.x();
 	}
 
-	private Drivetrain mDrivetrain;  // TODO: this needs to be instantiated before use
+	private CommandSwerveDrivetrain mDrivetrain;  // TODO: this needs to be instantiated before use
 
 	public final Supplier<Double> driveAxial;
 	public final Supplier<Double> driveLateral;

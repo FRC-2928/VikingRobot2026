@@ -4,13 +4,13 @@ import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Robot;
 import frc.robot.oi.DriverOI;
-import frc.robot.subsystems.Drivetrain;
+import frc.robot.subsystems.CommandSwerveDrivetrain;
 
 public class LockWheels extends Command {
-	private final Drivetrain mDrivetrain;
+	private final CommandSwerveDrivetrain mDrivetrain;
 	private final DriverOI mDriverOI;
 
-	public LockWheels(Drivetrain drivetrain, DriverOI driverOI) {
+	public LockWheels(CommandSwerveDrivetrain drivetrain, DriverOI driverOI) {
 		mDrivetrain = drivetrain;
 		mDriverOI = driverOI;
 		addRequirements(mDrivetrain);
@@ -18,7 +18,7 @@ public class LockWheels extends Command {
 
 	@Override
 	public void execute() {
-		mDrivetrain.control(Drivetrain.State.locked());
+		mDrivetrain.halt();
 		if(mDrivetrain != null) {
 			mDriverOI.getHID().setRumble(RumbleType.kBothRumble, 0.25);
 		}
@@ -26,7 +26,7 @@ public class LockWheels extends Command {
 
 	@Override
 	public void end(final boolean interrupted) {
-		mDrivetrain.control(Drivetrain.State.forward());
+		// mDrivetrain.control(Drivetrain.State.forward());
 		if(mDriverOI != null) {
 			mDriverOI.getHID().setRumble(RumbleType.kBothRumble, 0);
 		}

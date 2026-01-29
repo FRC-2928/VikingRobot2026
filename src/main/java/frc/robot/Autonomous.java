@@ -24,7 +24,6 @@ import frc.robot.commands.drivetrain.CenterLimelight;
 import frc.robot.commands.drivetrain.VoltageRampCommand;
 import frc.robot.lib.BLine.Path;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
-import frc.robot.subsystems.Drivetrain;
 
 public final class Autonomous {
 	public static SendableChooser<Command> createAutonomousChooser(AutoFactory factory, CommandSwerveDrivetrain drivetrain) {

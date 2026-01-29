@@ -11,14 +11,18 @@ import org.littletonrobotics.junction.Logger;
 import com.ctre.phoenix.Util;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.swerve.jni.SwerveJNI.ModulePosition;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveModule;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import choreo.auto.AutoFactory;
+import choreo.trajectory.SwerveSample;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
@@ -33,11 +37,13 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.Units;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
@@ -47,6 +53,7 @@ import frc.robot.Telemetry;
 import frc.robot.Tuning;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.lib.BLine.FollowPath;
+import frc.robot.oi.OperatorOI;
 import frc.robot.vision.Limelight;
 import frc.robot.LimelightHelpers.PoseEstimate;
 
@@ -78,7 +85,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private final PIDController xController = new PIDController(5, 0.0, 0);
     private final PIDController headingController = new PIDController(5, 0.0, 0.2);
     public final GyroIO gyro;
-    // private final SwerveModulePosition[] modulePositions = {new SwerveModulePosition()};
+    private SwerveModulePosition[] modulePositions = {new SwerveModulePosition(), new SwerveModulePosition(), new SwerveModulePosition(), new SwerveModulePosition()};
 	public final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
     private final SwerveRequest.ApplyRobotSpeeds applyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds()
         .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
@@ -312,6 +319,50 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return this.currentPose2D;
     }
 
+    public void setCurrentModulePostions(SwerveModulePosition[] positions){
+        this.modulePositions = positions;
+    }
+
+    public SwerveModulePosition[] getModulePositions() {
+        return modulePositions;
+    }
+
+    public Limelight getLimelight(String name) {
+		// TODO: eventually get the limelights by their names rather than individual getters...
+		return limelight;
+	}
+
+    public Command haltCommand() { return new RunCommand(() -> halt(), this).withTimeout(0.1); }
+
+    public void resetAngle() { 
+        this.resetAngle();
+    }
+    
+    @Override
+    public void resetPose(final Pose2d newPose) {
+		super.resetPose(newPose);
+		this.limelight.setIMUMode(1);
+		this.limelight.setRobotOrientation(newPose.getRotation().getMeasure());
+	}
+
+    public void setAngle(final Angle angle) {
+		super.resetPose(new Pose2d(getCurrentPose2D().getTranslation(), new Rotation2d(angle)));
+	}
+
+    public ChassisSpeeds getCurrentChassisSpeeds() {
+		return currentChassisSpeeds;
+	}
+
+    public void runCharacterization(final double volts) {
+		for(int i = 0; i < 4; i++) {
+			this.getModule(i).getSteerMotor().setControl(new PositionVoltage(Units.Degrees.of(0)));
+            this.getModule(i).getDriveMotor().setControl(new VoltageOut(volts).withEnableFOC(DriverStation.isAutonomous()));
+		}
+		Logger.recordOutput("Drivetrain/InputVoltage", volts);
+	}
+
+
+
     /**
      * Runs the SysId Quasistatic test in the given direction for the routine
      * specified by {@link #m_sysIdRoutineToApply}.
@@ -336,6 +387,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     @Override
     public void periodic() {
+        this.gyro.updateInputs(this.gyroInputs);
+        Logger.processInputs("Drivetrain/Gyro", this.gyroInputs);
+		Logger.recordOutput("Drivetrain/Botpose", limelight.getBluePose3d());
         /*
          * Periodically try to apply the operator perspective.
          * If we haven't applied the operator perspective before, then we should apply it regardless of DS state.
@@ -374,8 +428,14 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 				this.addVisionMeasurement(mt2.pose, mt2.timestampSeconds);
 			}
 		}
+		Logger.recordOutput("Drivetrain/Pose", this.getCurrentPose2D());
+		Logger.recordOutput("Drivetrain/Imumode", limelight.getImuMode());
+		PoseEstimate mt1 = this.limelight.getPoseMegatag1();
+		if(mt1 != null) {
+			Logger.recordOutput("Drivetrain/Mt1", mt1.pose);
+		}
 
-        this.gyro.updateInputs(this.gyroInputs);
+        
     }
 
     public void disabledPeriodic() {
@@ -383,6 +443,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 		if(this.limelight.hasValidTargets() && mt1 != null) {
             this.resetRotation(mt1.pose.getRotation());
 		}
+	}
+
+    public void setImuMode2() {
+		this.limelight.setIMUMode(2);
+		// System.out.println("SetImuMode2 yay Limelight !!!!!!!!!!!!");
 	}
 
     private void startSimThread() {
