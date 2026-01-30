@@ -2,9 +2,7 @@ package frc.robot;
 
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.AudioConfigs;
-import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.SlotConfigs;
-import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.pathplanner.lib.config.PIDConstants;
 
 import org.littletonrobotics.junction.Logger;
@@ -209,15 +207,15 @@ public class Constants {
         // public static final Angle swerveFrontRightOffset = Units.Rotations.of(-0.150146484375);
         public static final Angle swerveFrontRightOffset = Units.Rotations.of(-0.38671875);
         public static final Translation2d swerveFrontRightTranslation =
-                new Translation2d(Constants.Drivetrain.wheelBase, Constants.Drivetrain.trackWidth.negate());
+                new Translation2d(Constants.Drivetrain.wheelBase, Constants.Drivetrain.trackWidth.unaryMinus());
         // public static final Angle swerveBackLeftOffset = Units.Rotations.of(-0.136474609375);
         public static final Angle swerveBackLeftOffset = Units.Rotations.of(-0.19384765625);
         public static final Translation2d swerveBackLeftTranslation =
-                new Translation2d(Constants.Drivetrain.wheelBase.negate(), Constants.Drivetrain.trackWidth);
+                new Translation2d(Constants.Drivetrain.wheelBase.unaryMinus(), Constants.Drivetrain.trackWidth);
         // public static final Angle swerveBackRightOffset = Units.Rotations.of(-0.4404296875);
         public static final Angle swerveBackRightOffset = Units.Rotations.of(-0.404296875);
-        public static final Translation2d swerveBackRightTranslation =
-                new Translation2d(Constants.Drivetrain.wheelBase.negate(), Constants.Drivetrain.trackWidth.negate());
+        public static final Translation2d swerveBackRightTranslation = new Translation2d(
+                Constants.Drivetrain.wheelBase.unaryMinus(), Constants.Drivetrain.trackWidth.unaryMinus());
 
         public static final SwerveDriveKinematics kinematics = new SwerveDriveKinematics(
                 Constants.Drivetrain.swerveFrontLeftTranslation,
@@ -241,84 +239,17 @@ public class Constants {
                         / (2
                                 * Math.PI
                                 * Math.hypot(
-                                        Drivetrain.trackWidth.divide(2).in(Units.Meters),
-                                        Drivetrain.wheelBase.divide(2).in(Units.Meters))));
+                                        Drivetrain.trackWidth.div(2).in(Units.Meters),
+                                        Drivetrain.wheelBase.div(2).in(Units.Meters))));
     }
 
     public static class Shooter {
-        public static final class FlywheelConfiguration {
-            public static final FlywheelConfiguration yellowFairlane =
-                    new FlywheelConfiguration(Units.RotationsPerSecond.of(30), Units.RotationsPerSecond.of(27), 0.3);
-            public static final FlywheelConfiguration greenBane =
-                    new FlywheelConfiguration(Units.RotationsPerSecond.of(40), Units.RotationsPerSecond.of(37), 0.60);
-
-            public FlywheelConfiguration(
-                    final AngularVelocity flywheelVelocity,
-                    final AngularVelocity flywheelVelocityThreshold,
-                    final double ampPower) {
-                this.speakerVelocity = flywheelVelocity;
-                this.speakerVelocityThreshold = flywheelVelocityThreshold;
-                this.ampPower = ampPower;
-            }
-
-            public final AngularVelocity speakerVelocity;
-            public final AngularVelocity speakerVelocityThreshold;
-
-            public final double ampPower;
-        }
-
         private Shooter() {
             throw new IllegalCallerException("Cannot instantiate `Constants.Shooter`");
         }
 
-        public static final SlotConfigs pivotConfig = new SlotConfigs()
-                .withGravityType(GravityTypeValue.Arm_Cosine)
-                .withKS(0.025)
-                .withKG(0.028)
-                .withKP(10)
-                .withKD(0.05);
-
-        public static final double pivotCurrentLimit = 40;
-        public static final AngularVelocity pivotMaxVelocityShoot = Units.DegreesPerSecond.of(2);
-        public static final Slot0Configs flywheelGainsSlot0 = new Slot0Configs()
-                .withKP(0.05)
-                .withKI(0.0)
-                .withKD(0.0)
-                .withKS(0)
-                .withKV(0.015)
-                .withKA(0);
-
-        public static final PIDValues targetRotationController = new PIDValues(0.3, 0, 0, 0);
-
-        public static final FlywheelConfiguration flywheels = FlywheelConfiguration.greenBane;
-
-        // todo: fill angles
-
-        // a little above intake height to avoid hitting floor but to be ready
-        public static final Angle readyIntake = Units.Rotations.of(-0.1085);
-        // min angle before hitting floor
-        public static final Angle intakeGround = Units.Rotations.of(-0.1085);
-
-        public static final Angle readyDrive = Units.Degrees.zero();
-        public static final Angle readyShootFront = Units.Rotations.of(0.122);
-        public static final Angle readyShootRear = Units.Degrees.of(125);
-        // public static final Angle readyShootRearSub = Units.Degrees.of(105);
-        public static final Angle shootAmp = Units.Degrees.of(110);
-
-        public static final double ampBarServoAExtend = 1.0;
-        public static final double ampBarServoBExtend = 0.0;
-        public static final double ampBarServoARetract = 0.0;
-        public static final double ampBarServoBRetract = 1.0;
-
-        public static final Angle startingConfiguration = Units.Degrees.of(90);
-
-        public static final Angle shootSub = Units.Degrees.of(115);
-        public static final Angle shootFerry = Units.Degrees.of(130);
-
-        // max angle before exiting allowed extension range
-        public static final Angle max = Units.Rotations.of(0.39);
-
-        public static final double fireTimeout = 0.3;
+        public static final Angle hoodAngle = Units.Degrees.of(0);
+        public static final LinearVelocity releaseVelocity = Units.FeetPerSecond.of(0);
     }
 
     public static class Climber {

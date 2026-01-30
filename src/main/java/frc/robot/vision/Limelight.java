@@ -1,6 +1,7 @@
 package frc.robot.vision;
 
 import org.littletonrobotics.junction.AutoLogOutput;
+import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.networktables.*;
@@ -9,9 +10,10 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.RobotBase;
-import frc.robot.vision.LimelightHelpers.LimelightResults;
-import frc.robot.vision.LimelightHelpers.PoseEstimate;
-import frc.robot.vision.LimelightHelpers.RawFiducial;
+import frc.robot.LimelightHelpers;
+import frc.robot.LimelightHelpers.LimelightResults;
+import frc.robot.LimelightHelpers.PoseEstimate;
+import frc.robot.LimelightHelpers.RawFiducial;
 
 public class Limelight {
     public final NetworkTable nt;
@@ -104,12 +106,14 @@ public class Limelight {
         return LimelightHelpers.getLimelightNTDouble(this.limelightName, "imumode_set");
     }
 
+    public void setThrottleRate(int rate) {
+        Logger.recordOutput("Odometry/Limelight/ThrottleRate", rate);
+        LimelightHelpers.SetThrottle(this.limelightName, rate);
+    }
+
     // Robot transform in 2D field-space. Translation (X,Y) Rotation(Z)
-    @AutoLogOutput(key = "Odometry/Limelight")
+    @AutoLogOutput(key = "Odometry/Limelight/Pose")
     public Pose2d getPose2d() {
-        // Pose2d botPose = getBotPose2d().relativeTo(new Pose2d(-8.27, -4.105, new Rotation2d()));
-        // This should do the same thing as the commented out line above, without need for manual coordinate
-        // transformation
         if (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red) {
             return LimelightHelpers.getBotPose2d_wpiRed(this.limelightName);
         } else {

@@ -37,7 +37,7 @@ public abstract class BaseOI {
     }
 
     public CommandXboxController controller;
-    public final XboxController hid;
+    protected final XboxController hid;
 
     /**
      * C-Stop, the most useful command you'll ever have Press this magical button (start/left "window" button) to stop *all running commands*.
@@ -49,5 +49,9 @@ public abstract class BaseOI {
         this.hid = controller.getHID();
 
         this.cstop = this.controller.start();
+    }
+
+    public XboxController getHID() {
+        return this.hid;
     }
 }

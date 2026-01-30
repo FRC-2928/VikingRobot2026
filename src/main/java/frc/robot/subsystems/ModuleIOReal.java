@@ -36,7 +36,7 @@ import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.Constants;
-import frc.robot.Robot;
+import frc.robot.oi.OperatorOI;
 import frc.robot.subsystems.SwerveModule.Place;
 
 public class ModuleIOReal implements ModuleIO {
@@ -53,6 +53,8 @@ public class ModuleIOReal implements ModuleIO {
     public final StatusSignal<Current> azimuthCurrent;
 
     public final StatusSignal<Angle> angle;
+
+    private OperatorOI mOperatorOI; // TODO: this needs to be instantiated before use
 
     public final Angle absoluteEncoderOffset;
 
@@ -177,8 +179,8 @@ public class ModuleIOReal implements ModuleIO {
 
     @Override
     public void setDriveVoltage(final double volts) {
-        this.drive.setControl(new VoltageOut(volts)
-                .withEnableFOC(Robot.cont.operatorOI.foc.getAsBoolean() || DriverStation.isAutonomous()));
+        this.drive.setControl(
+                new VoltageOut(volts).withEnableFOC(mOperatorOI.foc.getAsBoolean() || DriverStation.isAutonomous()));
     }
 
     @Override
@@ -197,10 +199,9 @@ public class ModuleIOReal implements ModuleIO {
                 this.drivePosition, this.driveVelocity, this.driveCurrent, this.azimuthCurrent, this.angle);
 
         inputs.drivePosition =
-                Units.Rotations.of(this.drivePosition.getValueAsDouble()).divide(Constants.Drivetrain.driveGearRatio);
+                Units.Rotations.of(this.drivePosition.getValueAsDouble()).div(Constants.Drivetrain.driveGearRatio);
         inputs.driveVelocity = Units.MetersPerSecond.of(this.driveVelocity.getValueAsDouble());
         inputs.driveCurrent = Units.Amps.of(this.driveCurrent.getValueAsDouble());
-
         inputs.azimuthCurrent = Units.Amps.of(this.azimuthCurrent.getValueAsDouble());
 
         inputs.angle = Units.Rotations.of(this.angle.getValueAsDouble());

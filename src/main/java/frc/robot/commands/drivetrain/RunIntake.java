@@ -8,7 +8,6 @@ import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.Tuning;
 import frc.robot.subsystems.Intake;
 
 public class RunIntake extends Command {
@@ -29,7 +28,7 @@ public class RunIntake extends Command {
     // Called every time the scheduler runs while the command is scheduled.
     @Override
     public void execute() {
-        double speed = Tuning.intakeSpeed.get();
+        double speed = 0;
         Logger.recordOutput("Intake/Speed", speed);
         intake.runIntake(MathUtil.clamp(speed, -1, 1));
     }
