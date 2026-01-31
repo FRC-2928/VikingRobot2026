@@ -2,21 +2,18 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix.motorcontrol.TalonSRXControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-import com.ctre.phoenix.motorcontrol.can.TalonSRXConfiguration;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.subsystems.IntakeIO.IntakeIOInputs;
 
 public class Intake extends SubsystemBase {
     private TalonSRX motor;
+    public IntakeIO intakeIO;
+    public IntakeIOInputs intakeIOInputs = new IntakeIOInputs();
 
     public Intake() {
         motor = new TalonSRX(10); // creates a new TalonSRX with ID 0
-        TalonSRXConfiguration config = new TalonSRXConfiguration();
-        config.peakCurrentLimit = 40; // the peak current, in amps
-        config.peakCurrentDuration = 1500; // the time at the peak current before the limit triggers, in ms
-        config.continuousCurrentLimit = 30; // the current to maintain if the peak limit is triggered
-        motor.configAllSettings(config); // apply the config settings; this selects the quadrature encoder
-        motor.setInverted(true);
+        this.intakeIO = new IntakeIOReal();
     }
 
     public void runIntake(double speed) {
@@ -24,5 +21,7 @@ public class Intake extends SubsystemBase {
     }
 
     @Override
-    public void periodic() {}
+    public void periodic() {
+        this.intakeIO.updateInputs(this.intakeIOInputs);
+    }
 }

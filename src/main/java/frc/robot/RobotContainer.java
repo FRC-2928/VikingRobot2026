@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.commands.drivetrain.CenterLimelight;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.Intake;
 
 public class RobotContainer {
     // TODO organize Driver and Operator bindings
@@ -43,10 +44,14 @@ public class RobotContainer {
 
     private final CommandXboxController joystick = new CommandXboxController(0);
 
-    public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
-    private final Telemetry logger = new Telemetry(MaxSpeed, drivetrain);
+    public final CommandSwerveDrivetrain drivetrain;
+    public final Intake intake;
+    private final Telemetry logger;
 
     public RobotContainer() {
+        this.drivetrain = TunerConstants.createDrivetrain();
+        this.intake = new Intake();
+        this.logger = new Telemetry(MaxSpeed, drivetrain);
         this.autoChooser = Autonomous.getChoreoAutoChooser(drivetrain);
         autoChooser.select("SimpleFromRight");
         // TODO: implement drive mode chooser (point, turn modes). Joystick drive needs to consume the chosen mode
@@ -59,7 +64,7 @@ public class RobotContainer {
     }
 
     private void configureBindings() {
-        // this.driverOI.configureControls();
+        // this.driverOI.configureControls(intake);
         // this.operatorOI.configureControls();
 
         // Note that X is defined as forward according to WPILib convention,
