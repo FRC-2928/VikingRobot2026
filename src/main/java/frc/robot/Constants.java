@@ -133,6 +133,8 @@ public class Constants {
             public static final int shooterFlywheelB = 4;
 
             public static final int climber = 17;
+
+            public static final int hopper = 99;
         }
     }
 
@@ -250,6 +252,14 @@ public class Constants {
 
         public static final Angle hoodAngle = Units.Degrees.of(0);
         public static final LinearVelocity releaseVelocity = Units.FeetPerSecond.of(0);
+    }
+
+    public static class HopperFloor {
+        HopperFloor() {
+            throw new IllegalCallerException("Cannot instantiate `Constants.HopperFloor`");
+        }
+
+        public static final AngularVelocity intakeVelocity = Units.RotationsPerSecond.of(0);
     }
 
     public static class Climber {

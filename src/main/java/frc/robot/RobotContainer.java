@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+import frc.robot.Constants.HopperFloor;
 import frc.robot.commands.drivetrain.CenterLimelight;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
@@ -47,10 +48,12 @@ public class RobotContainer {
     public final CommandSwerveDrivetrain drivetrain;
     public final Intake intake;
     private final Telemetry logger;
+    public final HopperFloor hopperFloor;
 
     public RobotContainer() {
         this.drivetrain = TunerConstants.createDrivetrain();
         this.intake = new Intake();
+        this.hopperFloor = new HopperFloor();
         this.logger = new Telemetry(MaxSpeed, drivetrain);
         this.autoChooser = Autonomous.getChoreoAutoChooser(drivetrain);
         autoChooser.select("SimpleFromRight");
