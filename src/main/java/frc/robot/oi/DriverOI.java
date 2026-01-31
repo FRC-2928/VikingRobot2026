@@ -35,6 +35,10 @@ public class DriverOI extends BaseOI {
         this.resetAngle = this.controller.a();
 
         this.lockWheels = this.controller.x();
+
+        this.fixedShoot = this.controller.leftTrigger(); // This trigger is for driver intention to prepare the shot
+        this.haltShotTrigger = this.controller.rightTrigger(); // This is the override to stop shooting
+        this.doShoot = this.fixedShoot.and(haltShotTrigger.negate());  // This is the composite trigger for the robot to do the shoot command
     }
 
     private CommandSwerveDrivetrain mDrivetrain; // TODO: this needs to be instantiated before use
@@ -57,6 +61,11 @@ public class DriverOI extends BaseOI {
     public final List<Integer> bargeTags = List.of(4, 5, 14, 15);
     public final Trigger resetAngle;
 
+    public final Trigger fixedShoot;
+    public final Trigger doShoot;
+
+    public final Trigger haltShotTrigger;
+
     public void configureControls(Intake intake) {
 
         this.lockWheels.whileTrue(new LockWheels(mDrivetrain, this));
@@ -64,5 +73,6 @@ public class DriverOI extends BaseOI {
         this.intake.whileTrue(new RunIntake(intake));
         // this.resetAngle.whileTrue(new RunCommand(Robot.cont.drivetrain::seedLimelightImu));
         // this.resetAngle.whileFalse(new RunCommand(Robot.cont.drivetrain::setImuMode2));
+        this.doShoot.whileTrue(null); // TODO: add shooting command
     }
 }
