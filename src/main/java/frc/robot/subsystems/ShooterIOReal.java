@@ -4,7 +4,6 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -87,6 +86,32 @@ public class ShooterIOReal implements ShooterIO {
         // PID Values
         hoodConfig.Slot0 = Constants.Shooter.hoodGainsSlot0;
 
+
+        //
+        // Kicker
+        //
+        final TalonFXConfiguration kickerConfig = new TalonFXConfiguration(); // TODO: Check everything about this
+
+        kickerConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        kickerConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+
+        // Peak Output Amps
+        kickerConfig.CurrentLimits.StatorCurrentLimit = 80.0;
+        kickerConfig.CurrentLimits.StatorCurrentLimitEnable = true;
+        kickerConfig.TorqueCurrent.PeakForwardTorqueCurrent = 40;
+        kickerConfig.TorqueCurrent.PeakReverseTorqueCurrent = -40;
+
+        // Supply Current Limits
+        kickerConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+        kickerConfig.CurrentLimits.SupplyCurrentLimit = 60; // max current draw allowed
+        kickerConfig.CurrentLimits.SupplyCurrentLowerLimit =
+                35; // current allowed *after* the supply current limit is reached
+        kickerConfig.CurrentLimits.SupplyCurrentLowerTime = 0.1; // max time allowed to draw SupplyCurrentLimit
+
+        // PID Values
+        kickerConfig.Slot0 = Constants.Shooter.kickerGainsSlot0;
+
+
         this.velocityA = this.flywheelA.getRotorVelocity();
         this.velocityB = this.flywheelB.getRotorVelocity();
         this.hoodAngle = this.hood.getPosition();
@@ -99,7 +124,7 @@ public class ShooterIOReal implements ShooterIO {
 
     // Rotates the hood to change angle of fuel shooting
     public void rotateHood(Angle hoodAngle) {
-        this.hood.setControl(new PositionVoltage(hoodAngle));
+        //this.hood.setControl(new PositionVoltage(hoodAngle));
     }
 
     // Runs the flywheel in the shooter. 2 motors. Based on voltage

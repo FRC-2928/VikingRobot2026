@@ -272,6 +272,14 @@ public class Constants {
                 .withKS(0)
                 .withKV(0.0)
                 .withKA(0);
+
+        public static final Slot0Configs kickerGainsSlot0 = new Slot0Configs()
+                .withKP(0)
+                .withKI(0.0)
+                .withKD(0.0)
+                .withKS(0)
+                .withKV(0.0)
+                .withKA(0);
     }
 
     public static class HopperFloor {
