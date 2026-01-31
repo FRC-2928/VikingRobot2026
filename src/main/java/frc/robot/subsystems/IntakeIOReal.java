@@ -3,40 +3,47 @@ package frc.robot.subsystems;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
 
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.AngularVelocity;
+import frc.robot.Constants;
 
 public class IntakeIOReal implements IntakeIO {
-    public TalonFX intake;
-    public StatusSignal<AngularVelocity> statusSignal;
+    public TalonFX intakeMotor;
+    public StatusSignal<AngularVelocity> intakeAngularVelocity;
 
     public IntakeIOReal() {
-        this.intake = new TalonFX(16);
-        this.statusSignal = this.intake.getRotorVelocity();
+        this.intakeMotor = new TalonFX(16, Constants.CAN.CTRE.bus);
 
-        BaseStatusSignal.setUpdateFrequencyForAll(100, statusSignal);
-        TalonFXConfiguration config = new TalonFXConfiguration();
-        CurrentLimitsConfigs currentLimitsConfigs = new CurrentLimitsConfigs();
-        config.CurrentLimits = currentLimitsConfigs;
+        final TalonFXConfiguration config = new TalonFXConfiguration();
+        CurrentLimitsConfigs currentLimitsConfigs = new CurrentLimitsConfigs()
+                .withStatorCurrentLimit(Units.Amps.of(80))
+                .withSupplyCurrentLimit(Units.Amps.of(60))
+                .withStatorCurrentLimitEnable(true)
+                .withSupplyCurrentLimitEnable(true);
 
-        currentLimitsConfigs.StatorCurrentLimit = 40; // the peak current, in amps
-        intake.getConfigurator().apply(config); // apply the config settings; this selects the quadrature encode
-        // intake.setInverted(true);
+        MotorOutputConfigs outputConfigs = new MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive);
+        config.withMotorOutput(outputConfigs).withCurrentLimits(currentLimitsConfigs);
+        intakeMotor.getConfigurator().apply(config); // apply the config settings
+
+        this.intakeAngularVelocity = this.intakeMotor.getRotorVelocity();
+        BaseStatusSignal.setUpdateFrequencyForAll(Units.Hertz.of(100), intakeAngularVelocity);
     }
 
     @Override
-    public void setSpeed(AngularVelocity angularVelocity) {
+    public void setSpeed(double speed) {
         // Do a feed forward later
-        intake.setControl(new DutyCycleOut(angularVelocity.in(Units.RotationsPerSecond) / 30));
+        intakeMotor.setControl(new DutyCycleOut(speed));
     }
 
     @Override
-    public void updateInputs(IntakeIOInputs intakeInputs) {
-        BaseStatusSignal.refreshAll(statusSignal);
-        intakeInputs.angularVelocity = statusSignal.getValue();
+    public void updateInputs(IntakeInputs intakeInputs) {
+        BaseStatusSignal.refreshAll(intakeAngularVelocity);
+        intakeInputs.angularVelocity = intakeAngularVelocity.getValue();
     }
 }

@@ -8,11 +8,13 @@ import static edu.wpi.first.units.Units.*;
 
 import java.util.List;
 
+import org.opencv.core.Mat;
+
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import choreo.auto.AutoChooser;
-import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -20,13 +22,14 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.commands.drivetrain.CenterLimelight;
 import frc.robot.generated.TunerConstants;
+import frc.robot.oi.DriverOI;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.HopperFloor;
 import frc.robot.subsystems.Intake;
 
 public class RobotContainer {
     // TODO organize Driver and Operator bindings
-    // public final DriverOI driverOI = new DriverOI(new CommandXboxController(0));
+    public final DriverOI driverOI;
     // public final OperatorOI operatorOI = new OperatorOI(new CommandXboxController(1));
     // public final LoggedDashboardChooser<String> driveModeChooser;
     public final AutoChooser autoChooser;
@@ -57,6 +60,7 @@ public class RobotContainer {
         this.hopperFloor = new HopperFloor();
         this.logger = new Telemetry(MaxSpeed, drivetrain);
         this.autoChooser = Autonomous.getChoreoAutoChooser(drivetrain);
+        this.driverOI = new DriverOI(joystick, drivetrain);
         autoChooser.select("SimpleFromRight");
         // TODO: implement drive mode chooser (point, turn modes). Joystick drive needs to consume the chosen mode
         // this.driveModeChooser = new LoggedDashboardChooser<>("Drive Mode", JoystickDrive.createDriveModeChooser());
@@ -68,7 +72,7 @@ public class RobotContainer {
     }
 
     private void configureBindings() {
-        // this.driverOI.configureControls(intake);
+        this.driverOI.configureControls(intake);
         // this.operatorOI.configureControls();
 
         // Note that X is defined as forward according to WPILib convention,
@@ -76,9 +80,8 @@ public class RobotContainer {
         drivetrain.setDefaultCommand(
                 // Drivetrain will execute this command periodically
                 drivetrain.applyRequest(
-                        () -> drive.withVelocityX(
-                                        -joystick.getLeftY() * MaxSpeed) // Drive forward with negative Y (forward)
-                                .withVelocityY(-joystick.getLeftX() * MaxSpeed) // Drive left with negative X (left)
+                        () -> drive.withVelocityX(-MathUtil.applyDeadband(joystick.getLeftY(), 0.25) * MaxSpeed) // Drive forward with negative Y (forward)
+                                .withVelocityY(-MathUtil.applyDeadband(joystick.getLeftX(), 0.65) * MaxSpeed) // Drive left with negative X (left)
                                 .withRotationalRate(-joystick.getRightX()
                                         * MaxAngularRate) // Drive counterclockwise with negative X (left)
                         ));
@@ -90,9 +93,10 @@ public class RobotContainer {
                 .whileTrue(drivetrain.applyRequest(() -> idle).ignoringDisable(true));
 
         joystick.a().whileTrue(drivetrain.applyRequest(() -> brake));
-        joystick.b()
-                .whileTrue(drivetrain.applyRequest(
-                        () -> point.withTargetDirection(new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))));
+        // joystick.b()
+        //         .whileTrue(drivetrain.applyRequest(
+        //                 () -> point.withTargetDirection(new Rotation2d(-joystick.getLeftY(),
+        // -joystick.getLeftX()))));
         // For testing purposes. TODO install new version of WPILIB and use 2026 field apriltag map
         joystick.rightBumper()
                 .whileTrue(new CenterLimelight(Units.Meters.of(0.5), Units.Meters.of(0), List.of(1), drivetrain));

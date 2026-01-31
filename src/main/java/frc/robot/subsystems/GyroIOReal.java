@@ -25,21 +25,29 @@ import frc.robot.Constants;
 
 /** IO implementation for Pigeon2 */
 public class GyroIOReal implements GyroIO {
-    private final Pigeon2 pigeon = new Pigeon2(Constants.CAN.CTRE.pigeon, Constants.CAN.CTRE.bus);
-    private final StatusSignal<Angle> yaw = this.pigeon.getYaw();
-    private final StatusSignal<AngularVelocity> yawVelocity = this.pigeon.getAngularVelocityZWorld();
+    private final Pigeon2 pigeon;
+    private final StatusSignal<Angle> yaw;
+    private final StatusSignal<AngularVelocity> yawVelocity;
 
     public GyroIOReal() {
+        // instantiate the Pigeon2 object
+        pigeon = new Pigeon2(Constants.CAN.CTRE.pigeon, Constants.CAN.CTRE.bus);
+
+        // apply the default configs and reset the heading to 0
+        // TODO: determine if this is even necessary
         this.pigeon.getConfigurator().apply(new Pigeon2Configuration());
-        this.pigeon.getConfigurator().setYaw(0);
-        this.yaw.setUpdateFrequency(100);
-        this.yawVelocity.setUpdateFrequency(100);
-        this.pigeon.optimizeBusUtilization();
+        this.pigeon.reset();
+
+        yaw = pigeon.getYaw();
+        yawVelocity = pigeon.getAngularVelocityZWorld();
+        StatusSignal.setUpdateFrequencyForAll(Units.Hertz.of(100), yaw, yawVelocity);
     }
 
     @Override
     public void updateInputs(final GyroIOInputs inputs) {
-        inputs.connected = StatusCode.OK.equals(BaseStatusSignal.refreshAll(this.yaw, this.yawVelocity));
+        StatusCode refreshStatus = BaseStatusSignal.refreshAll(this.yaw, this.yawVelocity);
+        inputs.refreshStatus = refreshStatus;
+        inputs.connected = refreshStatus.equals(StatusCode.OK);
         inputs.yawPosition = Units.Degrees.of(this.yaw.getValueAsDouble());
         inputs.yawVelocityRadPerSec = Units.DegreesPerSecond.of(this.yawVelocity.getValueAsDouble());
     }

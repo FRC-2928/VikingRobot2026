@@ -22,6 +22,8 @@ public final class Tuning {
     public static final LoggedNetworkNumber hoodAngle =
             new LoggedNetworkNumber("Tuning/HoodAngle", Constants.Shooter.hoodAngle.in(Units.Degrees));
 
+    public static final LoggedNetworkNumber intakeSpeed = new LoggedNetworkNumber("Tuning/IntakeSpeed", 0.8);
+
     public static final LoggedNetworkNumber releaseVelocity = new LoggedNetworkNumber(
             "Tuning/releaseVelocity", Constants.Shooter.releaseVelocity.in(Units.InchesPerSecond));
 

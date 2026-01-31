@@ -13,11 +13,12 @@ import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Intake;
 
 public class DriverOI extends BaseOI {
-    public DriverOI(final CommandXboxController controller) {
+    public DriverOI(final CommandXboxController controller, CommandSwerveDrivetrain drivetrain) {
         super(controller);
 
         this.driveAxial = this.controller::getLeftY;
         this.driveLateral = this.controller::getLeftX;
+        this.mDrivetrain = drivetrain;
 
         if (Constants.mode == Mode.REAL) {
             this.driveFORX = this.controller::getRightX;
