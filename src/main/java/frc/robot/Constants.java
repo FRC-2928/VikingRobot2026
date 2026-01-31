@@ -4,6 +4,7 @@ import org.littletonrobotics.junction.Logger;
 
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.AudioConfigs;
+import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.SlotConfigs;
 import com.pathplanner.lib.config.PIDConstants;
 
@@ -216,8 +217,8 @@ public class Constants {
                 new Translation2d(Constants.Drivetrain.wheelBase.unaryMinus(), Constants.Drivetrain.trackWidth);
         // public static final Angle swerveBackRightOffset = Units.Rotations.of(-0.4404296875);
         public static final Angle swerveBackRightOffset = Units.Rotations.of(-0.404296875);
-        public static final Translation2d swerveBackRightTranslation =
-                new Translation2d(Constants.Drivetrain.wheelBase.unaryMinus(), Constants.Drivetrain.trackWidth.unaryMinus());
+        public static final Translation2d swerveBackRightTranslation = new Translation2d(
+                Constants.Drivetrain.wheelBase.unaryMinus(), Constants.Drivetrain.trackWidth.unaryMinus());
 
         public static final SwerveDriveKinematics kinematics = new SwerveDriveKinematics(
                 Constants.Drivetrain.swerveFrontLeftTranslation,
@@ -246,26 +247,6 @@ public class Constants {
     }
 
     public static class Shooter {
-        public static final class FlywheelConfiguration {
-            public static final FlywheelConfiguration yellowFairlane =
-                    new FlywheelConfiguration(Units.RotationsPerSecond.of(30), Units.RotationsPerSecond.of(27), 0.3);
-            public static final FlywheelConfiguration greenBane =
-                    new FlywheelConfiguration(Units.RotationsPerSecond.of(40), Units.RotationsPerSecond.of(37), 0.60);
-
-            public FlywheelConfiguration(
-                    final AngularVelocity flywheelVelocity,
-                    final AngularVelocity flywheelVelocityThreshold,
-                    final double ampPower) {
-                this.speakerVelocity = flywheelVelocity;
-                this.speakerVelocityThreshold = flywheelVelocityThreshold;
-                this.ampPower = ampPower;
-            }
-
-            public final AngularVelocity speakerVelocity;
-            public final AngularVelocity speakerVelocityThreshold;
-
-            public final double ampPower;
-        }
 
         private Shooter() {
             throw new IllegalCallerException("Cannot instantiate `Constants.Shooter`");
@@ -273,6 +254,24 @@ public class Constants {
 
         public static final Angle hoodAngle = Units.Degrees.of(0);
         public static final LinearVelocity releaseVelocity = Units.FeetPerSecond.of(0);
+
+        public static final double pivotCurrentLimit = 40;
+        public static final AngularVelocity pivotMaxVelocityShoot = Units.DegreesPerSecond.of(2);
+        public static final Slot0Configs flywheelGainsSlot0 = new Slot0Configs()
+                .withKP(0.0)
+                .withKI(0.0)
+                .withKD(0.0)
+                .withKS(0)
+                .withKV(0.0)
+                .withKA(0);
+
+        public static final Slot0Configs hoodGainsSlot0 = new Slot0Configs()
+                .withKP(0)
+                .withKI(0.0)
+                .withKD(0.0)
+                .withKS(0)
+                .withKV(0.0)
+                .withKA(0);
     }
 
     public static class HopperFloor {

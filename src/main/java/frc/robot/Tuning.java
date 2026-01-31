@@ -19,10 +19,17 @@ public final class Tuning {
 
     public static final LoggedNetworkNumber flywheelVelocity = new LoggedNetworkNumber("Tuning/FlywheelSpeed", 0);
 
-    public static final LoggedNetworkNumber hoodAngle =
-            new LoggedNetworkNumber("Tuning/HoodAngle", Constants.Shooter.hoodAngle.in(Units.Degrees));
+    public static final LoggedNetworkNumber hoodAngle = new LoggedNetworkNumber("Tuning/HoodAngleDegrees", 0.0);
+    public static final LoggedNetworkNumber flywheelSpeed = new LoggedNetworkNumber("Tuning/FlywheelSpeedRPS", 0.0);
+    public static final LoggedNetworkNumber kickerSpeed = new LoggedNetworkNumber("Tuning/KickerSpeed", 0.0);
 
     public static final LoggedNetworkNumber intakeSpeed = new LoggedNetworkNumber("Tuning/IntakeSpeed", 0.8);
+
+    public static final LoggedNetworkNumber drivetrainP = new LoggedNetworkNumber("Tuning/Drivetrain P", 0.15);
+    public static final LoggedNetworkNumber shootSpeakerPivotThreshold =
+            new LoggedNetworkNumber("Tuning/ShootSpeakerPivotThreshold", 1.25);
+    public static final LoggedNetworkNumber shootSpeakerExponent =
+            new LoggedNetworkNumber("Tuning/ShootSpeakerExponent", 1);
 
     public static final LoggedNetworkNumber releaseVelocity = new LoggedNetworkNumber(
             "Tuning/releaseVelocity", Constants.Shooter.releaseVelocity.in(Units.InchesPerSecond));
