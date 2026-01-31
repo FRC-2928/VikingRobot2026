@@ -1,13 +1,12 @@
 package frc.robot;
 
-import org.littletonrobotics.junction.Logger;
-
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.AudioConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.SlotConfigs;
-import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.pathplanner.lib.config.PIDConstants;
+
+import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
@@ -216,8 +215,8 @@ public class Constants {
                 new Translation2d(Constants.Drivetrain.wheelBase.unaryMinus(), Constants.Drivetrain.trackWidth);
         // public static final Angle swerveBackRightOffset = Units.Rotations.of(-0.4404296875);
         public static final Angle swerveBackRightOffset = Units.Rotations.of(-0.404296875);
-        public static final Translation2d swerveBackRightTranslation =
-                new Translation2d(Constants.Drivetrain.wheelBase.unaryMinus(), Constants.Drivetrain.trackWidth.unaryMinus());
+        public static final Translation2d swerveBackRightTranslation = new Translation2d(
+                Constants.Drivetrain.wheelBase.unaryMinus(), Constants.Drivetrain.trackWidth.unaryMinus());
 
         public static final SwerveDriveKinematics kinematics = new SwerveDriveKinematics(
                 Constants.Drivetrain.swerveFrontLeftTranslation,
@@ -246,51 +245,28 @@ public class Constants {
     }
 
     public static class Shooter {
-        public static final class FlywheelConfiguration {
-            public static final FlywheelConfiguration yellowFairlane =
-                    new FlywheelConfiguration(Units.RotationsPerSecond.of(30), Units.RotationsPerSecond.of(27), 0.3);
-            public static final FlywheelConfiguration greenBane =
-                    new FlywheelConfiguration(Units.RotationsPerSecond.of(40), Units.RotationsPerSecond.of(37), 0.60);
-
-            public FlywheelConfiguration(
-                    final AngularVelocity flywheelVelocity,
-                    final AngularVelocity flywheelVelocityThreshold,
-                    final double ampPower) {
-                this.speakerVelocity = flywheelVelocity;
-                this.speakerVelocityThreshold = flywheelVelocityThreshold;
-                this.ampPower = ampPower;
-            }
-
-            public final AngularVelocity speakerVelocity;
-            public final AngularVelocity speakerVelocityThreshold;
-
-            public final double ampPower;
-        }
 
         private Shooter() {
             throw new IllegalCallerException("Cannot instantiate `Constants.Shooter`");
         }
 
-        public static final SlotConfigs pivotConfig = new SlotConfigs()
-                .withGravityType(GravityTypeValue.Arm_Cosine)
-                .withKS(0.025)
-                .withKG(0.028)
-                .withKP(10)
-                .withKD(0.05);
-
         public static final double pivotCurrentLimit = 40;
         public static final AngularVelocity pivotMaxVelocityShoot = Units.DegreesPerSecond.of(2);
         public static final Slot0Configs flywheelGainsSlot0 = new Slot0Configs()
-                .withKP(0.05)
+                .withKP(0.0)
                 .withKI(0.0)
                 .withKD(0.0)
                 .withKS(0)
-                .withKV(0.015)
+                .withKV(0.0)
                 .withKA(0);
 
-        public static final PIDValues targetRotationController = new PIDValues(0.3, 0, 0, 0);
-
-        public static final FlywheelConfiguration flywheels = FlywheelConfiguration.greenBane;
+        public static final Slot0Configs hoodGainsSlot0 = new Slot0Configs()
+                .withKP(0)
+                .withKI(0.0)
+                .withKD(0.0)
+                .withKS(0)
+                .withKV(0.0)
+                .withKA(0);
 
         // todo: fill angles
 

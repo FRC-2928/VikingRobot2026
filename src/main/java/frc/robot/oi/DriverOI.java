@@ -10,7 +10,6 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
 import frc.robot.Robot;
-import frc.robot.commands.drivetrain.CenterLimelight;
 import frc.robot.commands.drivetrain.LockWheels;
 import frc.robot.commands.drivetrain.RunIntake;
 
@@ -30,8 +29,6 @@ public class DriverOI extends BaseOI {
         }
         this.manualRotation = this.controller.rightStick();
 
-        this.ceneterReefLeft = this.controller.leftBumper();
-        this.ceneterReefRight = this.controller.rightBumper();
         this.intake = this.controller.b();
 
         this.ferry = this.controller.rightBumper();
@@ -50,8 +47,6 @@ public class DriverOI extends BaseOI {
     public final Supplier<Double> driveFORY;
     public final Trigger manualRotation;
 
-    public final Trigger ceneterReefLeft;
-    public final Trigger ceneterReefRight;
     public final Trigger intake;
 
     public final Trigger lockWheels;
@@ -71,7 +66,5 @@ public class DriverOI extends BaseOI {
         this.intake.whileTrue(new RunIntake());
         this.resetAngle.whileTrue(new RunCommand(Robot.cont.drivetrain::seedLimelightImu));
         this.resetAngle.whileFalse(new RunCommand(Robot.cont.drivetrain::setImuMode2));
-        this.ceneterReefLeft.whileTrue(CenterLimelight.CenterLimelightLeft());
-        this.ceneterReefRight.whileTrue(CenterLimelight.CenterLimelightRightRotated());
     }
 }

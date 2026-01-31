@@ -27,7 +27,7 @@ public class RobotContainer {
         Robot.instance.container = this;
         Robot.cont = this;
 
-        Tuning.flywheelVelocity.get(); // load the class to put the tuning controls on the dashboard
+        Tuning.flywheelSpeed.get(); // load the class to put the tuning controls on the dashboard
         this.drivetrain = new Drivetrain();
 
         NamedCommands.registerCommand("ScoreL4", new RunCommand(() -> {}).withTimeout(2));
