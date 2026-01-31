@@ -8,8 +8,6 @@ import static edu.wpi.first.units.Units.*;
 
 import java.util.List;
 
-import org.opencv.core.Mat;
-
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
@@ -80,8 +78,10 @@ public class RobotContainer {
         drivetrain.setDefaultCommand(
                 // Drivetrain will execute this command periodically
                 drivetrain.applyRequest(
-                        () -> drive.withVelocityX(-MathUtil.applyDeadband(joystick.getLeftY(), 0.25) * MaxSpeed) // Drive forward with negative Y (forward)
-                                .withVelocityY(-MathUtil.applyDeadband(joystick.getLeftX(), 0.65) * MaxSpeed) // Drive left with negative X (left)
+                        () -> drive.withVelocityX(-MathUtil.applyDeadband(joystick.getLeftY(), 0.25)
+                                        * MaxSpeed) // Drive forward with negative Y (forward)
+                                .withVelocityY(-MathUtil.applyDeadband(joystick.getLeftX(), 0.65)
+                                        * MaxSpeed) // Drive left with negative X (left)
                                 .withRotationalRate(-joystick.getRightX()
                                         * MaxAngularRate) // Drive counterclockwise with negative X (left)
                         ));

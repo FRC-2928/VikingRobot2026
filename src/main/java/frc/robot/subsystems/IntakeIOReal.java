@@ -27,7 +27,8 @@ public class IntakeIOReal implements IntakeIO {
                 .withStatorCurrentLimitEnable(true)
                 .withSupplyCurrentLimitEnable(true);
 
-        MotorOutputConfigs outputConfigs = new MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive);
+        MotorOutputConfigs outputConfigs =
+                new MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive);
         config.withMotorOutput(outputConfigs).withCurrentLimits(currentLimitsConfigs);
         intakeMotor.getConfigurator().apply(config); // apply the config settings
 
