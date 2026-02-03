@@ -38,7 +38,8 @@ public class DriverOI extends BaseOI {
 
         this.fixedShoot = this.controller.leftTrigger(); // This trigger is for driver intention to prepare the shot
         this.haltShotTrigger = this.controller.rightTrigger(); // This is the override to stop shooting
-        this.doShoot = this.fixedShoot.and(haltShotTrigger.negate());  // This is the composite trigger for the robot to do the shoot command
+        this.doShoot = this.fixedShoot.and(
+                haltShotTrigger.negate()); // This is the composite trigger for the robot to do the shoot command
     }
 
     private CommandSwerveDrivetrain mDrivetrain; // TODO: this needs to be instantiated before use

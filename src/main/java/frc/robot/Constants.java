@@ -255,7 +255,7 @@ public class Constants {
     }
 
     public static class HopperFloor {
-        HopperFloor() {
+        private HopperFloor() {
             throw new IllegalCallerException("Cannot instantiate `Constants.HopperFloor`");
         }
 

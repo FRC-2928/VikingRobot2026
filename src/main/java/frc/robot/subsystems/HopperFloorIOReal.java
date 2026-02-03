@@ -17,7 +17,7 @@ public class HopperFloorIOReal implements HopperFloorIO {
     public StatusSignal<AngularVelocity> statusSignal;
 
     public HopperFloorIOReal() {
-        //TODO: change CAN ID
+        // TODO: change CAN ID
         this.hopper = new TalonFX(Constants.CAN.CTRE.hopper, Constants.CAN.CTRE.bus);
         this.statusSignal = this.hopper.getRotorVelocity();
 
