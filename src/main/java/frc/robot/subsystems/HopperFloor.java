@@ -13,7 +13,7 @@ public class HopperFloor extends SubsystemBase {
     public HopperFloor() {
         this.io = switch (Constants.mode) {
             case REAL -> new HopperFloorIOReal();
-            default -> throw new Error();};
+            default -> new HopperFloorIOReal();};
     }
 
     public Command runHopperCommand() {
