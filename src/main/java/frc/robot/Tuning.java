@@ -8,7 +8,6 @@ import java.io.PrintWriter;
 import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
-import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -28,7 +27,8 @@ public final class Tuning {
 
     public static final LoggedNetworkBoolean publishData = new LoggedNetworkBoolean("Tuning/PublishData", false);
 
-    public static final LoggedNetworkNumber hopperVelocity = new LoggedNetworkNumber("Tuning/IntakeVelocity", Constants.HopperFloor.intakeVelocity.in(Units.RotationsPerSecond));
+    public static final LoggedNetworkNumber hopperVelocity = new LoggedNetworkNumber(
+            "Tuning/IntakeVelocity", Constants.HopperFloorConstants.intakeVelocity.in(Units.RotationsPerSecond));
 
     public static void writeToCSV(double hAngle, double rVelocity, Distance distanceFromTarget)
             throws FileNotFoundException {

@@ -49,7 +49,7 @@ public class Robot extends LoggedRobot {
         try {
             if (Tuning.publishData.get()) {
                 // TODO PUT IN REAL VALUES!!!!
-                Tuning.writeToCSV(Tuning.hoodAngle.get(), Tuning.releaseVelocity.get(), Units.Inches.of(0));
+                Tuning.writeToCSV(Tuning.hoodAngle.get(), Tuning.releaseVelocity.get(), mRobotContainer.drivetrain.getDistanceFromHub());
                 Tuning.publishData.set(false);
             }
         } catch (FileNotFoundException e) {
