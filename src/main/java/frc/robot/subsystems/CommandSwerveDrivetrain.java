@@ -17,17 +17,21 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import org.littletonrobotics.junction.Logger;
 
 import choreo.auto.AutoFactory;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.jni.WPIMathJNI;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.proto.Wpimath;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
@@ -420,6 +424,17 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public void setImuMode2() {
         this.limelight.setIMUMode(2);
         // System.out.println("SetImuMode2 yay Limelight !!!!!!!!!!!!");
+    }
+
+    public Distance getDistanceFromHub(){
+        final Double hubX = 4.03;
+        final Double hubY = 8.07/2;
+        return Units.Meters.of( 
+            Math.hypot(
+                (hubX-currentPose2D.getMeasureX().in(Units.Meters)),
+                (hubY-currentPose2D.getMeasureY().in(Units.Meters))
+            )
+        );
     }
 
     private void startSimThread() {

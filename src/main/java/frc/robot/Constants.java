@@ -254,8 +254,8 @@ public class Constants {
         public static final LinearVelocity releaseVelocity = Units.FeetPerSecond.of(0);
     }
 
-    public static class HopperFloor {
-        HopperFloor() {
+    public static class HopperFloorConstants {
+        HopperFloorConstants() {
             throw new IllegalCallerException("Cannot instantiate `Constants.HopperFloor`");
         }
 

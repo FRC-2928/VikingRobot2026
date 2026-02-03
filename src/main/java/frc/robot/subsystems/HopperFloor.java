@@ -11,15 +11,14 @@ public class HopperFloor extends SubsystemBase {
     public HopperFloorIOInputs hopperIOInputs = new HopperFloorIOInputs();
 
     public HopperFloor() {
-            this.io = switch (Constants.mode) {
+        this.io = switch (Constants.mode) {
             case REAL -> new HopperFloorIOReal();
-            default -> throw new Error();};
+            default -> new HopperFloorIOReal();};
     }
 
     public Command runHopperCommand() {
         return new RunCommand(() -> io.runHopper(), this).finallyDo(() -> io.halt());
     }
-
 
     @Override
     public void periodic() {
