@@ -14,6 +14,7 @@ import frc.robot.commands.drivetrain.JoystickDrive;
 import frc.robot.oi.DriverOI;
 import frc.robot.oi.OperatorOI;
 import frc.robot.subsystems.Drivetrain;
+import frc.robot.subsystems.Climber;
 
 public class RobotContainer {
 	// public final LoggedDashboardChooser<Command> autonomousChooser;
@@ -23,6 +24,8 @@ public class RobotContainer {
 	public final Drivetrain drivetrain;
 	public static boolean ledState = false;
 	private final AutoChooser autoChooser;
+	public final Climber climber;
+
 	public RobotContainer() {
 		Robot.instance.container = this;
 		Robot.cont = this;

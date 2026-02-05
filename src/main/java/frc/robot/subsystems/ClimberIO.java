@@ -13,5 +13,7 @@ public interface ClimberIO {
 
 	public default void updateInputs(final ClimberIOInputs inputs) {} //updates the positon value and home boolean
 
+	public default void override(final double dutyCycle) {} //overides the climb if it is interupted
+
 	public default void periodic() {} //runs periodically
 }
