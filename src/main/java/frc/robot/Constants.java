@@ -1,12 +1,12 @@
 package frc.robot;
 
-import org.littletonrobotics.junction.Logger;
-
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.AudioConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.SlotConfigs;
 import com.pathplanner.lib.config.PIDConstants;
+
+import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
@@ -128,7 +128,7 @@ public class Constants {
             public static final int swerveBackRightAzimuth = 1;
             public static final int swerveBackRightDrive = 2;
 
-            public static final int uptake = 1; // TODO: find a good place for uptake and hood
+            public static final int kicker = 1; // TODO: find a good place for kicker and hood
             public static final int hood = 1;
             public static final int shooterFlywheelA = 1;
             public static final int shooterFlywheelB = 4;

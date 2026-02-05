@@ -12,16 +12,15 @@ public interface ShooterIO {
         public AngularVelocity flywheelSpeedA;
         public AngularVelocity flywheelSpeedB;
         public Angle hoodAngle = Units.Radians.zero();
-        public AngularVelocity uptakeSpeed;
     }
 
-    public default void rotateHood() {}
+    public default void rotateHood(Angle hoodAngle) {}
 
     public default void runFlywheels() {}
 
-    public default void runFlywheelsVelocity() {}
+    public default void runFlywheelsVelocity(AngularVelocity speed) {}
 
-    public default void runUptake() {}
+    public default void runKicker(int kickerVoltage) {}
 
     public default void updateInputs(final ShooterIOInputs inputs) {}
 }
