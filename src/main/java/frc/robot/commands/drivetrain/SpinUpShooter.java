@@ -1,6 +1,11 @@
 package frc.robot.commands.drivetrain;
 
+import org.littletonrobotics.junction.Logger;
+
+import edu.wpi.first.units.Units;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.Tuning;
 import frc.robot.subsystems.Shooter;
 
 public class SpinUpShooter extends Command {
@@ -18,7 +23,11 @@ public class SpinUpShooter extends Command {
 
     // Called every time the scheduler runs while the command is scheduled.
     @Override
-    public void execute() {}
+    public void execute() {
+        AngularVelocity velocity = Units.DegreesPerSecond.of(Tuning.flywheelSpeed.get());
+        Logger.recordOutput("Shooter/FlywheelSpeedRPS", velocity);
+        shooter.io.runFlywheelsVelocity(velocity);
+    }
 
     // Called once the command ends or is interrupted.
     @Override

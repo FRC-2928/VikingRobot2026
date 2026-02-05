@@ -4,6 +4,7 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
+import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -14,6 +15,9 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import frc.robot.Constants;
 
 public class ShooterIOReal implements ShooterIO {
@@ -21,7 +25,7 @@ public class ShooterIOReal implements ShooterIO {
     // --------------------- Hardware Interfaces ---------------------
     private final TalonFX flywheelA; // Kraken x60
     private final TalonFX flywheelB; // Kraken x60
-    private final TalonFX uptake; // Kraken x44
+    private final TalonFX kicker; // Kraken x44
     private final TalonFX hood; // Kraken x44
 
     private StatusSignal<Angle> hoodAngle;
@@ -31,7 +35,7 @@ public class ShooterIOReal implements ShooterIO {
     public ShooterIOReal(final Shooter shooter) {
         this.flywheelA = new TalonFX(Constants.CAN.CTRE.shooterFlywheelA, Constants.CAN.CTRE.bus);
         this.flywheelB = new TalonFX(Constants.CAN.CTRE.shooterFlywheelB, Constants.CAN.CTRE.bus);
-        this.uptake = new TalonFX(Constants.CAN.CTRE.uptake, Constants.CAN.CTRE.bus);
+        this.kicker = new TalonFX(Constants.CAN.CTRE.kicker, Constants.CAN.CTRE.bus);
         this.hood = new TalonFX(Constants.CAN.CTRE.hood, Constants.CAN.CTRE.bus);
 
         //
@@ -86,7 +90,6 @@ public class ShooterIOReal implements ShooterIO {
         // PID Values
         hoodConfig.Slot0 = Constants.Shooter.hoodGainsSlot0;
 
-
         //
         // Kicker
         //
@@ -111,7 +114,6 @@ public class ShooterIOReal implements ShooterIO {
         // PID Values
         kickerConfig.Slot0 = Constants.Shooter.kickerGainsSlot0;
 
-
         this.velocityA = this.flywheelA.getRotorVelocity();
         this.velocityB = this.flywheelB.getRotorVelocity();
         this.hoodAngle = this.hood.getPosition();
@@ -120,26 +122,44 @@ public class ShooterIOReal implements ShooterIO {
     // 5-6 motors max
     //	Flywheel: 2-4 max Kraken x60
     //	Hood: 1 Kraken x44 or Minion
-    //	Uptake (Moves ball into shooter): Kraken x44
+    //	kicker (Moves ball into shooter): Kraken x44
 
     // Rotates the hood to change angle of fuel shooting
+    @Override
     public void rotateHood(Angle hoodAngle) {
-        //this.hood.setControl(new PositionVoltage(hoodAngle));
+        this.hood.setControl(new PositionVoltage(hoodAngle));
     }
 
     // Runs the flywheel in the shooter. 2 motors. Based on voltage
+    @Override
     public void runFlywheels() {
         this.flywheelA.setControl(new VoltageOut(9));
     }
 
     // Runs the flywheel in the shooter. 2 motors. Based on velocity
+    @Override
     public void runFlywheelsVelocity(AngularVelocity speed) {
         this.flywheelA.setControl(new VelocityVoltage(speed));
     }
 
-    // Runs the kicker/uptake. Shoots ball into flywheels.
-    public void runUptake() {
-        this.uptake.setControl(new VoltageOut(9));
+    // Runs the kicker. Shoots ball into flywheels.
+    @Override
+    public void runKicker(int kickerVoltage) {
+        this.kicker.setControl(new VoltageOut(kickerVoltage));
+    }
+
+    public Command startShooting(AngularVelocity velocity, int kickerVoltage) {
+        return new ParallelCommandGroup(
+                new RunCommand(() -> {
+                    runFlywheelsVelocity(velocity);
+                }),
+                new RunCommand(() -> {
+                    runKicker(kickerVoltage);
+                }));
+    }
+
+    public Command stopShooting() {
+        return startShooting(Units.DegreesPerSecond.zero(), 0);
     }
 
     @Override
