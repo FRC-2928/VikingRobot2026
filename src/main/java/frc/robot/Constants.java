@@ -1,12 +1,12 @@
 package frc.robot;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.AudioConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.SlotConfigs;
 import com.pathplanner.lib.config.PIDConstants;
-
-import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
@@ -137,7 +137,9 @@ public class Constants {
             public static final int climber = 17;
 
             public static final int hopper = 99;
-            public static final int intake = 16;
+
+            public static final int intakeRoller = 16;
+            public static final int intakeExpansion = 99;
         }
     }
 
