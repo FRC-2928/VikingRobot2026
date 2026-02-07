@@ -116,7 +116,8 @@ public class Constants {
 			public static final int shooterFlywheelA = 1;
 			public static final int shooterFlywheelB = 4;
 
-			public static final int climber = 17;
+			public static final int climber = 17;// add the bus id
+			public static final int climberHook = 18;// add the bus id
 		}
 	}
 
