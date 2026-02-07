@@ -14,6 +14,7 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.Units;
@@ -303,6 +304,20 @@ public class Constants {
         public static final Angle max = Units.Rotations.of(0.39);
 
         public static final double fireTimeout = 0.3;
+
+        public static final InterpolatingTreeMap<Double, AimValues> lookUpTable =
+                new InterpolatingTreeMap<Double, AimValues>(null, null);
+
+        public static class AimValues {
+
+            public final Angle hoodAngle;
+            public final AngularVelocity shooterVelocity;
+
+            private AimValues(Angle hoodAngle, AngularVelocity shooterVelocity) {
+                this.hoodAngle = hoodAngle;
+                this.shooterVelocity = shooterVelocity;
+            }
+        }
     }
 
     public static class Climber {

@@ -9,7 +9,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
-import frc.robot.Robot;
+import frc.robot.RobotContainer;
 import frc.robot.commands.drivetrain.LockWheels;
 import frc.robot.commands.drivetrain.RunIntake;
 
@@ -33,6 +33,12 @@ public class DriverOI extends BaseOI {
 
         this.ferry = this.controller.rightBumper();
 
+        this.shotConditionsMet = new Trigger(() -> true);
+
+        this.spinKicker = this.controller.rightTrigger().and(shotConditionsMet);
+
+        this.getReadyToShoot = this.controller.leftTrigger();
+
         this.resetFOD = this.controller.y();
 
         this.resetAngle = this.controller.a();
@@ -49,6 +55,10 @@ public class DriverOI extends BaseOI {
 
     public final Trigger intake;
 
+    public final Trigger spinKicker;
+    public final Trigger getReadyToShoot;
+    public final Trigger shotConditionsMet;
+
     public final Trigger lockWheels;
 
     public final Trigger resetFOD;
@@ -59,12 +69,14 @@ public class DriverOI extends BaseOI {
     public final Trigger ferry;
     public final Trigger resetAngle;
 
-    public void configureControls() {
+    public void configureControls(RobotContainer cont) {
 
         this.lockWheels.whileTrue(new LockWheels());
-        this.resetFOD.onTrue(new InstantCommand(Robot.cont.drivetrain::resetAngle));
+        this.resetFOD.onTrue(new InstantCommand(cont.drivetrain::resetAngle));
         this.intake.whileTrue(new RunIntake());
-        this.resetAngle.whileTrue(new RunCommand(Robot.cont.drivetrain::seedLimelightImu));
-        this.resetAngle.whileFalse(new RunCommand(Robot.cont.drivetrain::setImuMode2));
+        this.resetAngle.whileTrue(new RunCommand(cont.drivetrain::seedLimelightImu));
+        this.resetAngle.whileFalse(new RunCommand(cont.drivetrain::setImuMode2));
+        this.spinKicker.onTrue(cont.shooter.startKicker());
+        this.getReadyToShoot.onTrue(cont.shooter.getReadyToShoot(() -> 0.0)); // TODO: Put actual supplier into this.
     }
 }

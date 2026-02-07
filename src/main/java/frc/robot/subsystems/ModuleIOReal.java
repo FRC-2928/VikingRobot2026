@@ -33,7 +33,10 @@ import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.Units;
-import edu.wpi.first.units.measure.*;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.Constants;
 import frc.robot.Robot;
@@ -197,7 +200,7 @@ public class ModuleIOReal implements ModuleIO {
                 this.drivePosition, this.driveVelocity, this.driveCurrent, this.azimuthCurrent, this.angle);
 
         inputs.drivePosition =
-                Units.Rotations.of(this.drivePosition.getValueAsDouble()).divide(Constants.Drivetrain.driveGearRatio);
+                Units.Rotations.of(this.drivePosition.getValueAsDouble()).div(Constants.Drivetrain.driveGearRatio);
         inputs.driveVelocity = Units.MetersPerSecond.of(this.driveVelocity.getValueAsDouble());
         inputs.driveCurrent = Units.Amps.of(this.driveCurrent.getValueAsDouble());
 
