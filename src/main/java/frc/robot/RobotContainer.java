@@ -26,6 +26,7 @@ import frc.robot.oi.DriverOI;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.HopperFloor;
 import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.Shooter;
 
 public class RobotContainer {
     // TODO organize Driver and Operator bindings
@@ -50,12 +51,14 @@ public class RobotContainer {
     public final CommandXboxController joystick = new CommandXboxController(0);
 
     public final CommandSwerveDrivetrain drivetrain;
+    public final Shooter shooter;
     public final Intake intake;
     private final Telemetry logger;
     public final HopperFloor hopperFloor;
 
     public RobotContainer() {
         this.drivetrain = TunerConstants.createDrivetrain();
+        this.shooter = new Shooter();
         this.intake = new Intake();
         this.hopperFloor = new HopperFloor();
         this.logger = new Telemetry(MaxSpeed, drivetrain);
@@ -72,7 +75,7 @@ public class RobotContainer {
     }
 
     private void configureBindings() {
-        this.driverOI.configureControls(intake);
+        this.driverOI.configureControls(this);
         // this.operatorOI.configureControls();
 
         // Note that X is defined as forward according to WPILib convention,

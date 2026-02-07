@@ -20,7 +20,7 @@ public interface ShooterIO {
 
     public default void runFlywheelsVelocity(AngularVelocity speed) {}
 
-    public default void runKicker(int kickerVoltage) {}
+    public default void runKicker() {}
 
     public default void updateInputs(final ShooterIOInputs inputs) {}
 }

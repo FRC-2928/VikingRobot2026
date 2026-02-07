@@ -3,14 +3,16 @@ package frc.robot.oi;
 import java.util.List;
 import java.util.function.Supplier;
 
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
+import frc.robot.RobotContainer;
 import frc.robot.commands.drivetrain.LockWheels;
 import frc.robot.commands.drivetrain.RunIntake;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
-import frc.robot.subsystems.Intake;
 
 public class DriverOI extends BaseOI {
     public DriverOI(final CommandXboxController controller, CommandSwerveDrivetrain drivetrain) {
@@ -18,7 +20,6 @@ public class DriverOI extends BaseOI {
 
         this.driveAxial = this.controller::getLeftY;
         this.driveLateral = this.controller::getLeftX;
-        this.mDrivetrain = drivetrain;
 
         if (Constants.mode == Mode.REAL) {
             this.driveFORX = this.controller::getRightX;
@@ -31,19 +32,18 @@ public class DriverOI extends BaseOI {
 
         this.intake = this.controller.b();
 
+        this.shotConditionsMet = new Trigger(() -> true);
+
+        this.spinKicker = this.controller.rightTrigger().and(shotConditionsMet);
+
+        this.getReadyToShoot = this.controller.leftTrigger();
+
         this.resetFOD = this.controller.y();
 
         this.resetAngle = this.controller.a();
 
         this.lockWheels = this.controller.x();
-
-        this.fixedShoot = this.controller.leftTrigger(); // This trigger is for driver intention to prepare the shot
-        this.haltShotTrigger = this.controller.rightTrigger(); // This is the override to stop shooting
-        this.doShoot = this.fixedShoot.and(
-                haltShotTrigger.negate()); // This is the composite trigger for the robot to do the shoot command
     }
-
-    private CommandSwerveDrivetrain mDrivetrain; // TODO: this needs to be instantiated before use
 
     public final Supplier<Double> driveAxial;
     public final Supplier<Double> driveLateral;
@@ -54,6 +54,10 @@ public class DriverOI extends BaseOI {
 
     public final Trigger intake;
 
+    public final Trigger spinKicker;
+    public final Trigger getReadyToShoot;
+    public final Trigger shotConditionsMet;
+
     public final Trigger lockWheels;
 
     public final Trigger resetFOD;
@@ -63,18 +67,14 @@ public class DriverOI extends BaseOI {
     public final List<Integer> bargeTags = List.of(4, 5, 14, 15);
     public final Trigger resetAngle;
 
-    public final Trigger fixedShoot;
-    public final Trigger doShoot;
+    public void configureControls(RobotContainer cont) {
 
-    public final Trigger haltShotTrigger;
-
-    public void configureControls(Intake intake) {
-
-        this.lockWheels.whileTrue(new LockWheels(mDrivetrain, this));
-        // this.resetFOD.onTrue(new InstantCommand(Robot.cont.drivetrain::resetAngle));
-        this.intake.whileTrue(new RunIntake(intake));
-        // this.resetAngle.whileTrue(new RunCommand(Robot.cont.drivetrain::seedLimelightImu));
-        // this.resetAngle.whileFalse(new RunCommand(Robot.cont.drivetrain::setImuMode2));
-        this.doShoot.whileTrue(null); // TODO: add shooting command
+        this.lockWheels.whileTrue(new LockWheels(cont.drivetrain, this));
+        this.resetFOD.onTrue(new InstantCommand(cont.drivetrain::resetAngle));
+        this.intake.whileTrue(new RunIntake(cont.intake));
+        this.resetAngle.whileTrue(new RunCommand(cont.drivetrain::seedLimelightImu));
+        this.resetAngle.whileFalse(new RunCommand(cont.drivetrain::setImuMode2));
+        this.spinKicker.onTrue(cont.shooter.startKicker());
+        this.getReadyToShoot.onTrue(cont.shooter.getReadyToShoot(() -> 0.0)); // TODO: Put actual supplier into this.
     }
 }

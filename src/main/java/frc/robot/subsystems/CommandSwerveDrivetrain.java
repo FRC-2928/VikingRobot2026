@@ -1,9 +1,13 @@
 package frc.robot.subsystems;
 
-import static edu.wpi.first.units.Units.*;
+import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.Second;
+import static edu.wpi.first.units.Units.Volts;
 
 import java.util.Optional;
 import java.util.function.Supplier;
+
+import org.littletonrobotics.junction.Logger;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
@@ -14,8 +18,6 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveRequest.FieldCentricFacingAngle;
-
-import org.littletonrobotics.junction.Logger;
 
 import choreo.auto.AutoFactory;
 import edu.wpi.first.math.Matrix;
@@ -433,6 +435,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             this.resetRotation(mt1.pose.getRotation());
         }
     }
+
+    public void seedLimelightImu(){
+		disabledPeriodic();
+	}
 
     public void setImuMode2() {
         this.limelight.setIMUMode(2);
