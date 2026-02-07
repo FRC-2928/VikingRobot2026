@@ -74,7 +74,7 @@
             },
             {
               "title": "Notes",
-              "type": "Text View",
+              "type": "Single Topic",
               "properties": {
                 "Topic": "/ShooterData/notes"
               },

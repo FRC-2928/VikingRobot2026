@@ -49,8 +49,9 @@ Add these widgets manually to your Elastic dashboard:
 4. **Toggle Switch** - Topic: `/ShooterData/successful`
    - Label: "Shot Successful?"
 
-5. **Text View** - Topic: `/ShooterData/notes`
+5. **Single Topic** (Text Input) - Topic: `/ShooterData/notes`
    - Label: "Notes"
+   - This widget auto-applies text changes
 
 6. **Toggle Button** - Topic: `/ShooterData/record_trigger`
    - Label: "RECORD DATA"
@@ -66,14 +67,14 @@ Add these widgets manually to your Elastic dashboard:
 
 **Testing Workflow:**
 1. Position robot at a known distance from the goal
-2. Enter the distance in the dashboard
-3. Set your shooter velocity and hood angle (either manually or from your shooter subsystem)
-4. Enter those values in the dashboard
-5. Take the shot
-6. Mark it as successful or not
-7. Add any notes (optional)
-8. Press the "RECORD DATA" button
-9. Watch for the green flash confirming it was saved
+2. Adjust the distance slider (changes apply immediately)
+3. Set your shooter velocity and hood angle sliders (changes apply immediately)
+4. Take the shot
+5. Toggle "Shot Successful?" on or off
+6. Type any notes (no need to hit return - changes apply as you type)
+7. Press the "RECORD DATA" button (it will automatically toggle back off)
+8. Watch for the green flash confirming it was saved
+9. Adjust values and repeat!
 
 **Repeat** at different distances and settings to build your dataset.
 

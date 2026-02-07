@@ -80,12 +80,14 @@ public class ShooterDataCollector {
             ));
         }
         
-        // Reset status after brief delay
+        // Reset trigger and status after brief delay
         new Thread(() -> {
             try {
                 Thread.sleep(200);
                 inputs.recordingStatus = false;
                 io.setRecordingStatus(false);
+                // Reset the trigger back to false
+                io.resetRecordTrigger();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }

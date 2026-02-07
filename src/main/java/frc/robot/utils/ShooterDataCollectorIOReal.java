@@ -60,4 +60,9 @@ public class ShooterDataCollectorIOReal implements ShooterDataCollectorIO {
     public void setRecordingStatus(boolean status) {
         recordingStatus.set(status);
     }
+
+    @Override
+    public void resetRecordTrigger() {
+        recordTrigger.set(false);
+    }
 }
