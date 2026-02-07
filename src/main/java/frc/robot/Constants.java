@@ -137,6 +137,7 @@ public class Constants {
             public static final int climber = 17;
 
             public static final int hopper = 99;
+            public static final int intake = 16;
         }
     }
 

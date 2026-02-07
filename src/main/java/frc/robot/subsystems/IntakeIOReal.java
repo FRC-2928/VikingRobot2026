@@ -18,7 +18,8 @@ public class IntakeIOReal implements IntakeIO {
     public StatusSignal<AngularVelocity> intakeAngularVelocity;
 
     public IntakeIOReal() {
-        this.intakeMotor = new TalonFX(16, Constants.CAN.CTRE.bus);
+        this.intakeMotor = new TalonFX(Constants.CAN.CTRE.intake, Constants.CAN.CTRE.bus);
+        // TODO: Declare the motor for instake expand
 
         final TalonFXConfiguration config = new TalonFXConfiguration();
         CurrentLimitsConfigs currentLimitsConfigs = new CurrentLimitsConfigs()
@@ -35,6 +36,8 @@ public class IntakeIOReal implements IntakeIO {
         this.intakeAngularVelocity = this.intakeMotor.getRotorVelocity();
         BaseStatusSignal.setUpdateFrequencyForAll(Units.Hertz.of(100), intakeAngularVelocity);
     }
+
+    // Add the methods for retract and expand
 
     @Override
     public void setSpeed(double speed) {
