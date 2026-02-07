@@ -14,8 +14,8 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import frc.robot.Constants;
 
 public class IntakeIOReal implements IntakeIO {
-    public TalonFX intakeRollerMotor;
-    public TalonFX intakeExpansionMotor;
+    private TalonFX intakeRollerMotor;
+    private TalonFX intakeExpansionMotor;
     public StatusSignal<AngularVelocity> intakeAngularVelocity;
 
     public IntakeIOReal() {
@@ -31,9 +31,10 @@ public class IntakeIOReal implements IntakeIO {
 
         MotorOutputConfigs intakeRollerOutputConfigs =
                 new MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive);
-        intakeRollerConfig.withMotorOutput(intakeRollerOutputConfigs).withCurrentLimits(intakeRollerCurrentLimitsConfigs);
+        intakeRollerConfig
+                .withMotorOutput(intakeRollerOutputConfigs)
+                .withCurrentLimits(intakeRollerCurrentLimitsConfigs);
         intakeRollerMotor.getConfigurator().apply(intakeRollerConfig); // apply the config settings
-
 
         // The Intake Expansion motor
         this.intakeExpansionMotor = new TalonFX(Constants.CAN.CTRE.intakeExpansion, Constants.CAN.CTRE.bus);
@@ -47,20 +48,31 @@ public class IntakeIOReal implements IntakeIO {
 
         MotorOutputConfigs intakeExpansionOutputConfigs =
                 new MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive);
-        intakeExpansionConfig.withMotorOutput(intakeExpansionOutputConfigs).withCurrentLimits(intakeExpansionCurrentLimitsConfigs);
+        intakeExpansionConfig
+                .withMotorOutput(intakeExpansionOutputConfigs)
+                .withCurrentLimits(intakeExpansionCurrentLimitsConfigs);
         intakeRollerMotor.getConfigurator().apply(intakeExpansionConfig); // apply the config settings
-
 
         this.intakeAngularVelocity = this.intakeRollerMotor.getRotorVelocity();
         BaseStatusSignal.setUpdateFrequencyForAll(Units.Hertz.of(100), intakeAngularVelocity);
     }
 
-    // Add the methods for retract and expand
-
     @Override
     public void setSpeed(double speed) {
         // Do a feed forward later
         intakeRollerMotor.setControl(new DutyCycleOut(speed));
+    }
+
+    @Override
+    public void expand() {
+        // Expand and stop once fully expanded
+        //intakeExpansionMotor.setControl();
+    }
+
+    @Override
+    public void retract() {
+        // Retract using the torque control
+        // intakeExpansionMotor.setControl();
     }
 
     @Override

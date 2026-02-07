@@ -1,12 +1,12 @@
 package frc.robot;
 
-import org.littletonrobotics.junction.Logger;
-
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.AudioConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.SlotConfigs;
 import com.pathplanner.lib.config.PIDConstants;
+
+import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;

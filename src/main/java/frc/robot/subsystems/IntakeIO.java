@@ -13,5 +13,9 @@ public interface IntakeIO {
 
     public default void setSpeed(double speed) {}
 
+    public default void expand() {}
+
+    public default void retract() {}
+
     public default void updateInputs(IntakeInputs intakeInputs) {}
 }
