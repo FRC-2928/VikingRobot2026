@@ -9,29 +9,24 @@ import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
-import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveModule;
-import com.ctre.phoenix6.swerve.SwerveRequest.FieldCentricFacingAngle;
-import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveRequest.PointWheelsAt;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.ctre.phoenix6.swerve.SwerveRequest.FieldCentricFacingAngle;
 
 import org.littletonrobotics.junction.Logger;
 
 import choreo.auto.AutoFactory;
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.jni.WPIMathJNI;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.math.proto.Wpimath;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
@@ -69,10 +64,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private boolean m_hasAppliedOperatorPerspective = false;
 
     private final Double hubX = 4.03;
-    private final Double hubY = 8.07/2;
+    private final Double hubY = 8.07 / 2;
     private final Double maxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
     public final FieldCentricFacingAngle drive = new FieldCentricFacingAngle()
-            .withDeadband( maxSpeed  * 0.1) // Add a 10% deadband
+            .withDeadband(maxSpeed * 0.1) // Add a 10% deadband
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage) // Use open-loop control for drive motors
             .withDesaturateWheelSpeeds(true);
 
@@ -103,8 +98,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private ChassisSpeeds currentChassisSpeeds = new ChassisSpeeds();
     private Pose2d currentPose2D = new Pose2d();
     public final Limelight limelight = new Limelight("limelight");
-
-    
 
     // Choreo PID controllers have to be created in our code
     private final PIDController choreoXController = new PIDController(5, 0, 0);
@@ -446,32 +439,23 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         // System.out.println("SetImuMode2 yay Limelight !!!!!!!!!!!!");
     }
 
-    public Distance getDistanceFromHub(){
-        
-        return Units.Meters.of( 
-            Math.hypot(
-                (hubX-currentPose2D.getMeasureX().in(Units.Meters)),
-                (hubY-currentPose2D.getMeasureY().in(Units.Meters))
-            )
-        );
+    public Distance getDistanceFromHub() {
+
+        return Units.Meters.of(Math.hypot(
+                (hubX - currentPose2D.getMeasureX().in(Units.Meters)),
+                (hubY - currentPose2D.getMeasureY().in(Units.Meters))));
     }
 
-    //Command to aim at hub while moving with max translation speed scaler not deadband (Overrides Rotational aspect)
+    // Command to aim at hub while moving with max translation speed scaler not deadband (Overrides Rotational aspect)
     public Command aimAtHubAndMove(Double vx, Double vy, Double speedMultipliter) {
         return this.applyRequest(
-                        () -> drive
-                                .withVelocityX(
-                                        -vy * maxSpeed * speedMultipliter) // Drive forward with negative Y (forward)
-                                .withVelocityY(
-                                    -vx * maxSpeed * speedMultipliter) // Drive left with negative X (left)
-                                .withTargetDirection(new Rotation2d(
-                                    Math.atan2(
-                                        (hubY-currentPose2D.getMeasureY().in(Units.Meters)),
-                                        (hubX-currentPose2D.getMeasureX().in(Units.Meters)))
-                                ))
-                        );
+                () -> drive.withVelocityX(-vy * maxSpeed * speedMultipliter) // Drive forward with negative Y (forward)
+                        .withVelocityY(-vx * maxSpeed * speedMultipliter) // Drive left with negative X (left)
+                        .withTargetDirection(new Rotation2d(Math.atan2(
+                                (hubY - currentPose2D.getMeasureY().in(Units.Meters)),
+                                (hubX - currentPose2D.getMeasureX().in(Units.Meters))))));
     }
-    //Command to locate fuel and intake them w/ limelight
+    // Command to locate fuel and intake them w/ limelight
 
     private void startSimThread() {
         m_lastSimTime = Utils.getCurrentTimeSeconds();

@@ -1,84 +1,98 @@
 package frc.robot.commands.drivetrain;
 
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.units.Units;
-import edu.wpi.first.wpilibj.GenericHID.RumbleType;
-import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.Constants;
-import frc.robot.Robot;
-import frc.robot.RobotContainer;
-import frc.robot.oi.BaseOI;
+import javax.swing.plaf.basic.BasicEditorPaneUI;
+
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.units.Units;
+import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.RobotContainer;
+import frc.robot.Tuning;
+import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.Intake;
+import frc.robot.Tuning;
+
 public class IntakeGround extends Command {
-	public static double lastTime = 0; // this is a bad way to do this but its necessary for right now, please do real path planning in the future
-
-	public IntakeGround(final boolean correction, RobotContainer robotContainer) {
-		this.robotContainer = robotContainer;
-
-		this.correction = correction;
-
-		this.addRequirements(robotContainer.intake);
-		if(correction) this.addRequirements(robotContainer.drivetrain);
-	}
-
+    public static double lastTime =
+            0; // this is a bad way to do this but its necessary for right now, please do real path planning in the
+    // future
 
 	public final boolean correction;
 
-	private final RobotContainer robotContainer;
+    private final RobotContainer robotContainer;
 
-	@Override
-	public void execute() {
-		//TODO: get reasonable speed
-		robotContainer.intake.intakeIO.setSpeed(0);
+    private final double speedMultiplier;
 
-		if(this.correction)
-			robotContainer.drivetrain
-				.control(
-					robotContainer.drivetrain.drive
-					.withVelocityX(robotContainer.joystick.getLeftX())
-					.withVelocityY(robotContainer.joystick.getLeftY())
-						.plus(
-							Robot.cont.drivetrain
-								.rod(
-									new ChassisSpeeds(
-										this.calculateSpeedX(),
-										Robot.cont.drivetrain.limelightNote
-											.getTargetHorizontalOffset()
-											.in(Units.Rotations)
-											* 10,
-										0
-									).times(pivotReady ? 1 : 1)
-								)
-						)
-				);
+	private final CommandSwerveDrivetrain drivetrain;
 
-		this.haptics.update();
+	private final Intake intake;
+
+	private final PIDController adjustX;
+
+	private final PIDController adjustY;
+
+    public IntakeGround(final boolean correction, RobotContainer robotContainer, double speedMultiplier) {
+        this.robotContainer = robotContainer;
+
+        this.correction = correction;
 		
-	}
-	public double calculateSpeedX(){
-		Logger.recordOutput("Drivetrain/auto/SpeedXIntakeGroun",(-10/(Math.abs(Robot.cont.drivetrain.limelightNote.getTargetHorizontalOffset().in(Units.Degrees))+1)));
-		return( 
-				(-10/(Math.abs(Robot.cont.drivetrain.limelightNote.getTargetHorizontalOffset().in(Units.Degrees))+1))
-		);
-	}
-	
-	@Override
-	public void end(final boolean interrupted) {
-		Robot.cont.shooter.io
-			.rotate(
-				Robot.cont.shooter.inputs.holdingNote ? Constants.Shooter.readyDrive : Constants.Shooter.readyIntake
-			);
-		Robot.cont.shooter.io.runFlywheels(0);
-		Robot.cont.shooter.io.runFeeder(Demand.Halt);
-		Robot.cont.shooter.io.runIntake(Demand.Halt);
+		this.intake = robotContainer.intake;
 
-		Robot.cont.drivetrain.control(new ChassisSpeeds());
+		this.drivetrain = robotContainer.drivetrain;
 
-		this.haptics.stop();
-	}
+		this.adjustX = new PIDController(0.5,0,0);
+		this.adjustY = new PIDController(0.5,0,0);
 
-	@Override
-	public boolean isFinished() { return Robot.cont.shooter.inputs.holdingNote; }
+        this.addRequirements(robotContainer.intake);
+        if (correction) this.addRequirements(robotContainer.drivetrain);
+
+        this.speedMultiplier = speedMultiplier;
+    }
+
+
+
+    @Override
+    public void execute() {
+        // TODO: get reasonable speed
+        intake.intakeIO.setSpeed(Tuning.intakeVelocity.get());
+
+        if (this.correction){
+            drivetrain.setControl(
+                    drivetrain
+                    .drive
+                    .withVelocityX((robotContainer.joystick.getLeftX() * speedMultiplier + this.calculateSpeedX())
+                            * robotContainer.MaxSpeed)
+                    .withVelocityY((robotContainer.joystick.getLeftY() * speedMultiplier + this.calculateSpeedY())
+                            * robotContainer.MaxSpeed));
+		}
+    }
+
+    public double calculateSpeedX() {
+		double output = adjustX.calculate(-1*drivetrain.limelight.getTargetHorizontalOffset().in(Units.Degrees),0);
+        Logger.recordOutput(
+                "Drivetrain/auto/SpeedXIntakeGroun",
+                output);
+        return output;
+    }
+
+    public double calculateSpeedY() {
+        double output = adjustY.calculate(Math.abs(1/drivetrain.limelight.getTargetHorizontalOffset().in(Units.Degrees)),0);
+		Logger.recordOutput(
+                "Drivetrain/auto/SpeedYIntakeGround",
+                output);
+        return output;
+    }
+
+    @Override
+    public void end(final boolean interrupted) {
+        robotContainer.intake.intakeIO.setSpeed(0);
+
+        robotContainer.drivetrain.halt();
+    }
+
+    @Override
+    public boolean isFinished() {
+        return false;
+    }
 }

@@ -31,7 +31,7 @@ public class RobotContainer {
     // public final OperatorOI operatorOI = new OperatorOI(new CommandXboxController(1));
     // public final LoggedDashboardChooser<String> driveModeChooser;
     public final AutoChooser autoChooser;
-    private static double MaxSpeed =
+    public double MaxSpeed =
             1.0 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
     private double MaxAngularRate =
             RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity

@@ -259,6 +259,14 @@ public class Constants {
             throw new IllegalCallerException("Cannot instantiate `Constants.HopperFloor`");
         }
 
+        public static final AngularVelocity hopperVelocity = Units.RotationsPerSecond.of(0);
+    }
+
+    public static class Intake {
+        private Intake() {
+            throw new IllegalCallerException("Dont Call this (Constants.Intake)");
+        }
+
         public static final AngularVelocity intakeVelocity = Units.RotationsPerSecond.of(0);
     }
 
