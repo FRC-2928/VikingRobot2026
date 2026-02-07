@@ -24,4 +24,9 @@ public interface ShooterDataCollectorIO {
      * Set the recording status output
      */
     public default void setRecordingStatus(boolean status) {}
+
+    /**
+     * Reset the record trigger back to false
+     */
+    public default void resetRecordTrigger() {}
 }
