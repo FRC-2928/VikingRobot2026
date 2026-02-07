@@ -71,7 +71,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private final Double hubX = 4.03;
     private final Double hubY = 8.07/2;
     private final Double maxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
-    private final FieldCentricFacingAngle drive = new FieldCentricFacingAngle()
+    public final FieldCentricFacingAngle drive = new FieldCentricFacingAngle()
             .withDeadband( maxSpeed  * 0.1) // Add a 10% deadband
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage) // Use open-loop control for drive motors
             .withDesaturateWheelSpeeds(true);

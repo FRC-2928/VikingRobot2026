@@ -45,7 +45,7 @@ public class RobotContainer {
     private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
     private final SwerveRequest.FieldCentricFacingAngle point = new SwerveRequest.FieldCentricFacingAngle();
 
-    private final CommandXboxController joystick = new CommandXboxController(0);
+    public final CommandXboxController joystick = new CommandXboxController(0);
 
     public final CommandSwerveDrivetrain drivetrain;
     public final Intake intake;
