@@ -13,9 +13,9 @@
 
 package frc.robot.subsystems;
 
-import org.littletonrobotics.junction.AutoLog;
-
 import com.ctre.phoenix6.StatusCode;
+
+import org.littletonrobotics.junction.AutoLog;
 
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;

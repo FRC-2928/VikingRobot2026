@@ -1,14 +1,13 @@
 package frc.robot;
 
-import java.nio.file.Path;
 import java.util.Optional;
-
-import org.littletonrobotics.junction.Logger;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
+
+import org.littletonrobotics.junction.Logger;
 
 import choreo.Choreo;
 import choreo.auto.AutoChooser;
@@ -27,6 +26,7 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.commands.drivetrain.CenterLimelight;
 import frc.robot.commands.drivetrain.VoltageRampCommand;
+import frc.robot.lib.BLine.Path;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
 public final class Autonomous {

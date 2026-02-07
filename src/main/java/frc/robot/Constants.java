@@ -1,12 +1,12 @@
 package frc.robot;
 
-import org.littletonrobotics.junction.Logger;
-
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.AudioConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.SlotConfigs;
 import com.pathplanner.lib.config.PIDConstants;
+
+import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
@@ -281,7 +281,7 @@ public class Constants {
                 .withKS(0)
                 .withKV(0.0)
                 .withKA(0);
-        
+
         public static final InterpolatingTreeMap<Double, AimValues> lookUpTable =
                 new InterpolatingTreeMap<Double, AimValues>(null, null);
 
