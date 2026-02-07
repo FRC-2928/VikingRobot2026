@@ -31,7 +31,7 @@ public class RunIntake extends Command {
         // AngularVelocity speed = Units.RotationsPerSecond.of(10);
         double speed = Tuning.intakeSpeed.get();
         Logger.recordOutput("Intake/Speed", speed);
-        intake.runIntake(0.8);
+        intake.runIntake(speed);
         // Logger.recordOutput("Intake/Speed", speed);
         // intake.intakeIO.setSpeed();
     }
