@@ -39,6 +39,7 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.robot.generated.TunerConstants;
@@ -452,14 +453,24 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 (hubY - currentPose2D.getMeasureY().in(Units.Meters))));
     }
 
-    // Command to aim at hub while moving with max translation speed scaler not deadband (Overrides Rotational aspect)
+   // Command to aim at hub while moving with max translation speed scaler not deadband (Overrides Rotational aspect)
     public Command aimAtHubAndMove(Double vx, Double vy, Double speedMultipliter) {
         return this.applyRequest(
                 () -> drive.withVelocityX(-vy * maxSpeed * speedMultipliter) // Drive forward with negative Y (forward)
                         .withVelocityY(-vx * maxSpeed * speedMultipliter) // Drive left with negative X (left)
                         .withTargetDirection(new Rotation2d(Math.atan2(
                                 (hubY - currentPose2D.getMeasureY().in(Units.Meters)),
-                                (hubX - currentPose2D.getMeasureX().in(Units.Meters))))));
+                                (hubX - currentPose2D.getMeasureX().in(Units.Meters))) + Math.PI)));
+    }
+
+    public Command aimAtHubAndMove(CommandXboxController joystick, Double speedMultipliter) {
+        return this.applyRequest(() -> drive.withVelocityX(
+                        -joystick.getLeftY() * maxSpeed * speedMultipliter) // Drive forward with negative Y (forward)
+                .withVelocityY(-joystick.getLeftX() * maxSpeed * speedMultipliter) // Drive left with negative X (left)
+                .withHeadingPID(100, 0, 0)
+                .withTargetDirection(new Rotation2d(Math.atan2(
+                        (hubY - currentPose2D.getMeasureY().in(Units.Meters)),
+                        (hubX - currentPose2D.getMeasureX().in(Units.Meters))) + Math.PI)));
     }
     // Command to locate fuel and intake them w/ limelight
 
