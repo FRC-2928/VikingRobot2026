@@ -20,6 +20,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest.FieldCentricFacingAngle;
 import org.littletonrobotics.junction.Logger;
 
 import choreo.auto.AutoFactory;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
@@ -45,6 +46,7 @@ import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.robot.generated.TunerConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.lib.BLine.FollowPath;
+import frc.robot.oi.BaseOI;
 import frc.robot.vision.Limelight;
 
 /**
@@ -70,16 +72,23 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private final Double hubY = 8.07 / 2;
     private final Double hubXOffset = 7.2898;
     private final Double maxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
-    public final FieldCentricFacingAngle drive = new FieldCentricFacingAngle()
+    private final double maxAngularRate =
+            Units.RotationsPerSecond.of(0.75).in(Units.RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
+    private final FieldCentricFacingAngle driveAndPoint = new FieldCentricFacingAngle()
             .withDeadband(maxSpeed * 0.1) // Add a 10% deadband
+            .withRotationalDeadband(maxAngularRate * 0.1)
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage) // Use open-loop control for drive motors
-            .withDesaturateWheelSpeeds(true);
+            .withDesaturateWheelSpeeds(true)
+            .withHeadingPID(8.0, 0.0, 0.25);
+            
 
-    // private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
-    //         // .withDeadband( * 0.1)
-    //         // .withRotationalDeadband(MaxAngularRate * 0.1) // Add a 10% deadband
-    //         .withDriveRequestType(DriveRequestType.OpenLoopVoltage) // Use open-loop control for drive motors
-    //         .withDesaturateWheelSpeeds(true);
+    /* Setting up bindings for necessary control of the swerve drive platform */
+    private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
+            .withDeadband(maxSpeed * 0.1)
+            .withRotationalDeadband(maxAngularRate * 0.1) // Add a 10% deadband
+            .withDriveRequestType(DriveRequestType.Velocity) // Use open-loop control for drive motors
+            .withDesaturateWheelSpeeds(true);
+    private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
 
     /* Swerve requests to apply during SysId characterization */
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization =
@@ -92,11 +101,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private AutoFactory autoFactory;
     private final PIDController xController = new PIDController(5, 0.0, 0);
     private final PIDController headingController = new PIDController(5, 0.0, 0.2);
-    public final GyroIO gyro;
+    // public final GyroIO gyro;
     private SwerveModulePosition[] modulePositions = {
         new SwerveModulePosition(), new SwerveModulePosition(), new SwerveModulePosition(), new SwerveModulePosition()
     };
-    public final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
+    // public final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
     private final SwerveRequest.ApplyRobotSpeeds applyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds()
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
     private ChassisSpeeds currentChassisSpeeds = new ChassisSpeeds();
@@ -107,6 +116,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private final PIDController choreoXController = new PIDController(5, 0, 0);
     private final PIDController choreoYController = new PIDController(5, 0, 0);
     private final PIDController choreoHeadingController = new PIDController(5, 0, 0.2);
+
+    private Rotation2d snapToHeading = new Rotation2d(0);
 
     /* SysId routine for characterizing translation. This is used to find PID gains for the drive motors. */
     private final SysIdRoutine m_sysIdRoutineTranslation = new SysIdRoutine(
@@ -173,7 +184,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         if (Utils.isSimulation()) {
             startSimThread();
         }
-        this.gyro = new GyroIOReal();
+        // this.gyro = new GyroIOReal();
         // B-Line path builder
         pathBuilder = initializeFollowPathBuilder();
         autoFactory = initializeChoreoAutoFactory();
@@ -205,7 +216,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         if (Utils.isSimulation()) {
             startSimThread();
         }
-        this.gyro = new GyroIOReal();
+        // this.gyro = new GyroIOReal();
         // B-Line path builder
         pathBuilder = initializeFollowPathBuilder();
         autoFactory = initializeChoreoAutoFactory();
@@ -247,7 +258,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             startSimThread();
         }
 
-        this.gyro = new GyroIOReal();
+        // this.gyro = new GyroIOReal();
         // B-Line path builder
         pathBuilder = initializeFollowPathBuilder();
         autoFactory = initializeChoreoAutoFactory();
@@ -286,6 +297,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     public void controlRobotDrivetrainAutonomus(ChassisSpeeds chassisSpeeds) {
+        // set desired heading for drivetrain
         this.setControl(
                 applyRobotSpeeds.withSpeeds(chassisSpeeds) // Apply the given chassis speed to the drivetrain
                 );
@@ -383,8 +395,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     @Override
     public void periodic() {
-        this.gyro.updateInputs(this.gyroInputs);
-        Logger.processInputs("Drivetrain/Gyro", this.gyroInputs);
+        // this.gyro.updateInputs(this.gyroInputs);
+        // Logger.processInputs("Drivetrain/Gyro", this.gyroInputs);
         Logger.recordOutput("Drivetrain/Botpose", limelight.getBluePose3d());
         Logger.recordOutput("Drivetrain/currentPose", currentPose2D);
         Logger.recordOutput("Drivetrain/angleFromHub", this.getAngleToHub().in(Units.Degrees));
@@ -411,9 +423,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             boolean rejectUpdate = false;
 
             // if our angular velocity is greater than 720 degrees per second, ignore vision updates
-            if (Math.abs(this.gyroInputs.yawVelocityRadPerSec.in(Units.DegreesPerSecond)) > 720) {
-                rejectUpdate = true;
-            }
+            // if (Math.abs(this.gyroInputs.yawVelocityRadPerSec.in(Units.DegreesPerSecond)) > 720) {
+            //     rejectUpdate = true;
+            // }
 
             if (mt2.tagCount == 0) {
                 rejectUpdate = true;
@@ -456,6 +468,31 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 (hubY - currentPose2D.getMeasureY().in(Units.Meters))));
     }
 
+    public Command joystickDrive(BaseOI controllerOI) {
+        return applyRequest(() -> {
+            double x = -controllerOI.controller.getLeftY() * maxSpeed;
+            double y = -controllerOI.controller.getLeftX() * maxSpeed;
+
+            double rx = -controllerOI.controller.getRightX();
+            double ry = -controllerOI.controller.getRightY();
+
+            double rotationRate = MathUtil.applyDeadband(rx * maxAngularRate, 0.3);
+
+            snapToHeading = snapToHeading.plus(new Rotation2d(
+                    rotationRate * 0.02)); // TODO: change 0.02 constant timestep to calculate actual timestamp
+
+            return driveAndPoint
+                    .withVelocityX(MathUtil.applyDeadband(x, 0.1))
+                    .withVelocityY(MathUtil.applyDeadband(y, 0.1))
+                    .withTargetDirection(snapToHeading);
+        });
+    }
+
+    // Halts the drive wheels and moves the modules in x formation for maximum traction
+    public Command brake() {
+        return applyRequest(() -> brake);
+    }
+
     public Double getHubX(){
         if(!DriverStation.getAlliance().isEmpty() && DriverStation.getAlliance().get() == Alliance.Red){
             return hubXOffset + hubX;
@@ -469,7 +506,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
    // Command to aim at hub while moving with max translation speed scaler not deadband (Overrides Rotational aspect)
     public Command aimAtHubAndMove(double vx, double vy, double speedMultipliter) {
         return this.applyRequest(
-                () -> drive.withVelocityX(-vy * maxSpeed * speedMultipliter) // Drive forward with negative Y (forward)
+                () -> driveAndPoint.withVelocityX(-vy * maxSpeed * speedMultipliter) // Drive forward with negative Y (forward)
                         .withVelocityY(-vx * maxSpeed * speedMultipliter) // Drive left with negative X (left)
                         .withTargetDirection(new Rotation2d(Math.atan2(
                                 (hubY - currentPose2D.getMeasureY().in(Units.Meters)),
@@ -477,7 +514,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     public Command aimAtHubAndMove(CommandXboxController joystick, double speedMultipliter) {
-        return this.applyRequest(() -> drive.withVelocityX(
+        return this.applyRequest(() -> driveAndPoint.withVelocityX(
                         -joystick.getLeftY() * maxSpeed * speedMultipliter) // Drive forward with negative Y (forward)
                 .withVelocityY(-joystick.getLeftX() * maxSpeed * speedMultipliter) // Drive left with negative X (left)
                 .withHeadingPID(10, 0, 0)

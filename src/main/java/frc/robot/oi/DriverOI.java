@@ -10,7 +10,6 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
 import frc.robot.RobotContainer;
-import frc.robot.commands.drivetrain.LockWheels;
 import frc.robot.commands.drivetrain.RunIntake;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 

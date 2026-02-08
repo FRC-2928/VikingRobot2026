@@ -10,11 +10,9 @@ import static edu.wpi.first.units.Units.RotationsPerSecond;
 
 import java.util.List;
 
-import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import choreo.auto.AutoChooser;
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -39,22 +37,13 @@ public class RobotContainer {
     private double MaxAngularRate =
             RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
 
-    /* Setting up bindings for necessary control of the swerve drive platform */
-    private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
-            .withDeadband(MaxSpeed * 0.1)
-            .withRotationalDeadband(MaxAngularRate * 0.1) // Add a 10% deadband
-            .withDriveRequestType(DriveRequestType.OpenLoopVoltage) // Use open-loop control for drive motors
-            .withDesaturateWheelSpeeds(true);
-    private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
-    private final SwerveRequest.FieldCentricFacingAngle point = new SwerveRequest.FieldCentricFacingAngle();
-
     public final CommandXboxController joystick = new CommandXboxController(0);
 
     public final CommandSwerveDrivetrain drivetrain;
     public final Shooter shooter;
     public final Intake intake;
     private final Telemetry logger;
-    public final HopperFloor hopperFloor;
+    public final HopperFloor hopperFloor;  
 
     public RobotContainer() {
         this.drivetrain = TunerConstants.createDrivetrain();
@@ -80,16 +69,7 @@ public class RobotContainer {
 
         // Note that X is defined as forward according to WPILib convention,
         // and Y is defined as to the left according to WPILib convention.
-        drivetrain.setDefaultCommand(
-                // Drivetrain will execute this command periodically
-                drivetrain.applyRequest(
-                        () -> drive.withVelocityX(-MathUtil.applyDeadband(joystick.getLeftY(), 0.25)
-                                        * MaxSpeed) // Drive forward with negative Y (forward)
-                                .withVelocityY(-MathUtil.applyDeadband(joystick.getLeftX(), 0.65)
-                                        * MaxSpeed) // Drive left with negative X (left)
-                                .withRotationalRate(-joystick.getRightX()
-                                        * MaxAngularRate) // Drive counterclockwise with negative X (left)
-                        ));
+        drivetrain.setDefaultCommand(drivetrain.joystickDrive(driverOI));
 
         // Idle while the robot is disabled. This ensures the configured
         // neutral mode is applied to the drive motors while disabled.
@@ -97,11 +77,7 @@ public class RobotContainer {
         RobotModeTriggers.disabled()
                 .whileTrue(drivetrain.applyRequest(() -> idle).ignoringDisable(true));
 
-        joystick.a().whileTrue(drivetrain.applyRequest(() -> brake));
-        // joystick.b()
-        //         .whileTrue(drivetrain.applyRequest(
-        //                 () -> point.withTargetDirection(new Rotation2d(-joystick.getLeftY(),
-        // -joystick.getLeftX()))));
+        joystick.a().whileTrue(drivetrain.brake());
         // For testing purposes. TODO install new version of WPILIB and use 2026 field apriltag map
         joystick.rightBumper()
                 .whileTrue(new CenterLimelight(Units.Meters.of(0.5), Units.Meters.of(0), List.of(1), drivetrain));

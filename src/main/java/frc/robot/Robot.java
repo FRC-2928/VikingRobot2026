@@ -4,8 +4,6 @@
 
 package frc.robot;
 
-import java.io.FileNotFoundException;
-
 import com.ctre.phoenix6.HootAutoReplay;
 
 import org.littletonrobotics.junction.LoggedRobot;
@@ -37,7 +35,7 @@ public class Robot extends LoggedRobot {
 
     @Override
     public void robotInit() {
-        mRobotContainer.drivetrain.limelight.setIMUMode(1);
+        // mRobotContainer.drivetrain.limelight.setIMUMode(1);
     }
 
     @Override
@@ -45,20 +43,20 @@ public class Robot extends LoggedRobot {
         m_timeAndJoystickReplay.update();
         CommandScheduler.getInstance().run();
         mRobotContainer.drivetrain.limelight.setThrottleRate(isEnabled() ? 0 : 100);
-        try {
-            if (Tuning.publishData.get()) {
-                // TODO PUT IN REAL VALUES!!!!
-                Tuning.writeToCSV(
-                        Tuning.hoodAngle.get(),
-                        Tuning.releaseVelocity.get(),
-                        mRobotContainer.drivetrain.getDistanceFromHub());
-                Tuning.publishData.set(false);
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        mRobotContainer.drivetrain.limelight.setRobotOrientation(
-                mRobotContainer.drivetrain.getCurrentPose2D().getRotation().getMeasure());
+        // try {
+        //     if (Tuning.publishData.get()) {
+        //         // TODO PUT IN REAL VALUES!!!!
+        //         Tuning.writeToCSV(
+        //                 Tuning.hoodAngle.get(),
+        //                 Tuning.releaseVelocity.get(),
+        //                 mRobotContainer.drivetrain.getDistanceFromHub());
+        //         Tuning.publishData.set(false);
+        //     }
+        // } catch (FileNotFoundException e) {
+        //     e.printStackTrace();
+        // }
+        // mRobotContainer.drivetrain.limelight.setRobotOrientation(
+        //         mRobotContainer.drivetrain.getCurrentPose2D().getRotation().getMeasure());
     }
 
     @Override
@@ -68,7 +66,7 @@ public class Robot extends LoggedRobot {
 
     @Override
     public void disabledPeriodic() {
-        mRobotContainer.drivetrain.disabledPeriodic();
+        // mRobotContainer.drivetrain.disabledPeriodic();
     }
 
     @Override
