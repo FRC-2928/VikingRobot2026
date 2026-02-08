@@ -33,6 +33,8 @@ public class RobotContainer {
 		Tuning.flywheelVelocity.get(); // load the class to put the tuning controls on the dashboard
 		this.drivetrain = new Drivetrain();
 
+		this.climber = new Climber();
+		
 		NamedCommands.registerCommand("ScoreL4", new RunCommand(() -> {}).withTimeout(2));
 
 		// this.autonomousChooser = new LoggedDashboardChooser<>(
