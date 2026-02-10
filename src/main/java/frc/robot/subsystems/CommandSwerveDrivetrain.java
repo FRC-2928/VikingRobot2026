@@ -385,6 +385,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         this.gyro.updateInputs(this.gyroInputs);
         Logger.processInputs("Drivetrain/Gyro", this.gyroInputs);
         Logger.recordOutput("Drivetrain/Botpose", limelight.getBluePose3d());
+        Logger.recordOutput("Drivetrain/currentPose", currentPose2D);
         /*
          * Periodically try to apply the operator perspective.
          * If we haven't applied the operator perspective before, then we should apply it regardless of DS state.
@@ -467,7 +468,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return this.applyRequest(() -> drive.withVelocityX(
                         -joystick.getLeftY() * maxSpeed * speedMultipliter) // Drive forward with negative Y (forward)
                 .withVelocityY(-joystick.getLeftX() * maxSpeed * speedMultipliter) // Drive left with negative X (left)
-                .withHeadingPID(100, 0, 0)
+                .withHeadingPID(1, 0, 0)
                 .withTargetDirection(new Rotation2d(Math.atan2(
                         (hubY - currentPose2D.getMeasureY().in(Units.Meters)),
                         (hubX - currentPose2D.getMeasureX().in(Units.Meters))) + Math.PI)));
