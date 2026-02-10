@@ -69,7 +69,7 @@ public class DriverOI extends BaseOI {
 
     public void configureControls(RobotContainer cont) {
 
-        this.lockWheels.whileTrue(new LockWheels(cont.drivetrain, this));
+        // this.lockWheels.whileTrue(new LockWheels(cont.drivetrain, this));
         this.resetFOD.onTrue(new InstantCommand(cont.drivetrain::resetAngle));
         this.intake.whileTrue(new RunIntake(cont.intake));
         this.resetAngle.whileTrue(new RunCommand(cont.drivetrain::seedLimelightImu));

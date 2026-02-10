@@ -293,7 +293,7 @@ public class Constants {
             public final Angle hoodAngle;
             public final AngularVelocity shooterVelocity;
 
-            private AimValues(Angle hoodAngle, AngularVelocity shooterVelocity) {
+            public AimValues(Angle hoodAngle, AngularVelocity shooterVelocity) {
                 this.hoodAngle = hoodAngle;
                 this.shooterVelocity = shooterVelocity;
             }

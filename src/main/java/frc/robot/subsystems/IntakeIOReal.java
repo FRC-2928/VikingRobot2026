@@ -66,7 +66,7 @@ public class IntakeIOReal implements IntakeIO {
     @Override
     public void expand() {
         // Expand and stop once fully expanded
-        //intakeExpansionMotor.setControl();
+        // intakeExpansionMotor.setControl();
     }
 
     @Override

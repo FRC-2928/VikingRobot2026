@@ -66,8 +66,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     /* Keep track if we've ever applied the operator perspective before or not */
     private boolean m_hasAppliedOperatorPerspective = false;
 
-    private final Double hubX = 4.03;
+    private final Double hubX = 4.625594;
     private final Double hubY = 8.07 / 2;
+    private final Double hubXOffset = 7.2898;
     private final Double maxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
     public final FieldCentricFacingAngle drive = new FieldCentricFacingAngle()
             .withDeadband(maxSpeed * 0.1) // Add a 10% deadband
@@ -386,6 +387,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         Logger.processInputs("Drivetrain/Gyro", this.gyroInputs);
         Logger.recordOutput("Drivetrain/Botpose", limelight.getBluePose3d());
         Logger.recordOutput("Drivetrain/currentPose", currentPose2D);
+        Logger.recordOutput("Drivetrain/angleFromHub", this.getAngleToHub().in(Units.Degrees));
         /*
          * Periodically try to apply the operator perspective.
          * If we haven't applied the operator perspective before, then we should apply it regardless of DS state.
@@ -454,24 +456,40 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 (hubY - currentPose2D.getMeasureY().in(Units.Meters))));
     }
 
+    public Double getHubX(){
+        if(!DriverStation.getAlliance().isEmpty() && DriverStation.getAlliance().get() == Alliance.Red){
+            return hubXOffset + hubX;
+        }
+        else{
+            return hubX;
+        }
+        
+    }
+
    // Command to aim at hub while moving with max translation speed scaler not deadband (Overrides Rotational aspect)
-    public Command aimAtHubAndMove(Double vx, Double vy, Double speedMultipliter) {
+    public Command aimAtHubAndMove(double vx, double vy, double speedMultipliter) {
         return this.applyRequest(
                 () -> drive.withVelocityX(-vy * maxSpeed * speedMultipliter) // Drive forward with negative Y (forward)
                         .withVelocityY(-vx * maxSpeed * speedMultipliter) // Drive left with negative X (left)
                         .withTargetDirection(new Rotation2d(Math.atan2(
                                 (hubY - currentPose2D.getMeasureY().in(Units.Meters)),
-                                (hubX - currentPose2D.getMeasureX().in(Units.Meters))) + Math.PI)));
+                                (getHubX() - currentPose2D.getMeasureX().in(Units.Meters))) + Math.PI)));
     }
 
-    public Command aimAtHubAndMove(CommandXboxController joystick, Double speedMultipliter) {
+    public Command aimAtHubAndMove(CommandXboxController joystick, double speedMultipliter) {
         return this.applyRequest(() -> drive.withVelocityX(
                         -joystick.getLeftY() * maxSpeed * speedMultipliter) // Drive forward with negative Y (forward)
                 .withVelocityY(-joystick.getLeftX() * maxSpeed * speedMultipliter) // Drive left with negative X (left)
-                .withHeadingPID(1, 0, 0)
+                .withHeadingPID(10, 0, 0)
                 .withTargetDirection(new Rotation2d(Math.atan2(
                         (hubY - currentPose2D.getMeasureY().in(Units.Meters)),
-                        (hubX - currentPose2D.getMeasureX().in(Units.Meters))) + Math.PI)));
+                        (getHubX() - currentPose2D.getMeasureX().in(Units.Meters))) + Math.PI)));
+    }
+
+    public Angle getAngleToHub() {
+        return Units.Radians.of(Math.atan2(
+                (hubY - currentPose2D.getMeasureY().in(Units.Meters)),
+                (getHubX() - currentPose2D.getMeasureX().in(Units.Meters))) - currentPose2D.getRotation().getMeasure().in(Units.Radians));
     }
     // Command to locate fuel and intake them w/ limelight
 
