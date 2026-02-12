@@ -2,7 +2,7 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.commands.drivetrain;
+package frc.robot.commands.Intake;
 
 import edu.wpi.first.wpilibj2.command.Command;
 
@@ -32,7 +32,7 @@ public class RunIntake extends Command {
         // AngularVelocity speed = Units.RotationsPerSecond.of(10);
         double speed = Tuning.intakeSpeed.get();
         Logger.recordOutput("Intake/Speed", speed);
-        intake.runIntake(speed);
+        intake.setIntakeSpeed(speed);
         // Logger.recordOutput("Intake/Speed", speed);
         // intake.intakeIO.setSpeed();
     }

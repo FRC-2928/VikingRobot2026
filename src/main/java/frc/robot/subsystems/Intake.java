@@ -12,8 +12,12 @@ public class Intake extends SubsystemBase {
         this.intakeIO = new IntakeIOReal();
     }
 
-    public void runIntake(double speed) {
+    public void setIntakeSpeed(double speed) {
         intakeIO.setSpeed(speed);
+    }
+
+    public void retract() {
+        intakeIO.retract();
     }
 
     @Override

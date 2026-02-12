@@ -1,18 +1,17 @@
 package frc.robot.oi;
 
+import java.util.List;
+import java.util.function.Supplier;
+
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
 import frc.robot.RobotContainer;
-import frc.robot.commands.drivetrain.RunIntake;
+import frc.robot.commands.Intake.RunIntake;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
-
-import java.util.List;
-import java.util.function.Supplier;
 
 public class DriverOI extends BaseOI {
     public DriverOI(
