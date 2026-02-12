@@ -1,10 +1,10 @@
 package frc.robot.commands.climber;
 
-import edu.wpi.first.wpilibj2.command.Command;
-
 import org.littletonrobotics.junction.Logger;
 
-import frc.robot.*;
+import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.Constants;
+import frc.robot.Robot;
 
 
 public class climberCommand extends Command {

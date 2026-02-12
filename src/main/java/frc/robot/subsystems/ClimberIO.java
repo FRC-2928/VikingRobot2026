@@ -2,11 +2,6 @@ package frc.robot.subsystems;
 
 import org.littletonrobotics.junction.AutoLog;
 
-import edu.wpi.first.units.measure.Angle;
-
-import com.ctre.phoenix6.StatusSignal;
-import com.ctre.phoenix6.signals.ReverseLimitValue;
-
 public interface ClimberIO {
 	@AutoLog
 	public static class ClimberIOInputs {

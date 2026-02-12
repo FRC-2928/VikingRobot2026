@@ -6,15 +6,14 @@ import com.pathplanner.lib.auto.NamedCommands;
 
 import choreo.auto.AutoChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import frc.robot.commands.drivetrain.JoystickDrive;
 import frc.robot.oi.DriverOI;
 import frc.robot.oi.OperatorOI;
-import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Climber;
+import frc.robot.subsystems.Drivetrain;
 
 public class RobotContainer {
 	// public final LoggedDashboardChooser<Command> autonomousChooser;
