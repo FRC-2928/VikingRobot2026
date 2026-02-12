@@ -4,10 +4,7 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
 
-import java.util.Optional;
-import java.util.function.Supplier;
-
-import org.littletonrobotics.junction.Logger;
+import choreo.auto.AutoFactory;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
@@ -19,7 +16,6 @@ import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveRequest.FieldCentricFacingAngle;
 
-import choreo.auto.AutoFactory;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
@@ -43,12 +39,18 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+
 import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.robot.generated.TunerConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.lib.BLine.FollowPath;
 import frc.robot.oi.BaseOI;
 import frc.robot.vision.Limelight;
+
+import java.util.Optional;
+import java.util.function.Supplier;
+
+import org.littletonrobotics.junction.Logger;
 
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements
@@ -323,7 +325,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 this::getCurrentPose2D, this::resetPose, this::controlRobotDrivetrainAutonomus, true, this);
     }
 
-
     @Override
     public void periodic() {
         // handle state transitions as applicable
@@ -438,7 +439,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         mDesiredState = state;
     }
 
-// spotless: off
+    // spotless: off
     private ChassisSpeeds calculateSpeedsBasedOnJoystickInputs(BaseOI controllerOI) {
         if (DriverStation.getAlliance().isEmpty()) {
             return new ChassisSpeeds(0, 0, 0);
@@ -473,9 +474,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public Command joystickDrive(BaseOI controllerOI) {
         return applyRequest(() -> {
             return new SwerveRequest.ApplyFieldSpeeds()
-                .withSpeeds(calculateSpeedsBasedOnJoystickInputs(controllerOI))
-                .withDriveRequestType(DriveRequestType.OpenLoopVoltage)
-                .withDesaturateWheelSpeeds(true);
+                    .withSpeeds(calculateSpeedsBasedOnJoystickInputs(controllerOI))
+                    .withDriveRequestType(DriveRequestType.OpenLoopVoltage)
+                    .withDesaturateWheelSpeeds(true);
         });
         // return applyRequest(() -> {
         //     double x = -controllerOI.controller.getLeftY() * maxSpeed;
@@ -500,7 +501,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         //     //         .withTargetDirection(snapToHeading);
         // });
     }
-// spotless: on
+    // spotless: on
 
     /**
      * Returns a command that applies the specified control request to this swerve drivetrain.
@@ -643,15 +644,27 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     public Command aimAtHubAndMove(CommandXboxController joystick, double speedMultipliter, Angle offset) {
         return new ParallelCommandGroup(
-            this.applyRequest(
-                () -> driveAndPoint
-                    .withVelocityX(-joystick.getLeftY() * maxSpeed * speedMultipliter) // Drive forward with negative Y (forward)
-                    .withVelocityY(-joystick.getLeftX() * maxSpeed * speedMultipliter) // Drive left with negative X (left)
-                    .withTargetDirection(
-                        new Rotation2d(Math.atan2((hubY - currentPose2D.getMeasureY().in(Units.Meters)),
-                                      (getHubX() - currentPose2D.getMeasureX().in(Units.Meters)))
-                                        + (!DriverStation.getAlliance().isEmpty() && DriverStation.getAlliance().get() != Alliance.Red
-                                            ? 0 : 0))
+                this.applyRequest(() -> driveAndPoint
+                        .withVelocityX(-joystick.getLeftY()
+                                * maxSpeed
+                                * speedMultipliter) // Drive forward with negative Y (forward)
+                        .withVelocityY(
+                                -joystick.getLeftX() * maxSpeed * speedMultipliter) // Drive left with negative X (left)
+                        .withTargetDirection(new Rotation2d(Math.atan2(
+                                                (hubY
+                                                        - currentPose2D
+                                                                .getMeasureY()
+                                                                .in(Units.Meters)),
+                                                (getHubX()
+                                                        - currentPose2D
+                                                                .getMeasureX()
+                                                                .in(Units.Meters)))
+                                        + (!DriverStation.getAlliance().isEmpty()
+                                                        && DriverStation.getAlliance()
+                                                                        .get()
+                                                                != Alliance.Red
+                                                ? 0
+                                                : 0))
                                 .plus(new Rotation2d(offset)))),
                 new RunCommand(() -> snapToHeading =
                         new Rotation2d(currentPose2D.getRotation().getRadians())));
