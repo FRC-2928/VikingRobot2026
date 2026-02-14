@@ -162,12 +162,11 @@ public class Constants {
                     // S1In --> Expension??
                     .withS1CloseState(
                             S1CloseStateValue.CloseWhenLow) // Intake Expansion limit switch -- closed when low
-                    .withS1FloatState(S1FloatStateValue.FloatDetect) // Intake Expansion limit switch -- high when open
+                    .withS1FloatState(S1FloatStateValue.PullHigh) // Intake Expansion limit switch -- high when open
                     // S2In --> Retraction??
                     .withS2CloseState(
                             S2CloseStateValue.CloseWhenLow) // Intake Retraction limit switch -- closed when low
-                    .withS2FloatState(
-                            S2FloatStateValue.FloatDetect); // Intake Retraction limit switch -- high when open
+                    .withS2FloatState(S2FloatStateValue.PullHigh); // Intake Retraction limit switch -- high when open
 
             public static synchronized CANdi getInstance() {
                 if (sInstance != null) {
