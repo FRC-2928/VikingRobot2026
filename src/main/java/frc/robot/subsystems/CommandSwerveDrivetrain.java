@@ -37,7 +37,9 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -74,7 +76,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private final Double maxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
     private final double maxAngularRate =
             Units.RotationsPerSecond.of(0.75).in(Units.RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
-    private final FieldCentricFacingAngle driveAndPoint = new FieldCentricFacingAngle()
+    public final FieldCentricFacingAngle driveAndPoint = new FieldCentricFacingAngle()
             .withDeadband(maxSpeed * 0.1) // Add a 10% deadband
             .withRotationalDeadband(maxAngularRate * 0.1)
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage) // Use open-loop control for drive motors
@@ -86,9 +88,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
             .withDeadband(maxSpeed * 0.1)
             .withRotationalDeadband(maxAngularRate * 0.1) // Add a 10% deadband
-            .withDriveRequestType(DriveRequestType.Velocity) // Use open-loop control for drive motors
+            .withDriveRequestType(DriveRequestType.OpenLoopVoltage) // Use open-loop control for drive motors
             .withDesaturateWheelSpeeds(true);
     private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
+
+    private double lastUpdate = Timer.getFPGATimestamp();
 
     /* Swerve requests to apply during SysId characterization */
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization =
@@ -117,7 +121,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private final PIDController choreoYController = new PIDController(5, 0, 0);
     private final PIDController choreoHeadingController = new PIDController(5, 0, 0.2);
 
-    private Rotation2d snapToHeading = new Rotation2d(0);
+    private Rotation2d snapToHeading = (!DriverStation.getAlliance().isEmpty() && DriverStation.getAlliance().get() == Alliance.Red) ? new Rotation2d(Math.PI) : new Rotation2d(0);
 
     /* SysId routine for characterizing translation. This is used to find PID gains for the drive motors. */
     private final SysIdRoutine m_sysIdRoutineTranslation = new SysIdRoutine(
@@ -399,7 +403,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         // Logger.processInputs("Drivetrain/Gyro", this.gyroInputs);
         Logger.recordOutput("Drivetrain/Botpose", limelight.getBluePose3d());
         Logger.recordOutput("Drivetrain/currentPose", currentPose2D);
-        Logger.recordOutput("Drivetrain/angleFromHub", this.getAngleToHub().in(Units.Degrees));
+        Logger.recordOutput("Drivetrain/angleFromHub", this.getAngleToHub(Units.Radians.of(0)).in(Units.Degrees));
+        Logger.recordOutput("Drivetrain/TargetHeading", snapToHeading.getMeasure().in(Units.Degrees));
+        Logger.recordOutput("Drivetrain/DistanceFromHub", this.getDistanceFromHub().in(Units.Meters));
+        Logger.recordOutput("Drivetrain/relativeDistanceFromHub", currentPose2D.relativeTo(new Pose2d(Units.Meters.of(getHubX()), Units.Meters.of(hubY), new Rotation2d())));
+        // currentPose2D.getRotation().rotateBy(new Rotation2d(Units.Radian.of(Math.PI)))
         /*
          * Periodically try to apply the operator perspective.
          * If we haven't applied the operator perspective before, then we should apply it regardless of DS state.
@@ -461,30 +469,30 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         // System.out.println("SetImuMode2 yay Limelight !!!!!!!!!!!!");
     }
 
-    public Distance getDistanceFromHub() {
-
-        return Units.Meters.of(Math.hypot(
-                (hubX - currentPose2D.getMeasureX().in(Units.Meters)),
-                (hubY - currentPose2D.getMeasureY().in(Units.Meters))));
-    }
+    
 
     public Command joystickDrive(BaseOI controllerOI) {
         return applyRequest(() -> {
             double x = -controllerOI.controller.getLeftY() * maxSpeed;
             double y = -controllerOI.controller.getLeftX() * maxSpeed;
 
-            double rx = -controllerOI.controller.getRightX();
-            double ry = -controllerOI.controller.getRightY();
-
-            double rotationRate = MathUtil.applyDeadband(rx * maxAngularRate, 0.3);
+            double rx = MathUtil.applyDeadband(-controllerOI.controller.getRightX(), 0.3);
+            double rotationRate = rx * maxAngularRate;
 
             snapToHeading = snapToHeading.plus(new Rotation2d(
-                    rotationRate * 0.02)); // TODO: change 0.02 constant timestep to calculate actual timestamp
-
-            return driveAndPoint
+                    rotationRate * (Timer.getFPGATimestamp() - lastUpdate))); // TODO: change 0.02 constant timestep to calculate actual timestamp
+            lastUpdate = Timer.getFPGATimestamp();
+            Logger.recordOutput("Drivetrain/inRotateMode", rotationRate != 0);
+            var skewCompensation = currentChassisSpeeds.omegaRadiansPerSecond * -0.03;
+                snapToHeading = new Rotation2d(currentPose2D.getRotation().getMeasure());
+                return drive
                     .withVelocityX(MathUtil.applyDeadband(x, 0.1))
                     .withVelocityY(MathUtil.applyDeadband(y, 0.1))
-                    .withTargetDirection(snapToHeading);
+                    .withRotationalRate(rotationRate + skewCompensation);
+            // return driveAndPoint
+            //         .withVelocityX(MathUtil.applyDeadband(x, 0.1))
+            //         .withVelocityY(MathUtil.applyDeadband(y, 0.1))
+            //         .withTargetDirection(snapToHeading);
         });
     }
 
@@ -509,24 +517,30 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 () -> driveAndPoint.withVelocityX(-vy * maxSpeed * speedMultipliter) // Drive forward with negative Y (forward)
                         .withVelocityY(-vx * maxSpeed * speedMultipliter) // Drive left with negative X (left)
                         .withTargetDirection(new Rotation2d(Math.atan2(
-                                (hubY - currentPose2D.getMeasureY().in(Units.Meters)),
-                                (getHubX() - currentPose2D.getMeasureX().in(Units.Meters))) + Math.PI)));
+                            (hubY - currentPose2D.getMeasureY().in(Units.Meters)),
+                            (getHubX() - currentPose2D.getMeasureX().in(Units.Meters))) + Math.PI)));
     }
 
-    public Command aimAtHubAndMove(CommandXboxController joystick, double speedMultipliter) {
-        return this.applyRequest(() -> driveAndPoint.withVelocityX(
-                        -joystick.getLeftY() * maxSpeed * speedMultipliter) // Drive forward with negative Y (forward)
+    public Command aimAtHubAndMove(CommandXboxController joystick, double speedMultipliter, Angle offset) {
+        return new ParallelCommandGroup(this.applyRequest(() -> driveAndPoint.withVelocityX(-joystick.getLeftY() * maxSpeed * speedMultipliter) // Drive forward with negative Y (forward)
                 .withVelocityY(-joystick.getLeftX() * maxSpeed * speedMultipliter) // Drive left with negative X (left)
-                .withHeadingPID(10, 0, 0)
                 .withTargetDirection(new Rotation2d(Math.atan2(
-                        (hubY - currentPose2D.getMeasureY().in(Units.Meters)),
-                        (getHubX() - currentPose2D.getMeasureX().in(Units.Meters))) + Math.PI)));
+                    (hubY - currentPose2D.getMeasureY().in(Units.Meters)),
+                    (getHubX() - currentPose2D.getMeasureX().in(Units.Meters))) + (!DriverStation.getAlliance().isEmpty() && DriverStation.getAlliance().get() != Alliance.Red ? 0 : 0)).plus(new Rotation2d(offset)))),
+                new RunCommand(() -> snapToHeading = new Rotation2d(currentPose2D.getRotation().getRadians())));
     }
 
-    public Angle getAngleToHub() {
+    public Angle getAngleToHub(Angle offset) {
         return Units.Radians.of(Math.atan2(
                 (hubY - currentPose2D.getMeasureY().in(Units.Meters)),
-                (getHubX() - currentPose2D.getMeasureX().in(Units.Meters))) - currentPose2D.getRotation().getMeasure().in(Units.Radians));
+                (getHubX() - currentPose2D.getMeasureX().in(Units.Meters))) - currentPose2D.getRotation().getMeasure().in(Units.Radians)).plus(offset);
+    }
+
+    public Distance getDistanceFromHub() {
+
+        return Units.Meters.of(Math.hypot(
+                (getHubX() - currentPose2D.getMeasureX().in(Units.Meters)),
+                (hubY - currentPose2D.getMeasureY().in(Units.Meters))));
     }
     // Command to locate fuel and intake them w/ limelight
 

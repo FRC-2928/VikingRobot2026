@@ -2,10 +2,13 @@ package frc.robot.subsystems;
 
 import java.util.function.DoubleSupplier;
 
+import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -47,21 +50,32 @@ public class Shooter extends SubsystemBase {
     }
 
     // Runs flywheels and kicker. Command will not end on its own
-    public Command startShooting(AngularVelocity velocity, int kickerVoltage) {
+    public Command startShooting(AngularVelocity velocity, double kickerVoltage) {
         return new ParallelCommandGroup(startFlywheels(velocity), startKicker());
     }
 
+    public Command shootWithDistance(Distance distance, double kickerVoltage) {
+        return startShooting(getShooterVelocity(distance), kickerVoltage);
+    }
+
     // Spins up flywheels to speed and turns hood to correct angle. Command will not end on its own
-    public Command getReadyToShoot(DoubleSupplier distance) {
+    public Command getReadyToShoot(Distance distance) {
         AimValues vals;
         if(Constants.mode == Constants.Mode.REAL) {
-            vals = Constants.Shooter.lookUpTable.get(distance.getAsDouble());
+            vals = Constants.Shooter.lookUpTable.get(distance.in(Units.Meters));
         }
         else{
             vals = new AimValues(Units.Degrees.of(30), Units.DegreesPerSecond.of(5000));
         }
 
         return new ParallelCommandGroup(startFlywheels(vals.shooterVelocity), turnHood(vals.hoodAngle));
+    }
+
+    public AngularVelocity getShooterVelocity(Distance distance) {
+        if(Constants.mode != Constants.Mode.REAL) {
+            return Units.DegreesPerSecond.of(5000);
+        }
+        return Constants.Shooter.lookUpTable.get(distance.in(Units.Meters)).shooterVelocity;
     }
 
     // Stops robot from shooting

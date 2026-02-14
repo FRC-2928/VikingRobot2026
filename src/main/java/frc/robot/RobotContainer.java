@@ -25,6 +25,8 @@ import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.HopperFloor;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
+import frc.robot.subsystems.ShooterIO;
+import frc.robot.subsystems.ShooterIO.ShooterIOInputs;
 
 public class RobotContainer {
     // TODO organize Driver and Operator bindings
@@ -41,6 +43,7 @@ public class RobotContainer {
 
     public final CommandSwerveDrivetrain drivetrain;
     public final Shooter shooter;
+    public final ShooterIOInputs shooterIO;;
     public final Intake intake;
     private final Telemetry logger;
     public final HopperFloor hopperFloor;  
@@ -48,11 +51,12 @@ public class RobotContainer {
     public RobotContainer() {
         this.drivetrain = TunerConstants.createDrivetrain();
         this.shooter = new Shooter();
+        this.shooterIO = new ShooterIOInputs();
         this.intake = new Intake();
         this.hopperFloor = new HopperFloor();
         this.logger = new Telemetry(MaxSpeed, drivetrain);
         this.autoChooser = Autonomous.getChoreoAutoChooser(drivetrain);
-        this.driverOI = new DriverOI(joystick, drivetrain);
+        this.driverOI = new DriverOI(joystick, drivetrain, this);
         autoChooser.select("SimpleFromRight");
         // TODO: implement drive mode chooser (point, turn modes). Joystick drive needs to consume the chosen mode
         // this.driveModeChooser = new LoggedDashboardChooser<>("Drive Mode", JoystickDrive.createDriveModeChooser());
@@ -84,7 +88,7 @@ public class RobotContainer {
 
         // Run SysId routines when holding back/start and X/Y.
         // Note that each routine should be run exactly once in a single log.
-        joystick.x().whileTrue(drivetrain.aimAtHubAndMove(joystick, 1.0));
+        joystick.x().whileTrue(drivetrain.aimAtHubAndMove(joystick, 1.0, Units.Radians.of(0)));
         joystick.back().and(joystick.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
         joystick.back().and(joystick.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
         joystick.start().and(joystick.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));

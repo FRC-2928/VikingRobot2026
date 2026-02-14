@@ -258,7 +258,8 @@ public class Constants {
 
         public static final Angle hoodAngle = Units.Degrees.of(0);
         public static final LinearVelocity releaseVelocity = Units.FeetPerSecond.of(0);
-
+        public static final Angle toleranceFromHub = Units.Degrees.of(10);
+        public static final AngularVelocity shooterVelocityTolerance = Units.RotationsPerSecond.of(10);
         public static final double pivotCurrentLimit = 40;
         public static final AngularVelocity pivotMaxVelocityShoot = Units.DegreesPerSecond.of(2);
         public static final Slot0Configs flywheelGainsSlot0 = new Slot0Configs()

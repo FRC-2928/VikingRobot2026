@@ -42,6 +42,7 @@ public final class Tuning {
     public static final LoggedNetworkNumber intakeVelocity = new LoggedNetworkNumber(
             "Tuning/IntakeVelocity", Constants.Intake.intakeVelocity.in(Units.DegreesPerSecond));
 
+
     public static void writeToCSV(double hAngle, double rVelocity, Distance distanceFromTarget)
             throws FileNotFoundException {
         File csvOutputFile = new File(Filesystem.getOperatingDirectory().getAbsolutePath() + "/ShootingTuner.csv");
