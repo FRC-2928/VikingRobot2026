@@ -12,6 +12,7 @@ import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.ForwardLimitSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.ReverseLimitSourceValue;
 
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
@@ -23,10 +24,14 @@ public class IntakeIOReal implements IntakeIO {
     private TalonFX intakeRollerMotor;
     private TalonFX intakeExpansionMotor;
     public StatusSignal<AngularVelocity> intakeAngularVelocity;
-    private PositionTorqueCurrentFOC positionTorqueCurrentFOC;
-    private PositionVoltage positionVoltage;
+    private PositionTorqueCurrentFOC retractPositionTorqueCurrentFOC;
+    private PositionVoltage expansionPositionVoltage;
     private final Angle closedAngle = Units.Rotations.of(0);
-    private final Angle openAngle = Units.Rotations.of(360);
+    private final Angle openAngle = Units.Rotations.of(10);
+
+    // Data goten 02/11/26 Wednesday
+    // Hopper extemsion: 11 iches and 3 quarters
+    // Gear ratio: 1 to 3
 
     public IntakeIOReal() {
         // The Intake Roller motor
@@ -59,7 +64,17 @@ public class IntakeIOReal implements IntakeIO {
         // TODO determine correct currect limit switch values
         HardwareLimitSwitchConfigs hardwareLimitSwitchConfigs = new HardwareLimitSwitchConfigs()
                 .withForwardLimitEnable(true)
-                .withForwardLimitSource(ForwardLimitSourceValue.LimitSwitchPin);
+                .withForwardLimitSource(ForwardLimitSourceValue.LimitSwitchPin)
+                .withForwardLimitRemoteSensorID(Constants.CAN.CTRE.intakeSensor)
+                .withReverseLimitEnable(true)
+                .withReverseLimitSource(ReverseLimitSourceValue.LimitSwitchPin)
+                .withReverseLimitRemoteSensorID(Constants.CAN.CTRE.intakeSensor);
+
+        intakeExpansionConfig.SoftwareLimitSwitch
+			.withForwardSoftLimitEnable(true)
+			.withForwardSoftLimitThreshold(Units.Rotations.of(100)) // Chnage this software limit later
+                        .withReverseSoftLimitEnable(true)
+			.withReverseSoftLimitThreshold(Units.Rotations.of(100)); // Chnage this software limit later
 
         MotorOutputConfigs intakeExpansionOutputConfigs =
                 new MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive);
@@ -67,17 +82,17 @@ public class IntakeIOReal implements IntakeIO {
                 .withMotorOutput(intakeExpansionOutputConfigs)
                 .withCurrentLimits(intakeExpansionCurrentLimitsConfigs)
                 .withHardwareLimitSwitch(hardwareLimitSwitchConfigs);
-        intakeRollerMotor.getConfigurator().apply(intakeExpansionConfig); // apply the config settings
+        intakeExpansionMotor.getConfigurator().apply(intakeExpansionConfig); // apply the config settings
 
         this.intakeAngularVelocity = this.intakeRollerMotor.getRotorVelocity();
         BaseStatusSignal.setUpdateFrequencyForAll(Units.Hertz.of(100), intakeAngularVelocity);
 
-        positionTorqueCurrentFOC = new PositionTorqueCurrentFOC(Units.Rotation.of(0))
+        retractPositionTorqueCurrentFOC = new PositionTorqueCurrentFOC(Units.Rotation.of(0))
                 .withSlot(0)
                 .withLimitReverseMotion(true)
                 .withLimitForwardMotion(true);
 
-        positionVoltage = new PositionVoltage(openAngle)
+        expansionPositionVoltage = new PositionVoltage(openAngle)
                 .withSlot(1)
                 .withLimitReverseMotion(true)
                 .withLimitForwardMotion(true);
@@ -92,13 +107,13 @@ public class IntakeIOReal implements IntakeIO {
     @Override
     public void expand() {
         // Expand and stop once fully expanded
-        intakeExpansionMotor.setControl(positionVoltage.withPosition(openAngle));
+        intakeExpansionMotor.setControl(expansionPositionVoltage.withPosition(openAngle));
     }
 
     @Override
     public void retract() {
         // Retract using the torque control
-        intakeExpansionMotor.setControl(positionTorqueCurrentFOC.withPosition(closedAngle));
+        intakeExpansionMotor.setControl(retractPositionTorqueCurrentFOC.withPosition(closedAngle));
     }
 
     @Override

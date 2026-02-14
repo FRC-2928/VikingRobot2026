@@ -1,5 +1,7 @@
 package frc.robot;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.AudioConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
@@ -140,6 +142,7 @@ public class Constants {
 
             public static final int intakeRoller = 16;
             public static final int intakeExpansion = 99;
+            public static final int intakeSensor = 99; // TODO: put in sensor ID
         }
     }
 
