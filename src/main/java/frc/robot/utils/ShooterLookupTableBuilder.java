@@ -18,7 +18,7 @@ public class ShooterLookupTableBuilder {
     private static final String DATA_DIRECTORY = "/home/lvuser/shooter_data";
     private static final String CURRENT_SESSION_FILE = "current_session.csv";
     private static final String MASTER_DATA_FILE = "shooter_lookup_data.csv";
-    
+
     private final String sessionFilePath;
     private final String masterFilePath;
     private boolean initialized = false;
@@ -66,22 +66,21 @@ public class ShooterLookupTableBuilder {
     /**
      * Record a new data point
      */
-    public boolean recordDataPoint(double distanceMeters, double velocityRPS, 
-                                   double hoodAngleDegrees, boolean successful, String notes) {
+    public boolean recordDataPoint(
+            double distanceMeters, double velocityRPS, double hoodAngleDegrees, boolean successful, String notes) {
         if (!initialized) {
             System.err.println("ShooterLookupTableBuilder not initialized!");
             return false;
         }
 
-        ShooterDataPoint dataPoint = new ShooterDataPoint(
-            distanceMeters, velocityRPS, hoodAngleDegrees, successful, notes
-        );
+        ShooterDataPoint dataPoint =
+                new ShooterDataPoint(distanceMeters, velocityRPS, hoodAngleDegrees, successful, notes);
 
         try {
             // Append to both session and master files
             appendDataPoint(sessionFilePath, dataPoint);
             appendDataPoint(masterFilePath, dataPoint);
-            
+
             System.out.println("Recorded: " + dataPoint.toCSV());
             return true;
         } catch (IOException e) {
@@ -104,7 +103,7 @@ public class ShooterLookupTableBuilder {
                 Files.move(Paths.get(sessionFilePath), Paths.get(archivePath));
                 System.out.println("Archived session to: " + archivePath);
             }
-            
+
             // Create new session file
             writeHeader(sessionFilePath);
             System.out.println("Started new session");

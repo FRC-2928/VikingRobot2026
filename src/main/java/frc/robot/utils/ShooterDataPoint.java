@@ -11,8 +11,8 @@ public class ShooterDataPoint {
     private final boolean successful;
     private final String notes;
 
-    public ShooterDataPoint(double distanceMeters, double velocityRPS, double hoodAngleDegrees, 
-                           boolean successful, String notes) {
+    public ShooterDataPoint(
+            double distanceMeters, double velocityRPS, double hoodAngleDegrees, boolean successful, String notes) {
         this.distanceMeters = distanceMeters;
         this.velocityRPS = velocityRPS;
         this.hoodAngleDegrees = hoodAngleDegrees;
@@ -21,20 +21,37 @@ public class ShooterDataPoint {
         this.notes = notes;
     }
 
-    public double getDistanceMeters() { return distanceMeters; }
-    public double getVelocityRPS() { return velocityRPS; }
-    public double getHoodAngleDegrees() { return hoodAngleDegrees; }
-    public long getTimestamp() { return timestamp; }
-    public boolean isSuccessful() { return successful; }
-    public String getNotes() { return notes; }
+    public double getDistanceMeters() {
+        return distanceMeters;
+    }
+
+    public double getVelocityRPS() {
+        return velocityRPS;
+    }
+
+    public double getHoodAngleDegrees() {
+        return hoodAngleDegrees;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public boolean isSuccessful() {
+        return successful;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
 
     /**
      * Convert to CSV format
      */
     public String toCSV() {
-        return String.format("%.3f,%.3f,%.3f,%d,%b,%s",
-            distanceMeters, velocityRPS, hoodAngleDegrees, timestamp, successful, 
-            notes.replace(",", ";"));
+        return String.format(
+                "%.3f,%.3f,%.3f,%d,%b,%s",
+                distanceMeters, velocityRPS, hoodAngleDegrees, timestamp, successful, notes.replace(",", ";"));
     }
 
     /**

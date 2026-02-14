@@ -32,9 +32,7 @@ public class RecordShooterDataCommand extends Command {
 
     @Override
     public void initialize() {
-        finished = dataBuilder.recordDataPoint(
-            distanceMeters, velocityRPS, hoodAngleDegrees, successful, notes
-        );
+        finished = dataBuilder.recordDataPoint(distanceMeters, velocityRPS, hoodAngleDegrees, successful, notes);
     }
 
     @Override

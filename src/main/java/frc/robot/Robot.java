@@ -4,13 +4,13 @@
 
 package frc.robot;
 
+import com.ctre.phoenix6.HootAutoReplay;
+
 import org.littletonrobotics.junction.LoggedPowerDistribution;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
-
-import com.ctre.phoenix6.HootAutoReplay;
 
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
@@ -29,9 +29,9 @@ public class Robot extends LoggedRobot {
     /* log and replay timestamp and joystick data */
     private final HootAutoReplay m_timeAndJoystickReplay =
             new HootAutoReplay().withTimestampReplay().withJoystickReplay();
-	// Shooter data collection
-	private ShooterLookupTableBuilder shooterDataBuilder;
-	private ShooterDataCollector shooterDataCollector;
+    // Shooter data collection
+    private ShooterLookupTableBuilder shooterDataBuilder;
+    private ShooterDataCollector shooterDataCollector;
 
     public Robot() {
         Logger.addDataReceiver(new WPILOGWriter());
@@ -46,12 +46,12 @@ public class Robot extends LoggedRobot {
     public void robotInit() {
         // mRobotContainer.drivetrain.limelight.setIMUMode(1);
         // Initialize shooter data collection
-		shooterDataBuilder = new ShooterLookupTableBuilder();
-		shooterDataBuilder.initialize();
+        shooterDataBuilder = new ShooterLookupTableBuilder();
+        shooterDataBuilder.initialize();
 
-		// Use real IO for robot hardware, could use sim IO for simulation
-		ShooterDataCollectorIO io = new ShooterDataCollectorIOReal();
-		shooterDataCollector = new ShooterDataCollector(shooterDataBuilder, io);
+        // Use real IO for robot hardware, could use sim IO for simulation
+        ShooterDataCollectorIO io = new ShooterDataCollectorIOReal();
+        shooterDataCollector = new ShooterDataCollector(shooterDataBuilder, io);
     }
 
     @Override
@@ -61,8 +61,8 @@ public class Robot extends LoggedRobot {
         LoggedPowerDistribution.getInstance(Constants.CAN.Misc.pdh, ModuleType.kRev);
         mRobotContainer.drivetrain.limelight.setThrottleRate(isEnabled() ? 0 : 100);
 
-		// Update shooter data collector (checks for dashboard input)
-		shooterDataCollector.periodic();
+        // Update shooter data collector (checks for dashboard input)
+        shooterDataCollector.periodic();
 
         // try {
         //     if (Tuning.publishData.get()) {

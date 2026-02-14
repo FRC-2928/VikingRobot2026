@@ -3,7 +3,6 @@ package frc.robot.oi;
 import java.util.List;
 import java.util.function.Supplier;
 
-import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -11,12 +10,12 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
 import frc.robot.RobotContainer;
-import frc.robot.Tuning;
 import frc.robot.commands.drivetrain.RunIntake;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
 public class DriverOI extends BaseOI {
-    public DriverOI(final CommandXboxController controller, CommandSwerveDrivetrain drivetrain, RobotContainer robotContainer) {
+    public DriverOI(
+            final CommandXboxController controller, CommandSwerveDrivetrain drivetrain, RobotContainer robotContainer) {
         super(controller);
 
         this.driveAxial = this.controller::getLeftY;
@@ -33,8 +32,8 @@ public class DriverOI extends BaseOI {
 
         this.intake = this.controller.b();
 
-        // this.shotConditionsMet = new Trigger(() -> {return 
-        //     (drivetrain.getAngleToHub().lte(Constants.Shooter.toleranceFromHub) &&  
+        // this.shotConditionsMet = new Trigger(() -> {return
+        //     (drivetrain.getAngleToHub().lte(Constants.Shooter.toleranceFromHub) &&
         //         ((robotContainer.shooter.inputs.flywheelSpeedA.minus
         //             (robotContainer.shooter.getShooterVelocity(drivetrain.getDistanceFromHub())))
         //             .lte(Constants.Shooter.shooterVelocityTolerance)
@@ -83,6 +82,7 @@ public class DriverOI extends BaseOI {
         this.resetAngle.whileFalse(new RunCommand(cont.drivetrain::setImuMode2));
         // this.spinKicker.onTrue(cont.shooter.startKicker());
         // this.shotConditionsMet.and(getReadyToShoot).whileTrue(cont.shooter.shootWithDistance(cont.drivetrain.getDistanceFromHub(), Tuning.kickerSpeed.get()));
-        this.getReadyToShoot.onTrue(cont.shooter.getReadyToShoot(cont.drivetrain.getDistanceFromHub())); // TODO: Put actual supplier into this.
+        this.getReadyToShoot.onTrue(cont.shooter.getReadyToShoot(
+                cont.drivetrain.getDistanceFromHub())); // TODO: Put actual supplier into this.
     }
 }

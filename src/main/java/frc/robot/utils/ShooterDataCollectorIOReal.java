@@ -1,17 +1,15 @@
 package frc.robot.utils;
 
+import edu.wpi.first.networktables.BooleanEntry;
+import edu.wpi.first.networktables.BooleanPublisher;
+import edu.wpi.first.networktables.DoubleEntry;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.BooleanPublisher;
-import edu.wpi.first.networktables.StringPublisher;
-import edu.wpi.first.networktables.DoubleEntry;
-import edu.wpi.first.networktables.BooleanEntry;
 import edu.wpi.first.networktables.StringEntry;
 
 public class ShooterDataCollectorIOReal implements ShooterDataCollectorIO {
     private final NetworkTable table;
-    
+
     // Use entries so we can both read and write (publish default values)
     private final DoubleEntry distanceInput;
     private final DoubleEntry velocityInput;
@@ -24,7 +22,7 @@ public class ShooterDataCollectorIOReal implements ShooterDataCollectorIO {
     public ShooterDataCollectorIOReal() {
         NetworkTableInstance inst = NetworkTableInstance.getDefault();
         table = inst.getTable("ShooterData");
-        
+
         // Create entries and publish default values so they appear in Elastic
         distanceInput = table.getDoubleTopic("distance_m").getEntry(0.0);
         velocityInput = table.getDoubleTopic("velocity_rps").getEntry(0.0);
@@ -33,7 +31,7 @@ public class ShooterDataCollectorIOReal implements ShooterDataCollectorIO {
         notesInput = table.getStringTopic("notes").getEntry("");
         recordTrigger = table.getBooleanTopic("record_trigger").getEntry(false);
         recordingStatus = table.getBooleanTopic("recording_status").publish();
-        
+
         // Publish initial values
         distanceInput.set(0.0);
         velocityInput.set(0.0);
@@ -42,7 +40,7 @@ public class ShooterDataCollectorIOReal implements ShooterDataCollectorIO {
         notesInput.set("");
         recordTrigger.set(false);
         recordingStatus.set(false);
-        
+
         System.out.println("ShooterData NetworkTables topics published and ready for Elastic");
     }
 

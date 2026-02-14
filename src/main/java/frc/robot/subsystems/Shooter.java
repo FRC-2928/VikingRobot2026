@@ -74,7 +74,7 @@ public class Shooter extends SubsystemBase {
     }
 
     public AngularVelocity getShooterVelocity(Distance distance) {
-        if(Constants.mode != Constants.Mode.REAL) {
+        if (Constants.mode != Constants.Mode.REAL) {
             return Units.DegreesPerSecond.of(5000);
         }
         return Constants.Shooter.lookUpTable.get(distance.in(Units.Meters)).shooterVelocity;

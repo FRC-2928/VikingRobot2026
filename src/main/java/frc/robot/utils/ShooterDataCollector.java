@@ -10,14 +10,14 @@ public class ShooterDataCollector {
     private final ShooterLookupTableBuilder dataBuilder;
     private final ShooterDataCollectorIO io;
     private final ShooterDataCollectorIOInputsAutoLogged inputs = new ShooterDataCollectorIOInputsAutoLogged();
-    
+
     private boolean lastTriggerState = false;
     private int totalRecordedPoints = 0;
 
     public ShooterDataCollector(ShooterLookupTableBuilder dataBuilder, ShooterDataCollectorIO io) {
         this.dataBuilder = dataBuilder;
         this.io = io;
-        
+
         System.out.println("ShooterDataCollector initialized with AdvantageKit logging");
     }
 
@@ -28,20 +28,20 @@ public class ShooterDataCollector {
     public void periodic() {
         // Update inputs from NetworkTables
         io.updateInputs(inputs);
-        
+
         // Log all inputs to AdvantageKit
         Logger.processInputs("ShooterDataCollector", inputs);
-        
+
         // Update total count in inputs for logging
         inputs.totalRecordedPoints = totalRecordedPoints;
-        
+
         boolean currentTrigger = inputs.recordTrigger;
-        
+
         // Detect rising edge (false -> true transition)
         if (currentTrigger && !lastTriggerState) {
             recordDataPoint();
         }
-        
+
         lastTriggerState = currentTrigger;
     }
 
@@ -54,18 +54,16 @@ public class ShooterDataCollector {
         double hoodAngle = inputs.hoodAngleDegrees;
         boolean successful = inputs.successful;
         String notes = inputs.notes;
-        
+
         // Flash recording status
         inputs.recordingStatus = true;
         io.setRecordingStatus(true);
-        
-        boolean success = dataBuilder.recordDataPoint(
-            distance, velocity, hoodAngle, successful, notes
-        );
-        
+
+        boolean success = dataBuilder.recordDataPoint(distance, velocity, hoodAngle, successful, notes);
+
         if (success) {
             totalRecordedPoints++;
-            
+
             // Log the recorded data point to AdvantageKit
             Logger.recordOutput("ShooterDataCollector/LastRecorded/Distance", distance);
             Logger.recordOutput("ShooterDataCollector/LastRecorded/Velocity", velocity);
@@ -73,25 +71,25 @@ public class ShooterDataCollector {
             Logger.recordOutput("ShooterDataCollector/LastRecorded/Successful", successful);
             Logger.recordOutput("ShooterDataCollector/LastRecorded/Notes", notes);
             Logger.recordOutput("ShooterDataCollector/TotalPoints", totalRecordedPoints);
-            
+
             System.out.println(String.format(
-                "Recorded from dashboard: dist=%.2fm, vel=%.1frps, angle=%.1fdeg, success=%b",
-                distance, velocity, hoodAngle, successful
-            ));
+                    "Recorded from dashboard: dist=%.2fm, vel=%.1frps, angle=%.1fdeg, success=%b",
+                    distance, velocity, hoodAngle, successful));
         }
-        
+
         // Reset trigger and status after brief delay
         new Thread(() -> {
-            try {
-                Thread.sleep(200);
-                inputs.recordingStatus = false;
-                io.setRecordingStatus(false);
-                // Reset the trigger back to false
-                io.resetRecordTrigger();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }).start();
+                    try {
+                        Thread.sleep(200);
+                        inputs.recordingStatus = false;
+                        io.setRecordingStatus(false);
+                        // Reset the trigger back to false
+                        io.resetRecordTrigger();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                })
+                .start();
     }
 
     /**
