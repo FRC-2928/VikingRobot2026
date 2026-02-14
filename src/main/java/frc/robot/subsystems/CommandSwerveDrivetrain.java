@@ -72,10 +72,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     /* Keep track if we've ever applied the operator perspective before or not */
     private boolean m_hasAppliedOperatorPerspective = false;
 
-    private final Double hubX = 4.625594;
-    private final Double hubY = 8.07 / 2;
-    private final Double hubXOffset = 7.2898;
-    private final Double maxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
+    private final double hubX = 4.625594;
+    private final double hubY = 8.07 / 2;
+    private final double hubXOffset = 7.2898;
+
+    private final double maxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
     private final double maxAngularRate = Units.RotationsPerSecond.of(0.75)
             .in(Units.RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
     public final FieldCentricFacingAngle driveAndPoint = new FieldCentricFacingAngle()
@@ -91,6 +92,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             .withRotationalDeadband(maxAngularRate * 0.1) // Add a 10% deadband
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage) // Use open-loop control for drive motors
             .withDesaturateWheelSpeeds(true);
+
     private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
 
     private double lastUpdate = Timer.getFPGATimestamp();
@@ -102,17 +104,15 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             new SwerveRequest.SysIdSwerveSteerGains();
     private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization =
             new SwerveRequest.SysIdSwerveRotation();
+
     private FollowPath.Builder pathBuilder;
     private AutoFactory autoFactory;
     private final PIDController xController = new PIDController(5, 0.0, 0);
     private final PIDController headingController = new PIDController(5, 0.0, 0.2);
-    // public final GyroIO gyro;
-    private SwerveModulePosition[] modulePositions = {
-        new SwerveModulePosition(), new SwerveModulePosition(), new SwerveModulePosition(), new SwerveModulePosition()
-    };
-    // public final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
+
     private final SwerveRequest.ApplyRobotSpeeds applyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds()
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
+
     private ChassisSpeeds currentChassisSpeeds = new ChassisSpeeds();
     private Pose2d currentPose2D = new Pose2d();
     public final Limelight limelight = new Limelight("limelight");
@@ -192,7 +192,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         if (Utils.isSimulation()) {
             startSimThread();
         }
-        // this.gyro = new GyroIOReal();
         // B-Line path builder
         pathBuilder = initializeFollowPathBuilder();
         autoFactory = initializeChoreoAutoFactory();
@@ -224,7 +223,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         if (Utils.isSimulation()) {
             startSimThread();
         }
-        // this.gyro = new GyroIOReal();
         // B-Line path builder
         pathBuilder = initializeFollowPathBuilder();
         autoFactory = initializeChoreoAutoFactory();
@@ -266,7 +264,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             startSimThread();
         }
 
-        // this.gyro = new GyroIOReal();
         // B-Line path builder
         pathBuilder = initializeFollowPathBuilder();
         autoFactory = initializeChoreoAutoFactory();
@@ -277,8 +274,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private FollowPath.Builder initializeFollowPathBuilder() {
         return new FollowPath.Builder(
                         this, // The drive subsystem to require
-                        () -> this.currentPose2D, // Supplier for current robot pose
-                        () -> this.currentChassisSpeeds, // Supplier for current speeds
+                        this::getCurrentPose2D, // Supplier for current robot pose
+                        this::getCurrentChassisSpeeds, // Supplier for current speeds
                         this::controlRobotDrivetrainAutonomus, // Consumer to drive the robot
                         xController, // Translation PID
                         headingController, // Rotation PID
@@ -327,14 +324,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     public Pose2d getCurrentPose2D() {
         return this.currentPose2D;
-    }
-
-    public void setCurrentModulePostions(SwerveModulePosition[] positions) {
-        this.modulePositions = positions;
-    }
-
-    public SwerveModulePosition[] getModulePositions() {
-        return modulePositions;
     }
 
     public Limelight getLimelight(String name) {
@@ -403,8 +392,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     @Override
     public void periodic() {
-        // this.gyro.updateInputs(this.gyroInputs);
-        // Logger.processInputs("Drivetrain/Gyro", this.gyroInputs);
         Logger.recordOutput("Drivetrain/Botpose", limelight.getBluePose3d());
         Logger.recordOutput("Drivetrain/currentPose", currentPose2D);
         Logger.recordOutput(
@@ -441,11 +428,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             Logger.recordOutput("Drivetrain/poseMegatag", mt2.pose);
             boolean rejectUpdate = false;
 
-            // if our angular velocity is greater than 720 degrees per second, ignore vision updates
-            // if (Math.abs(this.gyroInputs.yawVelocityRadPerSec.in(Units.DegreesPerSecond)) > 720) {
-            //     rejectUpdate = true;
-            // }
-
             if (mt2.tagCount == 0) {
                 rejectUpdate = true;
             }
@@ -477,7 +459,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     public void setImuMode2() {
         this.limelight.setIMUMode(2);
-        // System.out.println("SetImuMode2 yay Limelight !!!!!!!!!!!!");
     }
 
     public Command joystickDrive(BaseOI controllerOI) {
@@ -510,7 +491,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return applyRequest(() -> brake);
     }
 
-    public Double getHubX() {
+    public double getHubX() {
         if (!DriverStation.getAlliance().isEmpty()
                 && DriverStation.getAlliance().get() == Alliance.Red) {
             return hubXOffset + hubX;
@@ -532,27 +513,15 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     public Command aimAtHubAndMove(CommandXboxController joystick, double speedMultipliter, Angle offset) {
         return new ParallelCommandGroup(
-                this.applyRequest(() -> driveAndPoint
-                        .withVelocityX(-joystick.getLeftY()
-                                * maxSpeed
-                                * speedMultipliter) // Drive forward with negative Y (forward)
-                        .withVelocityY(
-                                -joystick.getLeftX() * maxSpeed * speedMultipliter) // Drive left with negative X (left)
-                        .withTargetDirection(new Rotation2d(Math.atan2(
-                                                (hubY
-                                                        - currentPose2D
-                                                                .getMeasureY()
-                                                                .in(Units.Meters)),
-                                                (getHubX()
-                                                        - currentPose2D
-                                                                .getMeasureX()
-                                                                .in(Units.Meters)))
-                                        + (!DriverStation.getAlliance().isEmpty()
-                                                        && DriverStation.getAlliance()
-                                                                        .get()
-                                                                != Alliance.Red
-                                                ? 0
-                                                : 0))
+            this.applyRequest(
+                () -> driveAndPoint
+                    .withVelocityX(-joystick.getLeftY() * maxSpeed * speedMultipliter) // Drive forward with negative Y (forward)
+                    .withVelocityY(-joystick.getLeftX() * maxSpeed * speedMultipliter) // Drive left with negative X (left)
+                    .withTargetDirection(
+                        new Rotation2d(Math.atan2((hubY - currentPose2D.getMeasureY().in(Units.Meters)),
+                                      (getHubX() - currentPose2D.getMeasureX().in(Units.Meters)))
+                                        + (!DriverStation.getAlliance().isEmpty() && DriverStation.getAlliance().get() != Alliance.Red
+                                            ? 0 : 0))
                                 .plus(new Rotation2d(offset)))),
                 new RunCommand(() -> snapToHeading =
                         new Rotation2d(currentPose2D.getRotation().getRadians())));
@@ -571,6 +540,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 (getHubX() - currentPose2D.getMeasureX().in(Units.Meters)),
                 (hubY - currentPose2D.getMeasureY().in(Units.Meters))));
     }
+
     // Command to locate fuel and intake them w/ limelight
 
     private void startSimThread() {
