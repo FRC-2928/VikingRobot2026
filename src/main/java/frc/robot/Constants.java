@@ -1,12 +1,12 @@
 package frc.robot;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.AudioConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.SlotConfigs;
 import com.pathplanner.lib.config.PIDConstants;
-
-import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
@@ -256,10 +256,13 @@ public class Constants {
             throw new IllegalCallerException("Cannot instantiate `Constants.Shooter`");
         }
 
+        public static final Angle shooterAngleOffsetFromFront = Units.Degrees.of(90);
+
         public static final Angle hoodAngle = Units.Degrees.of(0);
         public static final LinearVelocity releaseVelocity = Units.FeetPerSecond.of(0);
         public static final Angle toleranceFromHub = Units.Degrees.of(10);
         public static final AngularVelocity shooterVelocityTolerance = Units.RotationsPerSecond.of(10);
+        public static final Angle hoodAngleTolerance = Units.Degrees.of(3);
         public static final double pivotCurrentLimit = 40;
         public static final AngularVelocity pivotMaxVelocityShoot = Units.DegreesPerSecond.of(2);
         public static final Slot0Configs flywheelGainsSlot0 = new Slot0Configs()

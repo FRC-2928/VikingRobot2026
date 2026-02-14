@@ -147,6 +147,16 @@ public class ShooterIOReal implements ShooterIO {
     }
 
     @Override
+    public AngularVelocity getFlywheelVelocity() {
+        return velocityA.getValue();
+    }
+
+    @Override
+    public Angle getHoodAngle() {
+        return hoodAngle.getValue();
+    }
+
+    @Override
     public void updateInputs(final ShooterIOInputs inputs) {
         BaseStatusSignal.refreshAll(this.hoodAngle, this.velocityA, this.velocityB);
         inputs.flywheelSpeedA = Units.RotationsPerSecond.of(this.velocityA.getValueAsDouble());

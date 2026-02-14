@@ -32,18 +32,16 @@ public class DriverOI extends BaseOI {
 
         this.intake = this.controller.b();
 
-        // this.shotConditionsMet = new Trigger(() -> {return
-        //     (drivetrain.getAngleToHub().lte(Constants.Shooter.toleranceFromHub) &&
-        //         ((robotContainer.shooter.inputs.flywheelSpeedA.minus
-        //             (robotContainer.shooter.getShooterVelocity(drivetrain.getDistanceFromHub())))
-        //             .lte(Constants.Shooter.shooterVelocityTolerance)
-        //         )
-        //     );
-        // });
+        this.shotConditionsMet = new Trigger(() -> {
+            boolean facingHub = drivetrain.getAngleToHub(Constants.Shooter.shooterAngleOffsetFromFront).lte(Constants.Shooter.toleranceFromHub);
+            boolean correctHoodAngle = robotContainer.shooter.io.getHoodAngle().lte(Constants.Shooter.hoodAngleTolerance);
+            boolean correctFlywheelVelocity = robotContainer.shooter.io.getFlywheelVelocity().lte(Constants.Shooter.shooterVelocityTolerance);
+            return facingHub && correctHoodAngle && correctFlywheelVelocity;
+        });
 
         // this.spinKicker = this.controller.rightTrigger().and(shotConditionsMet);
 
-        this.getReadyToShoot = this.controller.leftTrigger();
+        this.startShoot = this.controller.leftTrigger();
         this.resetFOD = this.controller.y();
 
         this.resetAngle = this.controller.a();
@@ -61,8 +59,8 @@ public class DriverOI extends BaseOI {
     public final Trigger intake;
 
     // public final Trigger spinKicker;
-    public final Trigger getReadyToShoot;
-    // public final Trigger shotConditionsMet;
+    public final Trigger startShoot;
+    public final Trigger shotConditionsMet;
 
     public final Trigger lockWheels;
 
@@ -82,7 +80,6 @@ public class DriverOI extends BaseOI {
         this.resetAngle.whileFalse(new RunCommand(cont.drivetrain::setImuMode2));
         // this.spinKicker.onTrue(cont.shooter.startKicker());
         // this.shotConditionsMet.and(getReadyToShoot).whileTrue(cont.shooter.shootWithDistance(cont.drivetrain.getDistanceFromHub(), Tuning.kickerSpeed.get()));
-        this.getReadyToShoot.onTrue(cont.shooter.getReadyToShoot(
-                cont.drivetrain.getDistanceFromHub())); // TODO: Put actual supplier into this.
+        this.startShoot.whileTrue(cont.superstructure.readyAndShoot());
     }
 }

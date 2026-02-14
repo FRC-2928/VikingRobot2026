@@ -7,6 +7,8 @@ import static edu.wpi.first.units.Units.Volts;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.controls.PositionVoltage;
@@ -16,8 +18,6 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveRequest.FieldCentricFacingAngle;
-
-import org.littletonrobotics.junction.Logger;
 
 import choreo.auto.AutoFactory;
 import edu.wpi.first.math.MathUtil;
@@ -559,8 +559,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public Angle getAngleToHub(Angle offset) {
         return Units.Radians.of(Math.atan2(
                                 (hubY - currentPose2D.getMeasureY().in(Units.Meters)),
-                                (getHubX() - currentPose2D.getMeasureX().in(Units.Meters)))
-                        - currentPose2D.getRotation().getMeasure().in(Units.Radians))
+                                (getHubX() - currentPose2D.getMeasureX().in(Units.Meters))))
                 .plus(offset);
     }
 

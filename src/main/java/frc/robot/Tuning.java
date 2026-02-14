@@ -21,7 +21,7 @@ public final class Tuning {
 
     public static final LoggedNetworkNumber hoodAngle = new LoggedNetworkNumber("Tuning/HoodAngleDegrees", 0.0);
     public static final LoggedNetworkNumber flywheelSpeed = new LoggedNetworkNumber("Tuning/FlywheelSpeedRPS", 0.0);
-    public static final LoggedNetworkNumber kickerSpeed = new LoggedNetworkNumber("Tuning/KickerSpeed", 0.0);
+    public static final LoggedNetworkNumber kickerSpeed = new LoggedNetworkNumber("Tuning/KickerSpeed", 3.0);
 
     public static final LoggedNetworkNumber intakeSpeed = new LoggedNetworkNumber("Tuning/IntakeSpeed", 0.8);
 

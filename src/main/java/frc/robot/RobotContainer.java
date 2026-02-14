@@ -24,6 +24,7 @@ import frc.robot.oi.DriverOI;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
+import frc.robot.subsystems.Superstructure;
 
 public class RobotContainer {
     // TODO organize Driver and Operator bindings
@@ -38,6 +39,7 @@ public class RobotContainer {
 
     public final CommandXboxController joystick = new CommandXboxController(0);
 
+    public final Superstructure superstructure;
     public final CommandSwerveDrivetrain drivetrain;
     public final Shooter shooter;
     public final Intake intake;
@@ -45,6 +47,7 @@ public class RobotContainer {
     //     public final HopperFloor hopperFloor;
 
     public RobotContainer() {
+        this.superstructure = new Superstructure(this);
         this.drivetrain = TunerConstants.createDrivetrain();
         this.shooter = new Shooter();
         this.intake = new Intake();
