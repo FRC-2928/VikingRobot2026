@@ -15,6 +15,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Voltage;
 import frc.robot.Constants;
 
 public class ShooterIOReal implements ShooterIO {
@@ -141,8 +142,8 @@ public class ShooterIOReal implements ShooterIO {
 
     // Runs the kicker. Shoots ball into flywheels.
     @Override
-    public void runKicker() {
-        this.kicker.setControl(new VoltageOut(4));
+    public void runKicker(Voltage kickerVoltage) {
+        this.kicker.setControl(new VoltageOut(kickerVoltage));
     }
 
     @Override

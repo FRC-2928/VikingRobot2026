@@ -5,6 +5,7 @@ import org.littletonrobotics.junction.AutoLog;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Voltage;
 
 public interface ShooterIO {
     @AutoLog
@@ -20,7 +21,7 @@ public interface ShooterIO {
 
     public default void runFlywheelsVelocity(AngularVelocity speed) {}
 
-    public default void runKicker() {}
+    public default void runKicker(Voltage kickerVoltage) {}
 
     public default void updateInputs(final ShooterIOInputs inputs) {}
 }

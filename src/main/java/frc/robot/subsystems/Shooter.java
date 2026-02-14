@@ -1,20 +1,18 @@
 package frc.robot.subsystems;
 
-import java.util.function.DoubleSupplier;
+import static edu.wpi.first.units.Units.Volts;
 
-import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.Shooter.AimValues;
-import frc.robot.subsystems.ShooterIO.ShooterIOInputs;
 
 public class Shooter extends SubsystemBase {
     public Shooter() {
@@ -24,7 +22,7 @@ public class Shooter extends SubsystemBase {
     }
 
     public final ShooterIO io;
-    public final ShooterIOInputs inputs = new ShooterIOInputs();
+    public final ShooterIOInputsAutoLogged inputs = new ShooterIOInputsAutoLogged();
 
     @Override
     public void periodic() {
@@ -43,18 +41,18 @@ public class Shooter extends SubsystemBase {
         });
     }
 
-    public Command startKicker() {
+    public Command startKicker(Voltage kickerVoltage) {
         return new RunCommand(() -> {
-            io.runKicker();
+            io.runKicker(kickerVoltage);
         });
     }
 
     // Runs flywheels and kicker. Command will not end on its own
-    public Command startShooting(AngularVelocity velocity, double kickerVoltage) {
-        return new ParallelCommandGroup(startFlywheels(velocity), startKicker());
+    public Command startShooting(AngularVelocity velocity, Voltage kickerVoltage) {
+        return new ParallelCommandGroup(startFlywheels(velocity), startKicker(kickerVoltage));
     }
 
-    public Command shootWithDistance(Distance distance, double kickerVoltage) {
+    public Command shootWithDistance(Distance distance, Voltage kickerVoltage) {
         return startShooting(getShooterVelocity(distance), kickerVoltage);
     }
 
@@ -81,6 +79,6 @@ public class Shooter extends SubsystemBase {
     // Stops robot from shooting
     public Command idle() {
         return new ParallelCommandGroup(
-                startShooting(Units.DegreesPerSecond.zero(), 0), turnHood(Units.Degrees.zero()));
+                startShooting(Units.DegreesPerSecond.zero(), Volts.zero()), turnHood(Units.Degrees.zero()));
     }
 }
