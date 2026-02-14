@@ -1,9 +1,9 @@
 package frc.robot.subsystems;
 
-import org.littletonrobotics.junction.AutoLog;
-
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.AngularVelocity;
+
+import org.littletonrobotics.junction.AutoLog;
 
 public interface IntakeIO {
     @AutoLog

@@ -11,6 +11,7 @@ import com.ctre.phoenix6.signals.InvertedValue;
 
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.AngularVelocity;
+
 import frc.robot.Constants;
 
 public class IntakeIOReal implements IntakeIO {

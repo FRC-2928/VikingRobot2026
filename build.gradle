@@ -133,7 +133,7 @@ spotless {
         }
         toggleOffOn()
         palantirJavaFormat()
-        importOrder('java', 'javax', 'com', 'org')
+        importOrder('choreo', 'com', 'edu', 'frc', 'java', 'javax', 'org')
         removeUnusedImports()
         trimTrailingWhitespace()
         endWithNewline()

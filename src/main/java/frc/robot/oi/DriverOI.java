@@ -1,17 +1,18 @@
 package frc.robot.oi;
 
-import java.util.List;
-import java.util.function.Supplier;
-
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
 import frc.robot.RobotContainer;
 import frc.robot.commands.drivetrain.RunIntake;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+
+import java.util.List;
+import java.util.function.Supplier;
 
 public class DriverOI extends BaseOI {
     public DriverOI(
@@ -33,9 +34,13 @@ public class DriverOI extends BaseOI {
         this.intake = this.controller.b();
 
         this.shotConditionsMet = new Trigger(() -> {
-            boolean facingHub = drivetrain.getAngleToHub(Constants.Shooter.shooterAngleOffsetFromFront).lte(Constants.Shooter.toleranceFromHub);
-            boolean correctHoodAngle = robotContainer.shooter.io.getHoodAngle().lte(Constants.Shooter.hoodAngleTolerance);
-            boolean correctFlywheelVelocity = robotContainer.shooter.io.getFlywheelVelocity().lte(Constants.Shooter.shooterVelocityTolerance);
+            boolean facingHub = drivetrain
+                    .getAngleToHub(Constants.Shooter.shooterAngleOffsetFromFront)
+                    .lte(Constants.Shooter.toleranceFromHub);
+            boolean correctHoodAngle =
+                    robotContainer.shooter.io.getHoodAngle().lte(Constants.Shooter.hoodAngleTolerance);
+            boolean correctFlywheelVelocity =
+                    robotContainer.shooter.io.getFlywheelVelocity().lte(Constants.Shooter.shooterVelocityTolerance);
             return facingHub && correctHoodAngle && correctFlywheelVelocity;
         });
 

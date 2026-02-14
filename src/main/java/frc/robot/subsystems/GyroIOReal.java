@@ -22,6 +22,7 @@ import com.ctre.phoenix6.hardware.Pigeon2;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+
 import frc.robot.Constants;
 
 /** IO implementation for Pigeon2 */

@@ -13,10 +13,10 @@
 
 package frc.robot.subsystems;
 
-import org.littletonrobotics.junction.AutoLog;
-
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.*;
+
+import org.littletonrobotics.junction.AutoLog;
 
 public interface ModuleIO {
     @AutoLog

@@ -1,12 +1,13 @@
 package frc.robot.commands.drivetrain;
 
-import org.littletonrobotics.junction.Logger;
-
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
+
 import frc.robot.Tuning;
 import frc.robot.subsystems.Shooter;
+
+import org.littletonrobotics.junction.Logger;
 
 public class SpinUpShooter extends Command {
 

@@ -1,11 +1,11 @@
 package frc.robot.subsystems;
 
-import org.littletonrobotics.junction.AutoLog;
-
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
+
+import org.littletonrobotics.junction.AutoLog;
 
 public interface ShooterIO {
     @AutoLog
