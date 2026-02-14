@@ -22,11 +22,9 @@ import frc.robot.commands.drivetrain.CenterLimelight;
 import frc.robot.generated.TunerConstants;
 import frc.robot.oi.DriverOI;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
-import frc.robot.subsystems.HopperFloor;
+// import frc.robot.subsystems.HopperFloor;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
-import frc.robot.subsystems.ShooterIO;
-import frc.robot.subsystems.ShooterIO.ShooterIOInputs;
 
 public class RobotContainer {
     // TODO organize Driver and Operator bindings
@@ -43,17 +41,15 @@ public class RobotContainer {
 
     public final CommandSwerveDrivetrain drivetrain;
     public final Shooter shooter;
-    public final ShooterIOInputs shooterIO;;
     public final Intake intake;
     private final Telemetry logger;
-    public final HopperFloor hopperFloor;  
+//     public final HopperFloor hopperFloor;  
 
     public RobotContainer() {
         this.drivetrain = TunerConstants.createDrivetrain();
         this.shooter = new Shooter();
-        this.shooterIO = new ShooterIOInputs();
         this.intake = new Intake();
-        this.hopperFloor = new HopperFloor();
+        // this.hopperFloor = new HopperFloor();
         this.logger = new Telemetry(MaxSpeed, drivetrain);
         this.autoChooser = Autonomous.getChoreoAutoChooser(drivetrain);
         this.driverOI = new DriverOI(joystick, drivetrain, this);

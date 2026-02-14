@@ -484,11 +484,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             lastUpdate = Timer.getFPGATimestamp();
             Logger.recordOutput("Drivetrain/inRotateMode", rotationRate != 0);
             var skewCompensation = currentChassisSpeeds.omegaRadiansPerSecond * -0.03;
-                snapToHeading = new Rotation2d(currentPose2D.getRotation().getMeasure());
-                return drive
-                    .withVelocityX(MathUtil.applyDeadband(x, 0.1))
-                    .withVelocityY(MathUtil.applyDeadband(y, 0.1))
-                    .withRotationalRate(rotationRate + skewCompensation);
+            snapToHeading = new Rotation2d(currentPose2D.getRotation().getMeasure());
+            return drive
+                .withVelocityX(MathUtil.applyDeadband(x, 0.1))
+                .withVelocityY(MathUtil.applyDeadband(y, 0.1))
+                .withRotationalRate(rotationRate + skewCompensation);
             // return driveAndPoint
             //         .withVelocityX(MathUtil.applyDeadband(x, 0.1))
             //         .withVelocityY(MathUtil.applyDeadband(y, 0.1))

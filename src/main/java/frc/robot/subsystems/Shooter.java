@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Volts;
 
 import edu.wpi.first.units.Units;
@@ -59,12 +60,15 @@ public class Shooter extends SubsystemBase {
     // Spins up flywheels to speed and turns hood to correct angle. Command will not end on its own
     public Command getReadyToShoot(Distance distance) {
         AimValues vals;
-        if(Constants.mode == Constants.Mode.REAL) {
-            vals = Constants.Shooter.lookUpTable.get(distance.in(Units.Meters));
-        }
-        else{
-            vals = new AimValues(Units.Degrees.of(30), Units.DegreesPerSecond.of(5000));
-        }
+
+        // TODO: pull from the LUT once populated
+        vals = new AimValues(Degrees.zero(), Units.DegreesPerSecond.zero());
+        // if(Constants.mode == Constants.Mode.REAL) {
+        //     vals = Constants.Shooter.lookUpTable.get(distance.in(Units.Meters));
+        // }
+        // else{
+        //     vals = new AimValues(Units.Degrees.of(30), Units.DegreesPerSecond.of(5000));
+        // }
 
         return new ParallelCommandGroup(startFlywheels(vals.shooterVelocity), turnHood(vals.hoodAngle));
     }
