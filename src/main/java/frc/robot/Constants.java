@@ -1,12 +1,20 @@
 package frc.robot;
 
-import org.littletonrobotics.junction.Logger;
-
+import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.AudioConfigs;
+import com.ctre.phoenix6.configs.CANdiConfiguration;
+import com.ctre.phoenix6.configs.DigitalInputsConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.SlotConfigs;
+import com.ctre.phoenix6.hardware.CANdi;
+import com.ctre.phoenix6.signals.S1CloseStateValue;
+import com.ctre.phoenix6.signals.S1FloatStateValue;
+import com.ctre.phoenix6.signals.S2CloseStateValue;
+import com.ctre.phoenix6.signals.S2FloatStateValue;
 import com.pathplanner.lib.config.PIDConstants;
+
+import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
@@ -142,7 +150,41 @@ public class Constants {
 
             public static final int intakeRoller = 16;
             public static final int intakeExpansion = 99;
-            public static final int intakeSensor = 99; // TODO: put in sensor ID
+        }
+
+        public static final class INTAKE_CANDI {
+            /// Singleton instance of the CANdi for the Banana
+            private static CANdi sInstance = null;
+            /// CAN ID of the CANdi bridging the intake limit switch to the CAN bus
+            private static final int canId = 7;
+            /// Digital Inputs Configs for the CANdi
+            private static final DigitalInputsConfigs dioConfigs = new DigitalInputsConfigs()
+                    // S1In --> Expension??
+                    .withS1CloseState(
+                            S1CloseStateValue.CloseWhenLow) // Intake Expansion limit switch -- closed when low
+                    .withS1FloatState(S1FloatStateValue.FloatDetect) // Intake Expansion limit switch -- high when open
+                    // S2In --> Retraction??
+                    .withS2CloseState(
+                            S2CloseStateValue.CloseWhenLow) // Intake Retraction limit switch -- closed when low
+                    .withS2FloatState(
+                            S2FloatStateValue.FloatDetect); // Intake Retraction limit switch -- high when open
+
+            public static synchronized CANdi getInstance() {
+                if (sInstance != null) {
+                    return sInstance;
+                }
+
+                // create the CANdi instance
+                sInstance = new CANdi(canId, CTRE.bus);
+                // set up the configuration with the internal config we defined above
+                CANdiConfiguration candiConfig = new CANdiConfiguration().withDigitalInputs(INTAKE_CANDI.dioConfigs);
+                sInstance.getConfigurator().apply(candiConfig);
+
+                // Set the update frequency for the status frames for the CANdi signals
+                BaseStatusSignal.setUpdateFrequencyForAll(
+                        Units.Hertz.of(100), sInstance.getS1State(), sInstance.getS2State());
+                return sInstance;
+            }
         }
     }
 

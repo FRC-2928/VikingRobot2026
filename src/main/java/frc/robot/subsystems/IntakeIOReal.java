@@ -10,9 +10,9 @@ import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.PositionTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.ForwardLimitSourceValue;
+import com.ctre.phoenix6.signals.ForwardLimitTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
-import com.ctre.phoenix6.signals.ReverseLimitSourceValue;
+import com.ctre.phoenix6.signals.ReverseLimitTypeValue;
 
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
@@ -29,7 +29,7 @@ public class IntakeIOReal implements IntakeIO {
     private final Angle closedAngle = Units.Rotations.of(0);
     private final Angle openAngle = Units.Rotations.of(10);
 
-    // Data goten 02/11/26 Wednesday
+    // Data goten at 02/11/26 Wednesday
     // Hopper extemsion: 11 iches and 3 quarters
     // Gear ratio: 1 to 3
 
@@ -63,18 +63,31 @@ public class IntakeIOReal implements IntakeIO {
                 .withSupplyCurrentLimitEnable(true);
         // TODO determine correct currect limit switch values
         HardwareLimitSwitchConfigs hardwareLimitSwitchConfigs = new HardwareLimitSwitchConfigs()
-                .withForwardLimitEnable(true)
+                /* .withForwardLimitEnable(true)
                 .withForwardLimitSource(ForwardLimitSourceValue.LimitSwitchPin)
                 .withForwardLimitRemoteSensorID(Constants.CAN.CTRE.intakeSensor)
                 .withReverseLimitEnable(true)
                 .withReverseLimitSource(ReverseLimitSourceValue.LimitSwitchPin)
-                .withReverseLimitRemoteSensorID(Constants.CAN.CTRE.intakeSensor);
+                .withReverseLimitRemoteSensorID(Constants.CAN.CTRE.intakeSensor) */
 
-        intakeExpansionConfig.SoftwareLimitSwitch
-			.withForwardSoftLimitEnable(true)
-			.withForwardSoftLimitThreshold(Units.Rotations.of(100)) // Chnage this software limit later
-                        .withReverseSoftLimitEnable(true)
-			.withReverseSoftLimitThreshold(Units.Rotations.of(100)); // Chnage this software limit later
+                // TODO: Check if these configs are correct
+                .withForwardLimitRemoteCANdiS1(Constants.CAN.INTAKE_CANDI.getInstance())
+                .withForwardLimitEnable(true)
+                .withForwardLimitAutosetPositionEnable(true)
+                .withForwardLimitAutosetPositionValue(Units.Degrees.of(0))
+                .withForwardLimitType(ForwardLimitTypeValue.NormallyOpen)
+                .withReverseLimitRemoteCANdiS1(Constants.CAN.INTAKE_CANDI.getInstance())
+                .withReverseLimitEnable(true)
+                .withReverseLimitAutosetPositionEnable(true)
+                .withReverseLimitAutosetPositionValue(Units.Degrees.of(0))
+                .withReverseLimitType(ReverseLimitTypeValue.NormallyOpen);
+
+        intakeExpansionConfig
+                .SoftwareLimitSwitch
+                .withForwardSoftLimitEnable(true)
+                .withForwardSoftLimitThreshold(Units.Rotations.of(100)) // Chnage this software limit to fit later
+                .withReverseSoftLimitEnable(true)
+                .withReverseSoftLimitThreshold(Units.Rotations.of(100)); // Chnage this software limit to fit later
 
         MotorOutputConfigs intakeExpansionOutputConfigs =
                 new MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive);
