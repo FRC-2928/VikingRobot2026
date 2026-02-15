@@ -24,6 +24,7 @@ public class IntakeIOReal implements IntakeIO {
     private TalonFX intakeRollerMotor;
     private TalonFX intakeExpansionMotor;
     public StatusSignal<AngularVelocity> intakeAngularVelocity;
+    public StatusSignal<Angle> expansionMotorAngle;
     private PositionTorqueCurrentFOC retractPositionTorqueCurrentFOC;
     private PositionVoltage expansionPositionVoltage;
     private final Angle closedAngle = Units.Rotations.of(0);
@@ -31,7 +32,7 @@ public class IntakeIOReal implements IntakeIO {
 
     // Data goten at 02/11/26 Wednesday
     // Hopper extemsion: 11 iches and 3 quarters
-    // Gear ratio: 1 to 3
+    // Gear ratio: 3 to 1
 
     public IntakeIOReal() {
         // The Intake Roller motor
@@ -89,16 +90,20 @@ public class IntakeIOReal implements IntakeIO {
                 .withReverseSoftLimitEnable(true)
                 .withReverseSoftLimitThreshold(Units.Rotations.of(100)); // Chnage this software limit to fit later
 
+        intakeExpansionConfig.Feedback.withSensorToMechanismRatio(3.0); // May change later reduction gear ratio
+
         MotorOutputConfigs intakeExpansionOutputConfigs =
                 new MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive);
         intakeExpansionConfig
                 .withMotorOutput(intakeExpansionOutputConfigs)
                 .withCurrentLimits(intakeExpansionCurrentLimitsConfigs)
                 .withHardwareLimitSwitch(hardwareLimitSwitchConfigs);
+
         intakeExpansionMotor.getConfigurator().apply(intakeExpansionConfig); // apply the config settings
 
         this.intakeAngularVelocity = this.intakeRollerMotor.getRotorVelocity();
-        BaseStatusSignal.setUpdateFrequencyForAll(Units.Hertz.of(100), intakeAngularVelocity);
+        this.expansionMotorAngle = this.intakeExpansionMotor.getPosition();
+        BaseStatusSignal.setUpdateFrequencyForAll(Units.Hertz.of(100), intakeAngularVelocity, expansionMotorAngle);
 
         retractPositionTorqueCurrentFOC = new PositionTorqueCurrentFOC(Units.Rotation.of(0))
                 .withSlot(0)
@@ -118,7 +123,7 @@ public class IntakeIOReal implements IntakeIO {
     }
 
     @Override
-    public void expand() {
+    public void extend() {
         // Expand and stop once fully expanded
         intakeExpansionMotor.setControl(expansionPositionVoltage.withPosition(openAngle));
     }
@@ -131,7 +136,8 @@ public class IntakeIOReal implements IntakeIO {
 
     @Override
     public void updateInputs(IntakeInputs intakeInputs) {
-        BaseStatusSignal.refreshAll(intakeAngularVelocity);
+        BaseStatusSignal.refreshAll(intakeAngularVelocity, expansionMotorAngle);
         intakeInputs.angularVelocity = intakeAngularVelocity.getValue();
+        intakeInputs.expansionMotorAngle = expansionMotorAngle.getValue();
     }
 }

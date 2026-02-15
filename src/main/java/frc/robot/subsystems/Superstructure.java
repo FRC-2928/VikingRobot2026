@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.RobotContainer;
+import frc.robot.commands.Intake.RunIntake;
 
 public class Superstructure extends SubsystemBase {
     private RobotContainer cont;
@@ -44,5 +45,16 @@ public class Superstructure extends SubsystemBase {
     // Stops robot from shooting
     public Command idle() {
         return new RunCommand(() -> cont.shooter.home());
+    }
+
+    public Command extendAndIntake() {
+        return new SequentialCommandGroup(
+                new RunCommand(
+                                () -> {
+                                    cont.intake.extend();
+                                },
+                                cont.intake)
+                        .until(cont.intake::checkExtended),
+                new RunIntake(cont.intake));
     }
 }

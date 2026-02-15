@@ -8,7 +8,6 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
 import frc.robot.RobotContainer;
-import frc.robot.commands.Intake.RunIntake;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
 import java.util.List;
@@ -21,6 +20,7 @@ public class DriverOI extends BaseOI {
 
         this.driveAxial = this.controller::getLeftY;
         this.driveLateral = this.controller::getLeftX;
+        this.intake = this.controller.b();
 
         if (Constants.mode == Mode.REAL) {
             this.driveFORX = this.controller::getRightX;
@@ -30,8 +30,6 @@ public class DriverOI extends BaseOI {
             this.driveFORY = () -> this.hid.getRawAxis(3);
         }
         this.manualRotation = this.controller.rightStick();
-
-        this.intake = this.controller.b();
 
         this.shotConditionsMet = new Trigger(() -> {
             boolean facingHub = drivetrain
@@ -80,7 +78,7 @@ public class DriverOI extends BaseOI {
 
         // this.lockWheels.whileTrue(new LockWheels(cont.drivetrain, this));
         this.resetFOD.onTrue(new InstantCommand(cont.drivetrain::resetAngle));
-        this.intake.whileTrue(new RunIntake(cont.intake));
+        this.intake.whileTrue(cont.superstructure.extendAndIntake());
         this.resetAngle.whileTrue(new RunCommand(cont.drivetrain::seedLimelightImu));
         this.resetAngle.whileFalse(new RunCommand(cont.drivetrain::setImuMode2));
         // this.spinKicker.onTrue(cont.shooter.startKicker());

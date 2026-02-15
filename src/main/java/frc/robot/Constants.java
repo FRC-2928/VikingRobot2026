@@ -359,6 +359,9 @@ public class Constants {
             throw new IllegalCallerException("Dont Call this (Constants.Intake)");
         }
 
+        // Inchas per rotation for each gearn turn
+        public static final double extensionRatio_inchesPerRotation = 0.0;
+        public static final Distance expansionMotorMaxDistance = Units.Inches.of(11.75 - 0.5);
         public static final AngularVelocity intakeVelocity = Units.RotationsPerSecond.of(0);
     }
 
