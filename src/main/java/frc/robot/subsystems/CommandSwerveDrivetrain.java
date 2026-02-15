@@ -388,18 +388,19 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     private SystemState handleStateTransition() {
-        return switch (wantedState) {
+        return switch (mDesiredState) {
             case SYS_ID -> SystemState.SYS_ID;
             case TELEOP_DRIVE -> SystemState.TELEOP_DRIVE;
             case CHOREO_PATH -> {
-                if (systemState != SystemState.CHOREO_PATH) {
-                    choreoTimer.restart();
-                    choreoSampleToBeApplied = desiredChoreoTrajectory.sampleAt(choreoTimer.get(), false);
-                    yield SystemState.CHOREO_PATH;
-                } else {
-                    choreoSampleToBeApplied = desiredChoreoTrajectory.sampleAt(choreoTimer.get(), false);
-                    yield SystemState.CHOREO_PATH;
-                }
+                yield SystemState.CHOREO_PATH;
+                // if (mCurrentState != SystemState.CHOREO_PATH) {
+                //     choreoTimer.restart();
+                //     choreoSampleToBeApplied = desiredChoreoTrajectory.sampleAt(choreoTimer.get(), false);
+                //     yield SystemState.CHOREO_PATH;
+                // } else {
+                //     choreoSampleToBeApplied = desiredChoreoTrajectory.sampleAt(choreoTimer.get(), false);
+                //     yield SystemState.CHOREO_PATH;
+                // }
             }
             case ROTATION_LOCK -> SystemState.ROTATION_LOCK;
             case DRIVE_TO_POINT -> SystemState.DRIVE_TO_POINT;
@@ -408,16 +409,16 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     private void applyStates() {
-        switch (systemState) {
+        switch (mCurrentState) {
             default:
             case SYS_ID:
                 break;
             case TELEOP_DRIVE:
                 // FIXME: this needs to be our internal call...
-                applyRequest(new SwerveRequest.ApplyFieldSpeeds()
-                        .withSpeeds(calculateSpeedsBasedOnJoystickInputs())
-                        .withDriveRequestType(SwerveModule.DriveRequestType.OpenLoopVoltage)
-                        .withDesaturateWheelSpeeds(true));
+                // applyRequest(new SwerveRequest.ApplyFieldSpeeds()
+                //         .withSpeeds(calculateSpeedsBasedOnJoystickInputs())
+                //         .withDriveRequestType(SwerveModule.DriveRequestType.OpenLoopVoltage)
+                //         .withDesaturateWheelSpeeds(true));
                 break;
             case CHOREO_PATH: {
                 // TODO: handle choreo updates... may need to synchronize at some point
@@ -441,7 +442,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
 // spotless: off
-    private ChassisSpeeds calculateSpeedsBasedOnJoystickInputs() {
+    private ChassisSpeeds calculateSpeedsBasedOnJoystickInputs(BaseOI controllerOI) {
         if (DriverStation.getAlliance().isEmpty()) {
             return new ChassisSpeeds(0, 0, 0);
         }
@@ -456,14 +457,15 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         //        yMagnitude = Math.copySign(yMagnitude * yMagnitude, yMagnitude);
         angularMagnitude = Math.copySign(angularMagnitude * angularMagnitude, angularMagnitude);
 
-        double xVelocity = (FieldConstants.isRedAlliance() ? -xMagnitude * maxVelocity : xMagnitude * maxVelocity)
-        double yVelocity = (FieldConstants.isRedAlliance() ? -yMagnitude * maxVelocity : yMagnitude * maxVelocity)
-        double angularVelocity = angularMagnitude * maxAngularVelocity * rotationVelocityCoefficient;
+        boolean isRedAlliance = DriverStation.getAlliance().get() == Alliance.Red;
+        double xVelocity = (isRedAlliance ? -xMagnitude * maxSpeed : xMagnitude * maxSpeed);
+        double yVelocity = (isRedAlliance ? -yMagnitude * maxSpeed : yMagnitude * maxSpeed);
+        double angularVelocity = angularMagnitude * maxAngularRate;
 
         Rotation2d skewCompensationFactor =
                 Rotation2d.fromRadians(currentSwerveState.Speeds.omegaRadiansPerSecond * SKEW_COMPENSATION_SCALAR);
 
-        Rotation2D currentRotation = currentSwerveState.Pose.getRotation();
+        Rotation2d currentRotation = currentSwerveState.Pose.getRotation();
         // TODO: do this in a helper
         return ChassisSpeeds.fromRobotRelativeSpeeds(
                 ChassisSpeeds.fromFieldRelativeSpeeds(
@@ -472,10 +474,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     public Command joystickDrive(BaseOI controllerOI) {
-        applyRequest(new SwerveRequest.ApplyFieldSpeeds()
-            .withSpeeds(calculateSpeedsBasedOnJoystickInputs())
-            .withDriveRequestType(SwerveModule.DriveRequestType.OpenLoopVoltage)
-            .withDesaturateWheelSpeeds(true));
+        return applyRequest(() -> {
+            return new SwerveRequest.ApplyFieldSpeeds()
+                .withSpeeds(calculateSpeedsBasedOnJoystickInputs(controllerOI))
+                .withDriveRequestType(DriveRequestType.OpenLoopVoltage)
+                .withDesaturateWheelSpeeds(true);
+        });
         // return applyRequest(() -> {
         //     double x = -controllerOI.controller.getLeftY() * maxSpeed;
         //     double y = -controllerOI.controller.getLeftX() * maxSpeed;
