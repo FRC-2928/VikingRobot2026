@@ -17,18 +17,24 @@ public class Superstructure extends SubsystemBase {
 
     // Runs flywheels and kicker. Command will not end on its own
     public Command startShooting() {
-        return new RunCommand(() -> {
-            Distance distance = cont.drivetrain.getDistanceFromHub();
-            cont.shooter.shoot(distance);
-        });
+        return new RunCommand(
+                        () -> {
+                            Distance distance = cont.drivetrain.getDistanceFromHub();
+                            cont.shooter.shoot(distance);
+                        },
+                        cont.shooter)
+                .alongWith(cont.drivetrain.brake());
     }
 
     // Spins up flywheels to speed and turns hood to correct angle. Command will not end on its own
     public Command getReadyToShoot() {
-        return new RunCommand(() -> {
-            Distance distance = cont.drivetrain.getDistanceFromHub();
-            cont.shooter.aim(distance);
-        });
+        return new RunCommand(
+                        () -> {
+                            Distance distance = cont.drivetrain.getDistanceFromHub();
+                            cont.shooter.aim(distance);
+                        },
+                        cont.shooter)
+                .alongWith(cont.drivetrain.aimAtHubAndMove(0, 0, 0));
     }
 
     public Command readyAndShoot() {
