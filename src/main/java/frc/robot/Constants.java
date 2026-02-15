@@ -14,8 +14,6 @@ import com.ctre.phoenix6.signals.S2CloseStateValue;
 import com.ctre.phoenix6.signals.S2FloatStateValue;
 import com.pathplanner.lib.config.PIDConstants;
 
-import org.littletonrobotics.junction.Logger;
-
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.controller.PIDController;
