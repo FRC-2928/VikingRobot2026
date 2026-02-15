@@ -40,7 +40,6 @@ public class Telemetry {
         for (int i = 0; i < 4; ++i) {
             SmartDashboard.putData("Module " + i, m_moduleMechanisms[i]);
         }
-        this.drivetrain = drivetrain;
     }
 
     /* What to publish over networktables for telemetry */
@@ -136,9 +135,5 @@ public class Telemetry {
             m_moduleDirections[i].setAngle(state.ModuleStates[i].angle);
             m_moduleSpeeds[i].setLength(state.ModuleStates[i].speedMetersPerSecond / (2 * MaxSpeed));
         }
-
-        // Setting drivetrain current values to match the telemetry
-        drivetrain.setCurrentChassisSpeeds(state.Speeds);
-        drivetrain.setCurrentPose2D(state.Pose);
     }
 }
