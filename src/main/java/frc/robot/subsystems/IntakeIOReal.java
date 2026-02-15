@@ -76,7 +76,6 @@ public class IntakeIOReal implements IntakeIO {
                 .withForwardLimitAutosetPositionEnable(true)
                 .withForwardLimitAutosetPositionValue(Units.Degrees.of(0))
                 .withForwardLimitType(ForwardLimitTypeValue.NormallyOpen)
-                
                 .withReverseLimitRemoteCANdiS1(Constants.CAN.INTAKE_CANDI.getInstance())
                 .withReverseLimitEnable(true)
                 .withReverseLimitAutosetPositionEnable(true)
