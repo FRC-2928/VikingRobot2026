@@ -28,6 +28,7 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
@@ -503,6 +504,16 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
     // spotless: on
 
+    public Command driveForDuration(ChassisSpeeds chassisSpeeds, Time time) {
+        return applyRequest(() -> {
+                    return new SwerveRequest.ApplyFieldSpeeds()
+                            .withSpeeds(chassisSpeeds)
+                            .withDriveRequestType(DriveRequestType.OpenLoopVoltage)
+                            .withDesaturateWheelSpeeds(true);
+                })
+                .withTimeout(time)
+                .andThen(this.haltCommand());
+    }
     /**
      * Returns a command that applies the specified control request to this swerve drivetrain.
      *
