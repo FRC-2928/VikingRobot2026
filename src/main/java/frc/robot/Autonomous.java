@@ -64,6 +64,7 @@ public final class Autonomous {
 
         chooser.addOption("Center On Limelight", new CenterLimelight(cont.drivetrain));
 
+        // Backs out 1 meter and shoots the balls
         chooser.addOption(
                 "Auto0_goBackwardAndShoot",
                 new SequentialCommandGroup(
