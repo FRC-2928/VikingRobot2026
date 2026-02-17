@@ -25,8 +25,10 @@ public class Shooter extends SubsystemBase {
 
     public void aim(Distance distance) {
         AimValues val = Constants.Shooter.lookUpTable.get(distance.in(Units.Meters));
-        this.io.runFlywheelsVelocity(val.shooterVelocity);
-        this.io.rotateHood(val.hoodAngle);
+        if (val != null) {
+            this.io.runFlywheelsVelocity(val.shooterVelocity);
+            this.io.rotateHood(val.hoodAngle);
+        }
     }
 
     public void shoot(Distance distance) {

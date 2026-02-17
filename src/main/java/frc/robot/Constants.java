@@ -336,6 +336,11 @@ public class Constants {
         public static final InterpolatingTreeMap<Double, AimValues> lookUpTable =
                 new InterpolatingTreeMap<Double, AimValues>(null, null);
 
+        static {
+            // Add temperory values to the tree
+            Shooter.lookUpTable.put(5.0, new AimValues(Units.Degrees.of(20), Units.RotationsPerSecond.of(50)));
+        }
+
         public static class AimValues {
 
             public final Angle hoodAngle;
