@@ -7,7 +7,7 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.RobotContainer;
-import frc.robot.commands.Intake.RunIntake;
+import frc.robot.commands.Intake.ExtendAndRunIntake;
 
 public class Superstructure extends SubsystemBase {
     private RobotContainer cont;
@@ -48,13 +48,6 @@ public class Superstructure extends SubsystemBase {
     }
 
     public Command extendAndIntake() {
-        return new SequentialCommandGroup(
-                new RunCommand(
-                                () -> {
-                                    cont.intake.extend();
-                                },
-                                cont.intake)
-                        .until(cont.intake::checkExtended),
-                new RunIntake(cont.intake));
+        return new ExtendAndRunIntake(cont.intake);
     }
 }

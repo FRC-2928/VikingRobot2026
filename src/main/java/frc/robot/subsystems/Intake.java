@@ -6,7 +6,7 @@ import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Constants;
-import frc.robot.commands.Intake.Retract;
+import frc.robot.commands.Intake.RetractAndStop;
 import frc.robot.commands.Intake.StopRoller;
 import frc.robot.subsystems.IntakeIO.IntakeInputs;
 
@@ -38,11 +38,11 @@ public class Intake extends SubsystemBase {
     }
 
     public Command retractStop() {
-        return new ParallelCommandGroup(new StopRoller(this), new Retract(this));
+        return new ParallelCommandGroup(new StopRoller(this), new RetractAndStop(this));
     }
 
     public void initDefaultCommand() {
-        setDefaultCommand(this.retractStop());
+        setDefaultCommand(new RetractAndStop(this));
     }
 
     @Override

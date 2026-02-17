@@ -11,12 +11,12 @@ import frc.robot.subsystems.Intake;
 
 import org.littletonrobotics.junction.Logger;
 
-public class RunIntake extends Command {
+public class ExtendAndRunIntake extends Command {
     /** Creates a new RunIntake. */
     private Intake intake;
     // public double speed;
 
-    public RunIntake(Intake intake) {
+    public ExtendAndRunIntake(Intake intake) {
         this.intake = intake;
         this.addRequirements(intake);
         Tuning.intakeSpeed.get();
@@ -30,6 +30,7 @@ public class RunIntake extends Command {
     @Override
     public void execute() {
         // AngularVelocity speed = Units.RotationsPerSecond.of(10);
+        intake.extend();
         double speed = Tuning.intakeSpeed.get();
         Logger.recordOutput("Intake/Speed", speed);
         intake.setIntakeSpeed(speed);
