@@ -3,24 +3,43 @@ package frc.robot.commands.climber;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.Constants;
 import frc.robot.Robot;
 
 
 public class climberCommand extends Command {
   public climberCommand() { this.addRequirements(Robot.cont.climber); }
 
+  //different states the climber can be in
+  public enum ClimberHeight {
+    HOMEPOS(0), //height in inches
+    L1(30),
+    L2(48),
+    L3(66);
+
+    public final double height;
+    ClimberHeight(double height) {this.height = height; }
+  }
+
+  
   private boolean descending;
   private double startPos;
 
   @Override
   public void initialize() {
+    //sets the states to stay at the home climber position
+    this.currentState = State.HOMEPOS;
+    this.targetState = State.HOMEPOS;
+    //stops the robot from descending
     this.descending = false;
     this.startPos = Robot.cont.climber.inputs.position;
   }
 
   @Override
-  public void execute() {
+  public void setClimbLevel() {
+
+  }
+
+  /*public void execute() {
     //checks if the robot is descending or ascending 
     if(this.descending) {
       //add code to slow the descent
@@ -34,7 +53,7 @@ public class climberCommand extends Command {
       }
       Logger.recordOutput("Climber/Initialize/State", "Ascending"); //logs the robot ascending
     }
-  }
+  }*/
 
   @Override
   public void end(boolean interrupted) {//stops the climb
