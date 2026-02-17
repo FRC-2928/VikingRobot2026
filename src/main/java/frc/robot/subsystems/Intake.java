@@ -1,6 +1,5 @@
 package frc.robot.subsystems;
 
-import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -8,11 +7,12 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.commands.Intake.RetractAndStop;
 import frc.robot.commands.Intake.StopRoller;
-import frc.robot.subsystems.IntakeIO.IntakeInputs;
+
+import org.littletonrobotics.junction.Logger;
 
 public class Intake extends SubsystemBase {
     public IntakeIO intakeIO;
-    public IntakeInputs intakeInputs = new IntakeInputs();
+    public IntakeInputsAutoLogged intakeInputs = new IntakeInputsAutoLogged();
 
     public Intake() {
         this.intakeIO = new IntakeIOReal();
@@ -21,6 +21,7 @@ public class Intake extends SubsystemBase {
 
     public void setIntakeSpeed(double speed) {
         intakeIO.setSpeed(speed);
+        Logger.recordOutput("Intake/Roller Speed", speed);
     }
 
     public void retract() {
@@ -33,8 +34,9 @@ public class Intake extends SubsystemBase {
 
     public boolean checkExtended() {
         // Rotations value is actually inches because of configured gear ratio
-        return (intakeInputs.expansionMotorAngle.in(Units.Rotations)
-                >= Constants.Intake.expansionMotorMaxDistance.in(Units.Inches));
+        Boolean isExtended = (intakeInputs.expansionMotorAngle.gte(Constants.Intake.expansionMotorMaxDistance));
+        Logger.recordOutput("Intake/IsExtended", isExtended);
+        return isExtended;
     }
 
     public Command retractStop() {
@@ -47,6 +49,9 @@ public class Intake extends SubsystemBase {
 
     @Override
     public void periodic() {
+        this.checkExtended(); // Testing only 
+
         this.intakeIO.updateInputs(this.intakeInputs);
+        Logger.processInputs("Intake", this.intakeInputs);
     }
 }

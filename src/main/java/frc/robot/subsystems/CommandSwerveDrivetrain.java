@@ -651,7 +651,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 .withVelocityY(-vx * maxSpeed * speedMultipliter) // Drive left with negative X (left)
                 .withTargetDirection(new Rotation2d(Math.atan2(
                                 (hubY - mCurrentSwerveState.Pose.getMeasureY().in(Units.Meters)),
-                                (getHubX() - mCurrentSwerveState.Pose.getMeasureX().in(Units.Meters)))
+                                (getHubX()
+                                        - mCurrentSwerveState.Pose.getMeasureX().in(Units.Meters)))
                         + Math.PI)));
     }
 
@@ -665,11 +666,13 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                                 -joystick.getLeftX() * maxSpeed * speedMultipliter) // Drive left with negative X (left)
                         .withTargetDirection(new Rotation2d(Math.atan2(
                                                 (hubY
-                                                        - mCurrentSwerveState.Pose
+                                                        - mCurrentSwerveState
+                                                                .Pose
                                                                 .getMeasureY()
                                                                 .in(Units.Meters)),
                                                 (getHubX()
-                                                        - mCurrentSwerveState.Pose
+                                                        - mCurrentSwerveState
+                                                                .Pose
                                                                 .getMeasureX()
                                                                 .in(Units.Meters)))
                                         + (!DriverStation.getAlliance().isEmpty()

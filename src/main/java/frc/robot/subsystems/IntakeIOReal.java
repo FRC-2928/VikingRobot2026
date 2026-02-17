@@ -138,6 +138,7 @@ public class IntakeIOReal implements IntakeIO {
     public void updateInputs(IntakeInputs intakeInputs) {
         BaseStatusSignal.refreshAll(intakeAngularVelocity, expansionMotorAngle);
         intakeInputs.angularVelocity = intakeAngularVelocity.getValue();
-        intakeInputs.expansionMotorAngle = expansionMotorAngle.getValue();
+        intakeInputs.expansionMotorAngle =
+                Units.Inches.of(expansionMotorAngle.getValue().in(Units.Rotations));
     }
 }
