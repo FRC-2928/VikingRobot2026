@@ -148,6 +148,8 @@ public class Constants {
 
             public static final int intakeRoller = 16;
             public static final int intakeExpansion = 99;
+
+            public static final int candle = 99;
         }
 
         public static final class INTAKE_CANDI {
