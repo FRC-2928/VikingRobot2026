@@ -13,10 +13,11 @@ public class Superstructure extends SubsystemBase {
 
     public enum State {
 
-        IDLE(getDoNothingCommand()),
-        INTAKE(Commands.run(intake::extendAndIntake)),
-        AIM(superstructure.aimWithTransition()),
-        SHOOT(superstructure.shoot());
+        IDLE(getDoNothingCommand()), // Let all subsystems run their default command (joystick drive, no shooting, no intake)
+        INTAKE(Commands.run(intake::extendAndIntake)), // call an arbitrary function in a RunCommand (similar to applyStates())
+        AIM(superstructure.aimUntilInTolerance()
+            .andThen(superstructure.transition(SHOOT))), // this command will call the state machine to move to SHOOT after it's done
+        SHOOT(superstructure.startShooting()); // this command will not transition states on its own, need another place to handle (e.g. periodic)
 
         private final Trigger isCurrentState;
         private final Command command;
@@ -29,10 +30,25 @@ public class Superstructure extends SubsystemBase {
 
     private RobotContainer cont;
     private State currentState;
+    // Could define triggers here for transitioning states or use a periodic
+    private Trigger shootDriverButton = controller.getRightTrigger();
 
     public Superstructure(RobotContainer cont) {
         this.cont = cont;
         this.currentState = getStartingState();
+    }
+
+    @Override
+    public void periodic() {
+        switch (currentState) {
+            case SHOOT:
+                if (!shootDriverButton.getAsBoolean() || cont.hopper.isEmpty()) {
+                    this.transition(State.IDLE);
+                }
+                break;
+            default:
+                ; // don't handle any transition out of this state (COULD RESULT IN ROBOT GETTING STUCK)
+        }
     }
 
     // Runs flywheels and kicker. Command will not end on its own
