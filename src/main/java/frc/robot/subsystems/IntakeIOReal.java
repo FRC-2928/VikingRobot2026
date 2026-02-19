@@ -13,12 +13,21 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.ForwardLimitTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.ReverseLimitTypeValue;
+import com.ctre.phoenix6.sim.ChassisReference;
+import com.ctre.phoenix6.sim.TalonFXSimState;
 
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 
 import frc.robot.Constants;
+
+import org.littletonrobotics.junction.Logger;
 
 public class IntakeIOReal implements IntakeIO {
     private TalonFX intakeRollerMotor;
@@ -29,6 +38,12 @@ public class IntakeIOReal implements IntakeIO {
     private PositionVoltage expansionPositionVoltage;
     private final Angle closedAngle = Units.Rotations.of(0);
     private final Angle openAngle = Units.Rotations.of(10);
+
+    // For Simualtion
+    private DCMotorSim expansionDCMotorSim = new DCMotorSim(
+            LinearSystemId.createDCMotorSystem(
+                    DCMotor.getKrakenX60(1), 0.001, Constants.Intake.expensionMotorGearRatio),
+            DCMotor.getKrakenX60(1));
 
     // Data goten at 02/11/26 Wednesday
     // Hopper extemsion: 11 iches and 3 quarters
@@ -88,7 +103,7 @@ public class IntakeIOReal implements IntakeIO {
                 .withForwardSoftLimitEnable(true)
                 .withForwardSoftLimitThreshold(Units.Rotations.of(100)) // Chnage this software limit to fit later
                 .withReverseSoftLimitEnable(true)
-                .withReverseSoftLimitThreshold(Units.Rotations.of(100)); // Chnage this software limit to fit later
+                .withReverseSoftLimitThreshold(Units.Rotations.of(-100)); // Chnage this software limit to fit later
 
         intakeExpansionConfig.Feedback.withSensorToMechanismRatio(3.0); // May change later reduction gear ratio
 
@@ -114,6 +129,12 @@ public class IntakeIOReal implements IntakeIO {
                 .withSlot(1)
                 .withLimitReverseMotion(true)
                 .withLimitForwardMotion(true);
+
+        if (Constants.mode == Constants.Mode.SIM) {
+            TalonFXSimState simState = intakeExpansionMotor.getSimState();
+            simState.Orientation = ChassisReference.CounterClockwise_Positive;
+            simState.setMotorType(TalonFXSimState.MotorType.KrakenX60);
+        }
     }
 
     @Override
@@ -125,7 +146,9 @@ public class IntakeIOReal implements IntakeIO {
     @Override
     public void extend() {
         // Expand and stop once fully expanded
-        intakeExpansionMotor.setControl(expansionPositionVoltage.withPosition(openAngle));
+        // intakeExpansionMotor.setControl(expansionPositionVoltage.withPosition(openAngle));
+        Logger.recordOutput("Intake/Is extend called", true);
+        intakeExpansionMotor.setControl(new DutyCycleOut(8));
     }
 
     @Override
@@ -140,5 +163,26 @@ public class IntakeIOReal implements IntakeIO {
         intakeInputs.angularVelocity = intakeAngularVelocity.getValue();
         intakeInputs.expansionMotorAngle =
                 Units.Inches.of(expansionMotorAngle.getValue().in(Units.Rotations));
+    }
+
+    @Override
+    public void simPeriodic() {
+        Logger.recordOutput("Inake/simPeriodic called", true);
+        TalonFXSimState simState = intakeExpansionMotor.getSimState();
+
+        simState.setSupplyVoltage(RobotController.getBatteryVoltage());
+        Logger.recordOutput("Intake/battery voltage", RobotController.getBatteryVoltage());
+
+        Voltage motorVoltage = simState.getMotorVoltageMeasure();
+        Logger.recordOutput("Intake/voltagePassed", motorVoltage);
+
+        expansionDCMotorSim.setInputVoltage(motorVoltage.in(Units.Volts));
+        expansionDCMotorSim.update(0.02);
+
+        simState.setRawRotorPosition(
+                expansionDCMotorSim.getAngularPosition().times(Constants.Intake.expensionMotorGearRatio));
+        simState.setRotorVelocity(
+                expansionDCMotorSim.getAngularVelocity().times(Constants.Intake.expensionMotorGearRatio));
+        Logger.recordOutput("Intake/Sim Motor Velocity", expansionDCMotorSim.getAngularVelocity());
     }
 }

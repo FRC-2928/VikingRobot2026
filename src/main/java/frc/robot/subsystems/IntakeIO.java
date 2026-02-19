@@ -20,4 +20,8 @@ public interface IntakeIO {
     public default void retract() {}
 
     public default void updateInputs(IntakeInputs intakeInputs) {}
+
+    public default void simulationInit() {}
+
+    public default void simPeriodic() {}
 }

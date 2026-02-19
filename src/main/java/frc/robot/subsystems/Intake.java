@@ -49,9 +49,14 @@ public class Intake extends SubsystemBase {
 
     @Override
     public void periodic() {
-        this.checkExtended(); // Testing only 
+        this.checkExtended(); // Testing only
 
         this.intakeIO.updateInputs(this.intakeInputs);
         Logger.processInputs("Intake", this.intakeInputs);
+    }
+
+    @Override
+    public void simulationPeriodic() {
+        intakeIO.simPeriodic();
     }
 }
