@@ -505,11 +505,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     // spotless: on
 
     public Command driveForDuration(ChassisSpeeds chassisSpeeds, Time time) {
-        return applyRequest(() -> {
-                    return new SwerveRequest.ApplyFieldSpeeds()
-                            .withSpeeds(chassisSpeeds)
-                            .withDriveRequestType(DriveRequestType.OpenLoopVoltage)
-                            .withDesaturateWheelSpeeds(true);
+        return new RunCommand(() -> {
+                    this.controlRobotDrivetrainAutonomus(chassisSpeeds);
                 })
                 .withTimeout(time)
                 .andThen(this.haltCommand());

@@ -81,19 +81,30 @@ public final class Autonomous {
         return Commands.sequence(drivetrain.getPathBuilder().build(new Path("forwardBack")));
     }
 
-    public static AutoChooser getChoreoAutoChooser(CommandSwerveDrivetrain drivetrain) {
+    public static AutoChooser getChoreoAutoChooser(RobotContainer cont) {
         final AutoChooser choreoChooser = new AutoChooser();
-        AutoFactory autoFactory = drivetrain.getChoreAutoFactory();
+        AutoFactory autoFactory = cont.drivetrain.getChoreAutoFactory();
 
         choreoChooser.addCmd("BLine-ForwardBack", () -> {
             final var idle = new SwerveRequest.Idle();
 
-            var pathBuilder = drivetrain.getPathBuilder();
+            var pathBuilder = cont.drivetrain.getPathBuilder();
             Path forwardBack = new Path("forwardBack");
             return Commands.sequence(
-                    drivetrain.runOnce(() -> drivetrain.seedFieldCentric(Rotation2d.kZero)),
+                    cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(Rotation2d.kZero)),
                     pathBuilder.build(forwardBack),
-                    drivetrain.applyRequest(() -> idle));
+                    cont.drivetrain.applyRequest(() -> idle));
+        });
+
+        choreoChooser.addCmd("path1_shootPickShoot", () -> {
+            final var idle = new SwerveRequest.Idle();
+
+            var pathBuilder = cont.drivetrain.getPathBuilder();
+            Path path1_shootPickShoot = new Path("path1_shootPickShoot");
+            return Commands.sequence(
+                    cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(Rotation2d.kZero)),
+                    pathBuilder.build(path1_shootPickShoot),
+                    cont.superstructure.readyAndShoot());
         });
 
         choreoChooser.addCmd(
@@ -101,19 +112,29 @@ public final class Autonomous {
                 () -> Commands.sequence(
                         // autoFactory.resetOdometry("SimpleFromRight"),
                         autoFactory.trajectoryCmd("StartToF"),
-                        Commands.deadline(new WaitCommand(2), CenterLimelight.CenterLimelightF(drivetrain)),
+                        Commands.deadline(new WaitCommand(2), CenterLimelight.CenterLimelightF(cont.drivetrain)),
                         autoFactory.trajectoryCmd("FToB2Reverse"),
-                        Commands.deadline(new WaitCommand(2), CenterLimelight.CenterLimelightB2Reverse(drivetrain)),
+                        Commands.deadline(
+                                new WaitCommand(2), CenterLimelight.CenterLimelightB2Reverse(cont.drivetrain)),
                         autoFactory.trajectoryCmd("B1ReverseToC"),
-                        Commands.deadline(new WaitCommand(2), CenterLimelight.CenterLimelightC(drivetrain)),
+                        Commands.deadline(new WaitCommand(2), CenterLimelight.CenterLimelightC(cont.drivetrain)),
                         autoFactory.trajectoryCmd("CToB1Reverse"),
-                        Commands.deadline(new WaitCommand(2), CenterLimelight.CenterLimelightB2Reverse(drivetrain)),
+                        Commands.deadline(
+                                new WaitCommand(2), CenterLimelight.CenterLimelightB2Reverse(cont.drivetrain)),
                         autoFactory.trajectoryCmd("B1ReverseToD"),
-                        Commands.deadline(new WaitCommand(2), CenterLimelight.CenterLimelightD(drivetrain))
+                        Commands.deadline(new WaitCommand(2), CenterLimelight.CenterLimelightD(cont.drivetrain))
                         // Robot.cont.drivetrain.haltCommand()
                         ));
 
         choreoChooser.addCmd("SimpleScore", () -> Commands.sequence(autoFactory.trajectoryCmd("SimpleScore")));
+
+        choreoChooser.addCmd(
+                "Auto0_goBackwardAndShoot",
+                () -> new SequentialCommandGroup(
+                        // Go Backward for 10 sec
+                        cont.drivetrain.driveForDuration(new ChassisSpeeds(-2, 0, 0), Units.Seconds.of(1)),
+                        // Call shoot from superclass
+                        cont.superstructure.readyAndShoot()));
 
         return choreoChooser;
     }

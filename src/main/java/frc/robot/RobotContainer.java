@@ -13,6 +13,7 @@ import choreo.auto.AutoChooser;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.units.Units;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
@@ -55,7 +56,8 @@ public class RobotContainer {
         this.intake = new Intake();
         // this.hopperFloor = new HopperFloor();
         this.logger = new Telemetry(MaxSpeed, drivetrain);
-        this.autoChooser = Autonomous.getChoreoAutoChooser(drivetrain);
+        this.autoChooser = Autonomous.getChoreoAutoChooser(this);
+        SmartDashboard.putData("Autonomous Routine", autoChooser);
         this.driverOI = new DriverOI(joystick, drivetrain, this);
         autoChooser.select("SimpleFromRight");
         // TODO: implement drive mode chooser (point, turn modes). Joystick drive needs to consume the chosen mode
