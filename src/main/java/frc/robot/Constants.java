@@ -147,7 +147,7 @@ public class Constants {
             public static final int hopper = 99;
 
             public static final int intakeRoller = 16;
-            public static final int intakeExpansion = 98;
+            public static final int intakeExpansion = 20;
 
             public static final int candle = 97;
         }
@@ -370,7 +370,8 @@ public class Constants {
         public static final double extensionRatio_inchesPerRotation = 0.0;
         public static final Distance expansionMotorMaxDistance = Units.Inches.of(11.75 - 0.5);
         public static final AngularVelocity intakeVelocity = Units.RotationsPerSecond.of(0);
-        public static double expensionMotorGearRatio = 3.0;
+        public static final double expensionMotorGearRatio = 3.0;
+        public static final double rollerMotorGearRatio = 1.0;
     }
 
     public static class Climber {
