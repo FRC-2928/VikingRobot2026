@@ -36,9 +36,9 @@ public class DriverOI extends BaseOI {
                     .getAngleToHub(Constants.Shooter.shooterAngleOffsetFromFront)
                     .lte(Constants.Shooter.toleranceFromHub);
             boolean correctHoodAngle =
-                    robotContainer.shooter.io.getHoodAngle().lte(Constants.Shooter.hoodAngleTolerance);
+                    robotContainer.shooter.getHoodAngle().lte(Constants.Shooter.hoodAngleTolerance);
             boolean correctFlywheelVelocity =
-                    robotContainer.shooter.io.getFlywheelVelocity().lte(Constants.Shooter.shooterVelocityTolerance);
+                    robotContainer.shooter.getFlywheelVelocity().lte(Constants.Shooter.shooterVelocityTolerance);
             return facingHub && correctHoodAngle && correctFlywheelVelocity;
         });
 

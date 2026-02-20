@@ -51,7 +51,7 @@ public class IntakeGround extends Command {
     @Override
     public void execute() {
         // TODO: get reasonable speed
-        intake.intakeIO.setSpeed(Tuning.intakeVelocity.get());
+        intake.setIntakeSpeed(Tuning.intakeVelocity.get());
 
         if (this.correction) {
             drivetrain.setControl(drivetrain
@@ -79,8 +79,7 @@ public class IntakeGround extends Command {
 
     @Override
     public void end(final boolean interrupted) {
-        robotContainer.intake.intakeIO.setSpeed(0);
-
+        robotContainer.intake.setIntakeSpeed(0);
         robotContainer.drivetrain.halt();
     }
 

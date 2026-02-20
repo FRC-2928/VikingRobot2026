@@ -17,7 +17,7 @@ public class Climber extends SubsystemBase {
             default -> throw new Error();};
     }
 
-    public final ClimberIO io;
+    private final ClimberIO io;
     public final ClimberIOInputs inputs = new ClimberIOInputs() {};
 
     @Override

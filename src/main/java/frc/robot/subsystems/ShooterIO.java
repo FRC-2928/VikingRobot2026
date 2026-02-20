@@ -24,12 +24,4 @@ public interface ShooterIO {
     public default void runKicker(Voltage kickerVoltage) {}
 
     public default void updateInputs(final ShooterIOInputs inputs) {}
-
-    public default AngularVelocity getFlywheelVelocity() {
-        return null;
-    }
-
-    public default Angle getHoodAngle() {
-        return null;
-    }
 }

@@ -8,7 +8,7 @@ import frc.robot.Constants;
 import frc.robot.subsystems.HopperFloorIO.HopperFloorIOInputs;
 
 public class HopperFloor extends SubsystemBase {
-    public HopperFloorIO io;
+    private HopperFloorIO io;
     public HopperFloorIOInputs hopperIOInputs = new HopperFloorIOInputs();
 
     public HopperFloor() {

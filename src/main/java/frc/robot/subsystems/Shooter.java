@@ -1,6 +1,8 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.units.Units;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
@@ -15,8 +17,16 @@ public class Shooter extends SubsystemBase {
             default -> new ShooterIOReal(this);};
     }
 
-    public final ShooterIO io;
+    private final ShooterIO io;
     public final ShooterIOInputsAutoLogged inputs = new ShooterIOInputsAutoLogged();
+
+    public Angle getHoodAngle() {
+        return inputs.hoodAngle;
+    }
+
+    public AngularVelocity getFlywheelVelocity() {
+        return inputs.flywheelSpeedA;
+    }
 
     @Override
     public void periodic() {

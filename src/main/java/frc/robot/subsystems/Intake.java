@@ -11,7 +11,7 @@ import frc.robot.commands.Intake.StopRoller;
 import org.littletonrobotics.junction.Logger;
 
 public class Intake extends SubsystemBase {
-    public IntakeIO intakeIO;
+    private IntakeIO intakeIO;
     public IntakeInputsAutoLogged intakeInputs = new IntakeInputsAutoLogged();
 
     public Intake() {
