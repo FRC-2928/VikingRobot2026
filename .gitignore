@@ -178,3 +178,7 @@ ctre_sim/
 
 # VS cide eclipse user profile
 org.eclipse.*
+
+# Simulation
+simgui-ds.json
+simgui.json
