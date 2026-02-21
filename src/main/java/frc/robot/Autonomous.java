@@ -107,7 +107,7 @@ public final class Autonomous {
                     cont.superstructure.readyAndShoot());
         });
 
-         choreoChooser.addCmd("path2_shootPickShoot", () -> {
+        choreoChooser.addCmd("path2_shootPickShoot", () -> {
             final var idle = new SwerveRequest.Idle();
 
             var pathBuilder = cont.drivetrain.getPathBuilder();

@@ -9,7 +9,6 @@ import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.Slot1Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DutyCycleOut;
-import com.ctre.phoenix6.controls.PositionTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.ForwardLimitTypeValue;
@@ -34,7 +33,7 @@ public class IntakeIOReal implements IntakeIO {
     private TalonFX intakeExpansionMotor;
     public StatusSignal<AngularVelocity> intakeAngularVelocity;
     public StatusSignal<Angle> expansionMotorAngle;
-    private PositionTorqueCurrentFOC retractPositionTorqueCurrentFOC;
+    private PositionVoltage retractPositionTorqueCurrentFOC;
     private PositionVoltage expansionPositionVoltage;
     private final Angle closedAngle = Units.Rotations.of(0);
     private final Angle openAngle = Units.Rotations.of(10);
@@ -78,7 +77,7 @@ public class IntakeIOReal implements IntakeIO {
                 new Slot0Configs().withKP(10).withKI(0).withKD(0);
 
         final Slot1Configs extendSlot1Configs =
-                new Slot1Configs().withKP(10).withKI(0).withKD(0);
+                new Slot1Configs().withKP(20).withKI(0).withKD(2);
 
         final TalonFXConfiguration intakeExpansionConfig = new TalonFXConfiguration();
         // todo: config this mototr so that it turn off when limit switches.
@@ -103,16 +102,16 @@ public class IntakeIOReal implements IntakeIO {
                 .withForwardLimitAutosetPositionValue(Units.Degrees.of(0))
                 .withForwardLimitType(ForwardLimitTypeValue.NormallyOpen)
                 .withReverseLimitRemoteCANdiS1(Constants.CAN.INTAKE_CANDI.getInstance())
-                .withReverseLimitEnable(false)
-                .withReverseLimitAutosetPositionEnable(false)
-                // .withReverseLimitAutosetPositionValue(Units.Rotations.of(0))
+                .withReverseLimitEnable(true)
+                .withReverseLimitAutosetPositionEnable(true)
+                .withReverseLimitAutosetPositionValue(Units.Rotations.of(0))
                 .withReverseLimitType(ReverseLimitTypeValue.NormallyOpen);
 
         intakeExpansionConfig
                 .SoftwareLimitSwitch
-                .withForwardSoftLimitEnable(true)
+                .withForwardSoftLimitEnable(false)
                 .withForwardSoftLimitThreshold(Units.Rotations.of(1)) // Chnage this software limit to fit later
-                .withReverseSoftLimitEnable(true)
+                .withReverseSoftLimitEnable(false)
                 .withReverseSoftLimitThreshold(Units.Rotations.of(0)); // Chnage this software limit to fit later
 
         intakeExpansionConfig.Feedback.withSensorToMechanismRatio(3.0); // May change later reduction gear ratio
@@ -132,15 +131,10 @@ public class IntakeIOReal implements IntakeIO {
         this.expansionMotorAngle = this.intakeExpansionMotor.getPosition();
         BaseStatusSignal.setUpdateFrequencyForAll(Units.Hertz.of(100), intakeAngularVelocity, expansionMotorAngle);
 
-        retractPositionTorqueCurrentFOC = new PositionTorqueCurrentFOC(Units.Rotation.of(0))
-                .withSlot(0)
-                .withLimitReverseMotion(false)
-                .withLimitForwardMotion(false);
+        retractPositionTorqueCurrentFOC = new PositionVoltage(Units.Rotations.zero());
+        // .withSlot(0);
 
-        expansionPositionVoltage = new PositionVoltage(openAngle)
-                .withSlot(1)
-                .withLimitReverseMotion(false)
-                .withLimitForwardMotion(false);
+        expansionPositionVoltage = new PositionVoltage(openAngle).withSlot(1);
 
         if (Constants.mode == Constants.Mode.SIM) {
             TalonFXSimState simState = intakeExpansionMotor.getSimState();
@@ -165,7 +159,7 @@ public class IntakeIOReal implements IntakeIO {
     public void retract() {
         // Retract using the torque control
         intakeExpansionMotor.setControl(
-                retractPositionTorqueCurrentFOC.withPosition(closedAngle).withFeedForward(-1));
+                retractPositionTorqueCurrentFOC.withPosition(closedAngle).withFeedForward(0));
     }
 
     @Override
@@ -209,6 +203,10 @@ public class IntakeIOReal implements IntakeIO {
                 rollerDCMotorSim.getAngularPosition().times(Constants.Intake.rollerMotorGearRatio));
         rollerMotorSimState.setRotorVelocity(
                 rollerDCMotorSim.getAngularVelocity().times(Constants.Intake.rollerMotorGearRatio));
+
+        // 5) Set the Limit Swiches
+        expansionMotorSimState.setReverseLimit(
+                expansionDCMotorSim.getAngularPosition().lte(Units.Rotations.zero()));
     }
 
     /**
