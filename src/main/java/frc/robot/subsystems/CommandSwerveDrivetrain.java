@@ -37,7 +37,6 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -514,7 +513,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 .andThen(this.haltCommand());
     }
 
-    public Command runPath(String pathFileName){
+    public Command runPath(String pathFileName) {
         var pathBuilder = this.getPathBuilder();
         Path path = new Path(pathFileName);
         return pathBuilder.build(path);
