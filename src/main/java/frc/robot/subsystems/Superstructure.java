@@ -54,6 +54,9 @@ public class Superstructure extends SubsystemBase {
 
     public Command pathWileINtaking(String pathFileName) {
         return new ParallelDeadlineGroup(cont.drivetrain.runPath(pathFileName), this.extendAndIntake())
-            .finallyDo(() -> {cont.intake.setIntakeSpeed(0); cont.intake.retract();});
+                .finallyDo(() -> {
+                    cont.intake.setIntakeSpeed(0);
+                    cont.intake.retract();
+                });
     }
 }

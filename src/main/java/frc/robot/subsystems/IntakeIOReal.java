@@ -114,7 +114,8 @@ public class IntakeIOReal implements IntakeIO {
                 .withReverseSoftLimitEnable(false)
                 .withReverseSoftLimitThreshold(Units.Rotations.of(0)); // Chnage this software limit to fit later
 
-        intakeExpansionConfig.Feedback.withSensorToMechanismRatio( Constants.Intake.expensionMotorGearRatio); // May change later reduction gear ratio
+        intakeExpansionConfig.Feedback.withSensorToMechanismRatio(
+                Constants.Intake.expensionMotorGearRatio); // May change later reduction gear ratio
 
         MotorOutputConfigs intakeExpansionOutputConfigs =
                 new MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive);
@@ -131,8 +132,7 @@ public class IntakeIOReal implements IntakeIO {
         this.expansionMotorAngle = this.intakeExpansionMotor.getPosition();
         BaseStatusSignal.setUpdateFrequencyForAll(Units.Hertz.of(100), intakeAngularVelocity, expansionMotorAngle);
 
-        retractPositionTorqueCurrentFOC = new PositionVoltage(Units.Rotations.zero())
-        .withSlot(0);
+        retractPositionTorqueCurrentFOC = new PositionVoltage(Units.Rotations.zero()).withSlot(0);
 
         expansionPositionVoltage = new PositionVoltage(openAngle).withSlot(1);
 
