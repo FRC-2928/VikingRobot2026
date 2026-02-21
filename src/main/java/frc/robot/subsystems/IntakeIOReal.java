@@ -46,8 +46,7 @@ public class IntakeIOReal implements IntakeIO {
             DCMotor.getKrakenX60(1));
 
     private DCMotorSim rollerDCMotorSim = new DCMotorSim(
-            LinearSystemId.createDCMotorSystem(
-                    DCMotor.getKrakenX60(1), 0.001, Constants.Intake.rollerMotorGearRatio),
+            LinearSystemId.createDCMotorSystem(DCMotor.getKrakenX60(1), 0.001, Constants.Intake.rollerMotorGearRatio),
             DCMotor.getKrakenX60(1));
 
     // Data goten at 02/11/26 Wednesday
@@ -75,15 +74,11 @@ public class IntakeIOReal implements IntakeIO {
         // The Intake Expansion motor
         this.intakeExpansionMotor = new TalonFX(Constants.CAN.CTRE.intakeExpansion, Constants.CAN.CTRE.bus);
 
-        final Slot0Configs retractSlot0Configs = new Slot0Configs()
-                .withKP(10)
-                .withKI(0)
-                .withKD(0); 
+        final Slot0Configs retractSlot0Configs =
+                new Slot0Configs().withKP(10).withKI(0).withKD(0);
 
-        final Slot1Configs extendSlot1Configs = new Slot1Configs()
-                .withKP(10)
-                .withKI(0)
-                .withKD(0); 
+        final Slot1Configs extendSlot1Configs =
+                new Slot1Configs().withKP(10).withKI(0).withKD(0);
 
         final TalonFXConfiguration intakeExpansionConfig = new TalonFXConfiguration();
         // todo: config this mototr so that it turn off when limit switches.
@@ -169,7 +164,8 @@ public class IntakeIOReal implements IntakeIO {
     @Override
     public void retract() {
         // Retract using the torque control
-        intakeExpansionMotor.setControl(retractPositionTorqueCurrentFOC.withPosition(closedAngle).withFeedForward(-1));
+        intakeExpansionMotor.setControl(
+                retractPositionTorqueCurrentFOC.withPosition(closedAngle).withFeedForward(-1));
     }
 
     @Override
@@ -182,7 +178,7 @@ public class IntakeIOReal implements IntakeIO {
 
     @Override
     public void simPeriodic() {
-        // 1) Fetch the TalonFXSimState for each motor controller. Sim state will 
+        // 1) Fetch the TalonFXSimState for each motor controller. Sim state will
         //      provide output voltage to the motor and we will update it with simulated motor pos/vel
         TalonFXSimState expansionMotorSimState = intakeExpansionMotor.getSimState();
         TalonFXSimState rollerMotorSimState = intakeRollerMotor.getSimState();
@@ -198,7 +194,8 @@ public class IntakeIOReal implements IntakeIO {
         Voltage rollerMotorVoltage = rollerMotorSimState.getMotorVoltageMeasure();
         rollerDCMotorSim.setInputVoltage(addFriction(rollerMotorVoltage.in(Units.Volts), 0.2));
 
-        // 4) Update motor sim with a time step. This will have the motor sim move based on input voltage and give us back the new motor position
+        // 4) Update motor sim with a time step. This will have the motor sim move based on input voltage and give us
+        // back the new motor position
         expansionDCMotorSim.update(0.02);
         rollerDCMotorSim.update(0.02);
 
