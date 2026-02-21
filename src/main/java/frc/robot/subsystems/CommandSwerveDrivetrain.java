@@ -37,6 +37,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -45,6 +46,7 @@ import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.robot.generated.TunerConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.lib.BLine.FollowPath;
+import frc.robot.lib.BLine.Path;
 import frc.robot.oi.BaseOI;
 import frc.robot.vision.Limelight;
 
@@ -510,6 +512,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 })
                 .withTimeout(time)
                 .andThen(this.haltCommand());
+    }
+
+    public Command runPath(String pathFileName){
+        var pathBuilder = this.getPathBuilder();
+        Path path = new Path(pathFileName);
+        return pathBuilder.build(path);
     }
     /**
      * Returns a command that applies the specified control request to this swerve drivetrain.

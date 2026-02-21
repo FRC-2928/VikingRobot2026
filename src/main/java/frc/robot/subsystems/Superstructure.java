@@ -2,6 +2,8 @@ package frc.robot.subsystems;
 
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.ParallelDeadlineGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -49,5 +51,12 @@ public class Superstructure extends SubsystemBase {
 
     public Command extendAndIntake() {
         return new ExtendAndRunIntake(cont.intake);
+    }
+
+    public Command pathWileINtaking(String pathFileName){
+        return new ParallelDeadlineGroup(
+            cont.drivetrain.runPath(pathFileName),
+            this.extendAndIntake()
+        );
     }
 }
