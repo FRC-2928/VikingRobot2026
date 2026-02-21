@@ -36,7 +36,7 @@ public class IntakeIOReal implements IntakeIO {
     private PositionVoltage retractPositionTorqueCurrentFOC;
     private PositionVoltage expansionPositionVoltage;
     private final Angle closedAngle = Units.Rotations.of(0);
-    private final Angle openAngle = Units.Rotations.of(10);
+    private final Angle openAngle = Units.Rotations.of(11.75);
 
     // For Simualtion
     private DCMotorSim expansionDCMotorSim = new DCMotorSim(
@@ -77,7 +77,7 @@ public class IntakeIOReal implements IntakeIO {
                 new Slot0Configs().withKP(10).withKI(0).withKD(0);
 
         final Slot1Configs extendSlot1Configs =
-                new Slot1Configs().withKP(20).withKI(0).withKD(2);
+                new Slot1Configs().withKP(60).withKI(0).withKD(3);
 
         final TalonFXConfiguration intakeExpansionConfig = new TalonFXConfiguration();
         // todo: config this mototr so that it turn off when limit switches.
@@ -114,7 +114,7 @@ public class IntakeIOReal implements IntakeIO {
                 .withReverseSoftLimitEnable(false)
                 .withReverseSoftLimitThreshold(Units.Rotations.of(0)); // Chnage this software limit to fit later
 
-        intakeExpansionConfig.Feedback.withSensorToMechanismRatio(3.0); // May change later reduction gear ratio
+        intakeExpansionConfig.Feedback.withSensorToMechanismRatio( Constants.Intake.expensionMotorGearRatio); // May change later reduction gear ratio
 
         MotorOutputConfigs intakeExpansionOutputConfigs =
                 new MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive);
@@ -131,8 +131,8 @@ public class IntakeIOReal implements IntakeIO {
         this.expansionMotorAngle = this.intakeExpansionMotor.getPosition();
         BaseStatusSignal.setUpdateFrequencyForAll(Units.Hertz.of(100), intakeAngularVelocity, expansionMotorAngle);
 
-        retractPositionTorqueCurrentFOC = new PositionVoltage(Units.Rotations.zero());
-        // .withSlot(0);
+        retractPositionTorqueCurrentFOC = new PositionVoltage(Units.Rotations.zero())
+        .withSlot(0);
 
         expansionPositionVoltage = new PositionVoltage(openAngle).withSlot(1);
 

@@ -351,7 +351,7 @@ public class Constants {
         public static final double extensionRatio_inchesPerRotation = 0.0;
         public static final Distance expansionMotorMaxDistance = Units.Inches.of(11.75 - 0.5);
         public static final AngularVelocity intakeVelocity = Units.RotationsPerSecond.of(0);
-        public static final double expensionMotorGearRatio = 3.0;
+        public static final double expensionMotorGearRatio = 3.0 * 4.5;
         public static final double rollerMotorGearRatio = 1.0;
     }
 
