@@ -303,7 +303,7 @@ public class Constants {
 
         // Gear Ratios
         public static final double flywheelGearRatio = 1.0;
-        public static final double hoodGearRatio = 50.0; // TODO: Find the actual gear ratio for the hood motor
+        public static final double hoodGearRatio = 4.0 * 157.0 / 14;
         public static final double kickerGearRatio = 1.0;
 
         public static final Angle hoodAngle = Units.Degrees.of(0);
