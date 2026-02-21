@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.PositionVoltage;
@@ -11,12 +12,16 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.sim.TalonFXSimState;
 
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
-
+import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.Constants;
 
 public class ShooterIOReal implements ShooterIO {
@@ -27,6 +32,20 @@ public class ShooterIOReal implements ShooterIO {
     private final TalonFX kicker; // Kraken x44
     private final TalonFX hood; // Kraken x44
 
+    // --------------------- Simulation Interfaces ---------------------
+    private DCMotorSim flywheelADCMotorSim = new DCMotorSim(
+            LinearSystemId.createDCMotorSystem(DCMotor.getKrakenX60(1), 0.001, Constants.Shooter.flywheelGearRatio),
+            DCMotor.getKrakenX60(1));
+    private DCMotorSim flywheelBDCMotorSim = new DCMotorSim(
+            LinearSystemId.createDCMotorSystem(DCMotor.getKrakenX60(1), 0.001, Constants.Shooter.flywheelGearRatio),
+            DCMotor.getKrakenX60(1));
+    private DCMotorSim hoodDCMotorSim = new DCMotorSim(
+            LinearSystemId.createDCMotorSystem(DCMotor.getKrakenX44(1), 0.001, Constants.Shooter.hoodGearRatio),
+            DCMotor.getKrakenX44(1));
+    private DCMotorSim kickerDCMotorSim = new DCMotorSim(
+            LinearSystemId.createDCMotorSystem(DCMotor.getKrakenX44(1), 0.001, Constants.Shooter.kickerGearRatio),
+            DCMotor.getKrakenX44(1));
+
     private StatusSignal<Angle> hoodAngle;
     private StatusSignal<AngularVelocity> velocityA;
     private StatusSignal<AngularVelocity> velocityB;
@@ -36,6 +55,13 @@ public class ShooterIOReal implements ShooterIO {
         this.flywheelB = new TalonFX(Constants.CAN.CTRE.shooterFlywheelB, Constants.CAN.CTRE.bus);
         this.kicker = new TalonFX(Constants.CAN.CTRE.kicker, Constants.CAN.CTRE.bus);
         this.hood = new TalonFX(Constants.CAN.CTRE.hood, Constants.CAN.CTRE.bus);
+
+        final Slot0Configs flywheelsSlot0Config =
+                new Slot0Configs().withKP(0).withKI(0).withKD(0);
+        final Slot0Configs hoodSlot0Config =
+                new Slot0Configs().withKP(0).withKI(0).withKD(0);
+        final Slot0Configs kickerSlot0Config =
+                new Slot0Configs().withKP(0).withKI(0).withKD(0);
 
         //
         // Flywheels
@@ -59,7 +85,7 @@ public class ShooterIOReal implements ShooterIO {
         flywheelsConfig.CurrentLimits.SupplyCurrentLowerTime = 0.1; // max time allowed to draw SupplyCurrentLimit
 
         // PID Values
-        flywheelsConfig.Slot0 = Constants.Shooter.flywheelGainsSlot0;
+        flywheelsConfig.Slot0 = flywheelsSlot0Config;
 
         flywheelA.getConfigurator().apply(flywheelsConfig);
         flywheelB.getConfigurator().apply(flywheelsConfig);
@@ -87,7 +113,7 @@ public class ShooterIOReal implements ShooterIO {
         hoodConfig.CurrentLimits.SupplyCurrentLowerTime = 0.1; // max time allowed to draw SupplyCurrentLimit
 
         // PID Values
-        hoodConfig.Slot0 = Constants.Shooter.hoodGainsSlot0;
+        hoodConfig.Slot0 = hoodSlot0Config;
 
         //
         // Kicker
@@ -111,7 +137,7 @@ public class ShooterIOReal implements ShooterIO {
         kickerConfig.CurrentLimits.SupplyCurrentLowerTime = 0.1; // max time allowed to draw SupplyCurrentLimit
 
         // PID Values
-        kickerConfig.Slot0 = Constants.Shooter.kickerGainsSlot0;
+        kickerConfig.Slot0 = kickerSlot0Config;
 
         this.velocityA = this.flywheelA.getRotorVelocity();
         this.velocityB = this.flywheelB.getRotorVelocity();
@@ -145,6 +171,71 @@ public class ShooterIOReal implements ShooterIO {
     @Override
     public void runKicker(Voltage kickerVoltage) {
         this.kicker.setControl(new VoltageOut(kickerVoltage));
+    }
+
+    @Override
+    public void simPeriodic() {
+        TalonFXSimState flywheelASimState = flywheelA.getSimState();
+        TalonFXSimState flywheelBSimState = flywheelB.getSimState();
+        TalonFXSimState kickerSimState = kicker.getSimState();
+        TalonFXSimState hoodSimState = hood.getSimState();
+
+        flywheelASimState.setSupplyVoltage(RobotController.getBatteryVoltage());
+        flywheelBSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
+        kickerSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
+        hoodSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
+
+        Voltage flywheelAVoltage = flywheelASimState.getMotorVoltageMeasure();
+        flywheelADCMotorSim.setInputVoltage(addFriction(flywheelAVoltage.in(Units.Volts), 0.2));
+
+        Voltage flywheelBVoltage = flywheelASimState.getMotorVoltageMeasure();
+        flywheelADCMotorSim.setInputVoltage(addFriction(flywheelBVoltage.in(Units.Volts), 0.2));
+
+        Voltage hoodVoltage = flywheelASimState.getMotorVoltageMeasure();
+        flywheelADCMotorSim.setInputVoltage(addFriction(hoodVoltage.in(Units.Volts), 0.2));
+
+        Voltage kickerVoltage = flywheelASimState.getMotorVoltageMeasure();
+        flywheelADCMotorSim.setInputVoltage(addFriction(kickerVoltage.in(Units.Volts), 0.2));
+
+        flywheelADCMotorSim.update(0.02);
+        flywheelBDCMotorSim.update(0.02);
+        hoodDCMotorSim.update(0.02);
+        kickerDCMotorSim.update(0.02);
+
+        flywheelASimState.setRawRotorPosition(
+                flywheelADCMotorSim.getAngularPosition().times(Constants.Shooter.flywheelGearRatio));
+        flywheelASimState.setRotorVelocity(
+                flywheelADCMotorSim.getAngularVelocity().times(Constants.Shooter.flywheelGearRatio));
+
+        flywheelBSimState.setRawRotorPosition(
+                flywheelBDCMotorSim.getAngularPosition().times(Constants.Shooter.flywheelGearRatio));
+        flywheelBSimState.setRotorVelocity(
+                flywheelBDCMotorSim.getAngularVelocity().times(Constants.Shooter.flywheelGearRatio));
+
+        hoodSimState.setRawRotorPosition(hoodDCMotorSim.getAngularPosition().times(Constants.Shooter.hoodGearRatio));
+        hoodSimState.setRotorVelocity(hoodDCMotorSim.getAngularVelocity().times(Constants.Shooter.hoodGearRatio));
+
+        kickerSimState.setRawRotorPosition(
+                kickerDCMotorSim.getAngularPosition().times(Constants.Shooter.kickerGearRatio));
+        kickerSimState.setRotorVelocity(kickerDCMotorSim.getAngularVelocity().times(Constants.Shooter.kickerGearRatio));
+    }
+
+    /**
+     * Applies the effects of friction to dampen the motor voltage.
+     *
+     * @param motorVoltage Voltage output by the motor
+     * @param frictionVoltage Voltage required to overcome friction
+     * @return Friction-dampened motor voltage
+     */
+    protected double addFriction(double motorVoltage, double frictionVoltage) {
+        if (Math.abs(motorVoltage) < frictionVoltage) {
+            motorVoltage = 0.0;
+        } else if (motorVoltage > 0.0) {
+            motorVoltage -= frictionVoltage;
+        } else {
+            motorVoltage += frictionVoltage;
+        }
+        return motorVoltage;
     }
 
     @Override

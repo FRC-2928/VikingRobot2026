@@ -23,5 +23,7 @@ public interface ShooterIO {
 
     public default void runKicker(Voltage kickerVoltage) {}
 
+    public default void simPeriodic() {}
+
     public default void updateInputs(final ShooterIOInputs inputs) {}
 }

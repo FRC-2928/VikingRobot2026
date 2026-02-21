@@ -1,11 +1,12 @@
 package frc.robot;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.AudioConfigs;
 import com.ctre.phoenix6.configs.CANdiConfiguration;
 import com.ctre.phoenix6.configs.DigitalInputsConfigs;
-import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.SlotConfigs;
 import com.ctre.phoenix6.hardware.CANdi;
 import com.ctre.phoenix6.signals.S1CloseStateValue;
@@ -28,8 +29,6 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
-
-import org.littletonrobotics.junction.Logger;
 
 public class Constants {
     private static Mode currentMode() {
@@ -302,6 +301,11 @@ public class Constants {
 
         public static final Angle shooterAngleOffsetFromFront = Units.Degrees.of(90);
 
+        // Gear Ratios
+        public static final double flywheelGearRatio = 1.0;
+        public static final double hoodGearRatio = 50.0; // TODO: Find the actual gear ratio for the hood motor
+        public static final double kickerGearRatio = 1.0;
+
         public static final Angle hoodAngle = Units.Degrees.of(0);
         public static final LinearVelocity releaseVelocity = Units.FeetPerSecond.of(0);
         public static final Angle toleranceFromHub = Units.Degrees.of(10);
@@ -309,30 +313,6 @@ public class Constants {
         public static final Angle hoodAngleTolerance = Units.Degrees.of(3);
         public static final double pivotCurrentLimit = 40;
         public static final AngularVelocity pivotMaxVelocityShoot = Units.DegreesPerSecond.of(2);
-        public static final Slot0Configs flywheelGainsSlot0 = new Slot0Configs()
-                .withKP(0.0)
-                .withKI(0.0)
-                .withKD(0.0)
-                .withKS(0)
-                .withKV(0.0)
-                .withKA(0);
-
-        public static final Slot0Configs hoodGainsSlot0 = new Slot0Configs()
-                .withKP(0)
-                .withKI(0.0)
-                .withKD(0.0)
-                .withKS(0)
-                .withKV(0.0)
-                .withKA(0);
-
-        public static final Slot0Configs kickerGainsSlot0 = new Slot0Configs()
-                .withKP(0)
-                .withKI(0.0)
-                .withKD(0.0)
-                .withKS(0)
-                .withKV(0.0)
-                .withKA(0);
-
         public static final InterpolatingTreeMap<Double, AimValues> lookUpTable =
                 new InterpolatingTreeMap<Double, AimValues>(null, null);
 
@@ -357,6 +337,7 @@ public class Constants {
         private HopperFloor() {
             throw new IllegalCallerException("Cannot instantiate `Constants.HopperFloor`");
         }
+        // public final double indexerGearRatio = 1.0; // Idk if this goes here
 
         public static final AngularVelocity hopperVelocity = Units.RotationsPerSecond.of(0);
     }
@@ -366,7 +347,7 @@ public class Constants {
             throw new IllegalCallerException("Dont Call this (Constants.Intake)");
         }
 
-        // Inchas per rotation for each gearn turn
+        // Inches per rotation for each gearn turn
         public static final double extensionRatio_inchesPerRotation = 0.0;
         public static final Distance expansionMotorMaxDistance = Units.Inches.of(11.75 - 0.5);
         public static final AngularVelocity intakeVelocity = Units.RotationsPerSecond.of(0);
