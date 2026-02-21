@@ -39,10 +39,6 @@ public class Intake extends SubsystemBase {
         return isExtended;
     }
 
-    public Command retractStop() {
-        return new ParallelCommandGroup(new StopRoller(this), new RetractAndStop(this));
-    }
-
     public void initDefaultCommand() {
         setDefaultCommand(new RetractAndStop(this));
     }

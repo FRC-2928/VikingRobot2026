@@ -23,7 +23,7 @@ public class RetractAndStop extends InstantCommand {
     // Called when the command is initially scheduled.
     @Override
     public void initialize() {
-        m_intake.retract();
         m_intake.setIntakeSpeed(0);
+        m_intake.retract();
     }
 }
