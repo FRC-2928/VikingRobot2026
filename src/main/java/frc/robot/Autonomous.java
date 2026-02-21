@@ -107,6 +107,28 @@ public final class Autonomous {
                     cont.superstructure.readyAndShoot());
         });
 
+         choreoChooser.addCmd("path2_shootPickShoot", () -> {
+            final var idle = new SwerveRequest.Idle();
+
+            var pathBuilder = cont.drivetrain.getPathBuilder();
+            Path path2_shootPickShoot = new Path("path2_shootPickShoot");
+            return Commands.sequence(
+                    cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(Rotation2d.kZero)),
+                    pathBuilder.build(path2_shootPickShoot),
+                    cont.superstructure.readyAndShoot());
+        });
+
+        choreoChooser.addCmd("path3_middlePickShoot", () -> {
+            final var idle = new SwerveRequest.Idle();
+
+            var pathBuilder = cont.drivetrain.getPathBuilder();
+            Path path3_middlePickShoot = new Path("path3_middlePickShoot");
+            return Commands.sequence(
+                    cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(Rotation2d.kZero)),
+                    pathBuilder.build(path3_middlePickShoot),
+                    cont.superstructure.readyAndShoot());
+        });
+
         choreoChooser.addCmd(
                 "SimpleFromRight",
                 () -> Commands.sequence(
