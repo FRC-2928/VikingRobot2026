@@ -3,6 +3,7 @@ package frc.robot.subsystems;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.LinearVelocity;
 
 import org.littletonrobotics.junction.AutoLog;
 
@@ -11,6 +12,7 @@ public interface IntakeIO {
     public static class IntakeInputs {
         public AngularVelocity angularVelocity = Units.RadiansPerSecond.zero();
         public Distance expansionMotorAngle = Units.Inches.zero();
+        public LinearVelocity expansionAngularVelocity = Units.InchesPerSecond.zero();
     }
 
     public default void setSpeed(double speed) {}

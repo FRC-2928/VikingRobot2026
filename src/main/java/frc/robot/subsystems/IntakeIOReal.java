@@ -9,6 +9,7 @@ import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.Slot1Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DutyCycleOut;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.ForwardLimitTypeValue;
@@ -22,6 +23,7 @@ import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
@@ -32,8 +34,10 @@ public class IntakeIOReal implements IntakeIO {
     private TalonFX intakeRollerMotor;
     private TalonFX intakeExpansionMotor;
     public StatusSignal<AngularVelocity> intakeAngularVelocity;
+    public StatusSignal<AngularVelocity> expansionAngularVelocity;
     public StatusSignal<Angle> expansionMotorAngle;
     private PositionVoltage retractPositionTorqueCurrentFOC;
+    final MotionMagicVoltage motionMagicVoltage;
     private PositionVoltage expansionPositionVoltage;
     private final Angle closedAngle = Units.Rotations.of(0);
     private final Angle openAngle = Units.Rotations.of(11.75);
@@ -74,8 +78,12 @@ public class IntakeIOReal implements IntakeIO {
         this.intakeExpansionMotor = new TalonFX(Constants.CAN.CTRE.intakeExpansion, Constants.CAN.CTRE.bus);
 
         final Slot0Configs retractSlot0Configs =
-                new Slot0Configs().withKP(10).withKI(0).withKD(0);
-
+                new Slot0Configs();
+                retractSlot0Configs.kS = 0.2; // Add 0.2 V output to overcome static friction
+                retractSlot0Configs.kV = 0.12; // A velocity target of 1 rps results in 0.12 V output
+                retractSlot0Configs.kP = 4.8; // A position error of 2.5 rotations results in 12 V output
+                retractSlot0Configs.kI = 0; // no output for integrated error
+                retractSlot0Configs.kD = 0.1; // A velocity error of 1 rps results in 0.1 V output
         final Slot1Configs extendSlot1Configs =
                 new Slot1Configs().withKP(60).withKI(0).withKD(3);
 
@@ -97,8 +105,8 @@ public class IntakeIOReal implements IntakeIO {
 
                 // TODO: Check if these configs are correct
                 .withForwardLimitRemoteCANdiS1(Constants.CAN.INTAKE_CANDI.getInstance())
-                .withForwardLimitEnable(false)
-                .withForwardLimitAutosetPositionEnable(false)
+                .withForwardLimitEnable(true)
+                .withForwardLimitAutosetPositionEnable(true)
                 .withForwardLimitAutosetPositionValue(Units.Degrees.of(0))
                 .withForwardLimitType(ForwardLimitTypeValue.NormallyOpen)
                 .withReverseLimitRemoteCANdiS1(Constants.CAN.INTAKE_CANDI.getInstance())
@@ -109,13 +117,18 @@ public class IntakeIOReal implements IntakeIO {
 
         intakeExpansionConfig
                 .SoftwareLimitSwitch
-                .withForwardSoftLimitEnable(false)
-                .withForwardSoftLimitThreshold(Units.Rotations.of(1)) // Chnage this software limit to fit later
-                .withReverseSoftLimitEnable(false)
-                .withReverseSoftLimitThreshold(Units.Rotations.of(0)); // Chnage this software limit to fit later
+                .withForwardSoftLimitEnable(true)
+                .withForwardSoftLimitThreshold(openAngle) // Chnage this software limit to fit later
+                .withReverseSoftLimitEnable(true)
+                .withReverseSoftLimitThreshold(closedAngle); // Chnage this software limit to fit later
 
         intakeExpansionConfig.Feedback.withSensorToMechanismRatio(
                 Constants.Intake.expensionMotorGearRatio); // May change later reduction gear ratio
+
+        var motionMagicConfigs = intakeExpansionConfig.MotionMagic;
+                motionMagicConfigs.MotionMagicCruiseVelocity = 1; // Target cruise velocity of 80 rps
+                motionMagicConfigs.MotionMagicAcceleration = 160; // Target acceleration of 160 rps/s (0.5 seconds)
+                motionMagicConfigs.MotionMagicJerk = 1600; // Target jerk of 1600 rps/s/s (0.1 seconds)
 
         MotorOutputConfigs intakeExpansionOutputConfigs =
                 new MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive);
@@ -130,9 +143,13 @@ public class IntakeIOReal implements IntakeIO {
 
         this.intakeAngularVelocity = this.intakeRollerMotor.getRotorVelocity();
         this.expansionMotorAngle = this.intakeExpansionMotor.getPosition();
-        BaseStatusSignal.setUpdateFrequencyForAll(Units.Hertz.of(100), intakeAngularVelocity, expansionMotorAngle);
+        this.expansionAngularVelocity = this.intakeExpansionMotor.getRotorVelocity();
+        BaseStatusSignal.setUpdateFrequencyForAll(Units.Hertz.of(100), intakeAngularVelocity, expansionMotorAngle, expansionAngularVelocity);
 
         retractPositionTorqueCurrentFOC = new PositionVoltage(Units.Rotations.zero()).withSlot(0);
+
+        // create a Motion Magic request, voltage output                
+        this.motionMagicVoltage = new MotionMagicVoltage(0);
 
         expansionPositionVoltage = new PositionVoltage(openAngle).withSlot(1);
 
@@ -151,23 +168,24 @@ public class IntakeIOReal implements IntakeIO {
 
     @Override
     public void extend() {
-        // Expand and stop once fully expanded
         intakeExpansionMotor.setControl(expansionPositionVoltage.withPosition(openAngle));
     }
 
     @Override
     public void retract() {
-        // Retract using the torque control
+        intakeExpansionMotor.setControl(motionMagicVoltage.withPosition(closedAngle));
+        /* 
         intakeExpansionMotor.setControl(
-                retractPositionTorqueCurrentFOC.withPosition(closedAngle).withFeedForward(0));
+                retractPositionTorqueCurrentFOC.withPosition(closedAngle).withFeedForward(0)); */
     }
 
     @Override
     public void updateInputs(IntakeInputs intakeInputs) {
-        BaseStatusSignal.refreshAll(intakeAngularVelocity, expansionMotorAngle);
+        BaseStatusSignal.refreshAll(intakeAngularVelocity, expansionMotorAngle, expansionAngularVelocity);
         intakeInputs.angularVelocity = intakeAngularVelocity.getValue();
         intakeInputs.expansionMotorAngle =
                 Units.Inches.of(expansionMotorAngle.getValue().in(Units.Rotations));
+        intakeInputs.expansionAngularVelocity = Units.InchesPerSecond.of(expansionAngularVelocity.getValue().in(Units.RotationsPerSecond));
     }
 
     @Override
