@@ -14,6 +14,7 @@ import com.ctre.phoenix6.signals.ReverseLimitValue;
 
 import edu.wpi.first.units.measure.Angle;
 import frc.robot.Constants;
+import frc.robot.Robot;
 import frc.robot.commands.climber.climberCommand;
 
 //Franklin needs to finish once the climber design is done.
@@ -52,22 +53,42 @@ public class ClimberIOReal implements ClimberIO {
 	private double MAXheight = 30; //inches of height increase 
 	private double MINheight = 0; 
 	private double demandPosition;
-	private boolean disengaging; //boolean for if the climber is disengaging from the climb
-	private double disengagingStartPos; //the position the climber starts disengaging at
 	private boolean invertedDirection = false;
 	
 	private climberCommand.ClimberHeight targetHeight = climberCommand.ClimberHeight.HOMEPOS;
+	private climberCommand.ClimberState currentState = Robot.cont.climber.inputs.state;
 
 	@Override
 	public void periodic() {
+		Logger.recordOutput("Climber/State", this.currentState);
+		Logger.recordOutput("Climber/ClimbUp", this.demandPosition == targetHeight.height); //records the target height of the climber
+
+		//checks to see if the climber is in idle state 
+		if (currentState != climberCommand.ClimberState.IDLE) {
+			if (targetHeight == climberCommand.ClimberHeight.HOMEPOS && currentState == climberCommand.ClimberState.DESCENDING) {
+				if (getInInches(this.position.getValueAsDouble()) <= 30 && this.position.getValueAsDouble() > 0) {
+					//reset the climber to home
+					climber.setControl(new PositionDutyCycle(MINheight));
+				}
+			} else if (targetHeight == climberCommand.ClimberHeight.L1) {
+				
+
+			} else if (targetHeight == climberCommand.ClimberHeight.L2) {
+
+			} else if (targetHeight == climberCommand.ClimberHeight.L3) {
+
+			}
+		}
+
+
+
+
+
 		
-		Logger.recordOutput("Climber/ClimbUp", this.demandPosition == targetHeight.height); //records if the Climber is climbing up
-		Logger.recordOutput("Climber/Disengaging", this.disengaging);
 		if (targetHeight == climberCommand.ClimberHeight.HOMEPOS) {
 			if (getInInches(this.demandPosition) < 30 && this.demandPosition > 0) {
 				//reset the climber to home
 				climber.setControl(new PositionDutyCycle(MINheight));
-				disengaging = true;
 
 			}
 		} else if (targetHeight == climberCommand.ClimberHeight.L1){
@@ -120,13 +141,9 @@ public class ClimberIOReal implements ClimberIO {
 		}
 	}
 
-	public void setClimberHeight(climberCommand.ClimberHeight newHeight) {
-		this.targetHeight = newHeight;
-	}
+	public void setClimberHeight(climberCommand.ClimberHeight newHeight) {this.targetHeight = newHeight;}
 
-	public climberCommand.ClimberHeight getClimberHeight() {
-		return targetHeight;
-	}
+	public climberCommand.ClimberHeight getClimberHeight() {return targetHeight;}
 
 	/*public void periodic() {
 		Logger.recordOutput("Climber/ClimbUp", this.demandPosition == this.MAXheight); //records if the Climber is climbing up
@@ -188,7 +205,7 @@ public class ClimberIOReal implements ClimberIO {
 	
 	@Override
 	public void updateInputs(final ClimberIOInputs inputs) {
-		BaseStatusSignal.refreshAll(this.position, home); //updates the position of the climber.
+		BaseStatusSignal.refreshAll(this.position, this.home); //updates the position of the climber.
 		inputs.position = this.getInRotations(climber.getPosition().getValueAsDouble());
 	}
 

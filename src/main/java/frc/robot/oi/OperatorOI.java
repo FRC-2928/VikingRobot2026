@@ -7,11 +7,9 @@ public class OperatorOI extends BaseOI {
 	public OperatorOI(final CommandXboxController controller) {
 		super(controller);
 
-		this.climberDown = this.controller.x();
-		this.climberUp = this.controller.y();
+		this.climberDown = this.controller.povDown();
+		this.climberUp = this.controller.povUp();
 
-		this.climberOverrideLower = this.controller.povDown();
-		this.climberOverrideRaise = this.controller.povUp();
 
 		this.initializeClimber = this.controller.rightStick();
 
@@ -22,13 +20,11 @@ public class OperatorOI extends BaseOI {
 		this.overrideShoot = this.controller.rightTrigger();
 
 		this.foc = this.controller.rightBumper();
+
 	}
 
 	public final Trigger climberDown;
 	public final Trigger climberUp;
-
-	public final Trigger climberOverrideLower;
-	public final Trigger climberOverrideRaise;
 
 	public final Trigger initializeClimber;
 

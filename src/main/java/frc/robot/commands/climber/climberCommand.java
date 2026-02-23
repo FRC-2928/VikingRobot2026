@@ -20,40 +20,49 @@ public class climberCommand extends Command {
     ClimberHeight(double height) {this.height = height; }
   }
 
+  //state of the climber
+  public enum ClimberState {
+    IDLE,
+    ASCENDING,
+    DESCENDING;
+  }
   
-  private boolean descending;
   private double startPos;
+  private ClimberHeight targetHeight;
 
   @Override
   public void initialize() {
-    //sets the states to stay at the home climber position
-    this.currentState = State.HOMEPOS;
-    this.targetState = State.HOMEPOS;
     //stops the robot from descending
-    this.descending = false;
     this.startPos = Robot.cont.climber.inputs.position;
+    this.targetHeight = ClimberHeight.HOMEPOS;
   }
 
   @Override
-  public void setClimbLevel() {
+  public void ascend() {
+    if (targetHeight == ClimberHeight.HOMEPOS) {
+      targetHeight = ClimberHeight.L1;
+      Robot.cont.climber.inputs.state = ClimberState.ASCENDING;
 
+    } else if (targetHeight == ClimberHeight.L1) {
+      targetHeight = ClimberHeight.L2;
+      Robot.cont.climber.inputs.state = ClimberState.ASCENDING;
+
+    } else if (targetHeight == ClimberHeight.L2) {
+      targetHeight = ClimberHeight.L3;
+      Robot.cont.climber.inputs.state = ClimberState.ASCENDING;
+
+    } else if (targetHeight == ClimberHeight.L3) {
+      Robot.cont.climber.inputs.state = ClimberState.IDLE;
+    }
   }
 
-  /*public void execute() {
-    //checks if the robot is descending or ascending 
-    if(this.descending) {
-      //add code to slow the descent
-
-      Logger.recordOutput("Climber/Initialize/State", "Descending"); //logs the robot descending
-    } else {
-
-      Logger.recordOutput("Climber/Initialize/Threshold", this.startPos + Constants.Climber.initializeRaiseDistance); //logs the threshold the robot is ascending
-      if(Robot.cont.climber.inputs.position > this.startPos + Constants.Climber.initializeRaiseDistance) { //checks if the current position is greater than the previous position
-        this.descending = true; //sets the robot to descending
-      }
-      Logger.recordOutput("Climber/Initialize/State", "Ascending"); //logs the robot ascending
+  @Override 
+  public void descend() {
+    if (targetHeight == ClimberHeight.L1) {
+      targetHeight = ClimberHeight.HOMEPOS;
+      Robot.cont.climber.inputs.state = ClimberState.DESCENDING;
     }
-  }*/
+  }
 
   @Override
   public void end(boolean interrupted) {//stops the climb
