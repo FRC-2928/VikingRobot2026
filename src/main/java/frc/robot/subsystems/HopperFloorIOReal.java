@@ -8,14 +8,22 @@ import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 
 import frc.robot.Constants;
 import frc.robot.Tuning;
 
 public class HopperFloorIOReal implements HopperFloorIO {
     public TalonFX hopper;
+    // --------------------Simulation----------------------
+    private DCMotorSim hopperFloorSim = new DCMotorSim(
+            LinearSystemId.createDCMotorSystem(DCMotor.getKrakenX60(1), 0.001, Constants.HopperFloor.indexerGearRatio),
+            DCMotor.getKrakenX60(1));
+
     public StatusSignal<AngularVelocity> statusSignal;
 
     public HopperFloorIOReal() {
@@ -62,4 +70,7 @@ public class HopperFloorIOReal implements HopperFloorIO {
         BaseStatusSignal.refreshAll(statusSignal);
         hopperInputs.angularVelocity = statusSignal.getValue();
     }
+
+    @Override
+    public void simPeriodic() {}
 }

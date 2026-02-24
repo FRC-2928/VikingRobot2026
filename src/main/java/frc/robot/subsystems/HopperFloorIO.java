@@ -16,5 +16,7 @@ public interface HopperFloorIO {
 
     public default void halt() {}
 
+    public default void simPeriodic() {}
+
     public default void runHopper() {}
 }

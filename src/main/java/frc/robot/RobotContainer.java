@@ -23,6 +23,7 @@ import frc.robot.commands.drivetrain.CenterLimelight;
 import frc.robot.generated.TunerConstants;
 import frc.robot.oi.DriverOI;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.HopperFloor;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.Superstructure;
@@ -47,14 +48,14 @@ public class RobotContainer {
     public final Shooter shooter;
     public final Intake intake;
     private final Telemetry logger;
-    //     public final HopperFloor hopperFloor;
+    public final HopperFloor hopperFloor;
 
     public RobotContainer() {
         this.superstructure = new Superstructure(this);
         this.drivetrain = TunerConstants.createDrivetrain();
         this.shooter = new Shooter();
         this.intake = new Intake();
-        // this.hopperFloor = new HopperFloor();
+        this.hopperFloor = new HopperFloor();
         this.logger = new Telemetry(MaxSpeed, drivetrain);
         this.autoChooser = Autonomous.getChoreoAutoChooser(this);
         SmartDashboard.putData("Autonomous Routine", autoChooser);

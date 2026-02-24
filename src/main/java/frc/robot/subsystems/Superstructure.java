@@ -25,7 +25,8 @@ public class Superstructure extends SubsystemBase {
                             cont.shooter.shoot(distance);
                         },
                         cont.shooter)
-                .alongWith(cont.drivetrain.brake());
+                .alongWith(cont.drivetrain.brake())
+                .alongWith(cont.hopperFloor.runHopperCommand());
     }
 
     // Spins up flywheels to speed and turns hood to correct angle. Command will not end on its own
