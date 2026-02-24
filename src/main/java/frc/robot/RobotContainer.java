@@ -1,8 +1,8 @@
 package frc.robot;
 
-import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
-
 import com.pathplanner.lib.auto.NamedCommands;
+
+import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 import choreo.auto.AutoChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -16,45 +16,44 @@ import frc.robot.subsystems.Climber;
 import frc.robot.subsystems.Drivetrain;
 
 public class RobotContainer {
-	// public final LoggedDashboardChooser<Command> autonomousChooser;
-	public final LoggedDashboardChooser<String> driveModeChooser;
-	public final DriverOI driverOI = new DriverOI(new CommandXboxController(0));
-	public final OperatorOI operatorOI = new OperatorOI(new CommandXboxController(1));
-	public final Drivetrain drivetrain;
-	public static boolean ledState = false;
-	private final AutoChooser autoChooser;
-	public final Climber climber;
+    // public final LoggedDashboardChooser<Command> autonomousChooser;
+    public final LoggedDashboardChooser<String> driveModeChooser;
+    public final DriverOI driverOI = new DriverOI(new CommandXboxController(0));
+    public final OperatorOI operatorOI = new OperatorOI(new CommandXboxController(1));
+    public final Drivetrain drivetrain;
+    public static boolean ledState = false;
+    private final AutoChooser autoChooser;
+    public final Climber climber;
 
-	public RobotContainer() {
-		Robot.instance.container = this;
-		Robot.cont = this;
+    public RobotContainer() {
+        Robot.instance.container = this;
+        Robot.cont = this;
 
-		Tuning.flywheelVelocity.get(); // load the class to put the tuning controls on the dashboard
-		this.drivetrain = new Drivetrain();
+        Tuning.flywheelVelocity.get(); // load the class to put the tuning controls on the dashboard
+        this.drivetrain = new Drivetrain();
 
-		this.climber = new Climber();
-		
-		NamedCommands.registerCommand("ScoreL4", new RunCommand(() -> {}).withTimeout(2));
+        this.climber = new Climber();
 
-		// this.autonomousChooser = new LoggedDashboardChooser<>(
-		// 	"Autonomous Routine",
-		// 	Autonomous.createAutonomousChooser()
-		// );
+        NamedCommands.registerCommand("ScoreL4", new RunCommand(() -> {}).withTimeout(2));
 
-		autoChooser = Autonomous.getChoreoAutoChooser();
-		SmartDashboard.putData("Autonomous Routine", autoChooser);
-		autoChooser.select("SimpleFromRight");
-		RobotModeTriggers.autonomous().whileTrue(autoChooser.selectedCommandScheduler());
+        // this.autonomousChooser = new LoggedDashboardChooser<>(
+        // 	"Autonomous Routine",
+        // 	Autonomous.createAutonomousChooser()
+        // );
 
-		this.driveModeChooser = new LoggedDashboardChooser<>(
-			"Drive Mode",
-			JoystickDrive.createDriveModeChooser()
-		);
+        autoChooser = Autonomous.getChoreoAutoChooser();
+        SmartDashboard.putData("Autonomous Routine", autoChooser);
+        autoChooser.select("SimpleFromRight");
+        RobotModeTriggers.autonomous().whileTrue(autoChooser.selectedCommandScheduler());
 
-		this.driverOI.configureControls();
-		this.operatorOI.configureControls();
-	}
+        this.driveModeChooser = new LoggedDashboardChooser<>("Drive Mode", JoystickDrive.createDriveModeChooser());
 
-	// public Command getAutonomousCommand() { return this.autonomousChooser.get(); }
-	public String getDriveMode() { return this.driveModeChooser.get(); }
+        this.driverOI.configureControls();
+        this.operatorOI.configureControls();
+    }
+
+    // public Command getAutonomousCommand() { return this.autonomousChooser.get(); }
+    public String getDriveMode() {
+        return this.driveModeChooser.get();
+    }
 }
