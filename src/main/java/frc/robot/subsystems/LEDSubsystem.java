@@ -20,7 +20,10 @@ public class LEDSubsystem extends SubsystemBase {
 
     public enum WantedAction {
         OFF,
-        GREEN
+        GREEN,
+        RED,
+        BLUE,
+        PURPLE
     }
 
     public LEDSubsystem(LEDIO ledIO) {
@@ -41,6 +44,15 @@ public class LEDSubsystem extends SubsystemBase {
                 break;
             case GREEN:
                 ledIO.setLEDs(new SolidColor(kStartIndex, kEndIndex).withColor(new RGBWColor(0, 255, 0)));
+                break;
+            case RED:
+                ledIO.setLEDs(new SolidColor(kStartIndex, kEndIndex).withColor(new RGBWColor(255, 0, 0)));
+                break;
+            case BLUE:
+                ledIO.setLEDs(new SolidColor(kStartIndex, kEndIndex).withColor(new RGBWColor(0, 0, 255)));
+                break;
+            case PURPLE:
+                ledIO.setLEDs(new SolidColor(kStartIndex, kEndIndex).withColor(new RGBWColor(255, 0, 255)));
                 break;
             default:
                 break;
