@@ -8,14 +8,13 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
 import frc.robot.RobotContainer;
-import frc.robot.subsystems.CommandSwerveDrivetrain;
 
 import java.util.List;
 import java.util.function.Supplier;
 
 public class DriverOI extends BaseOI {
     public DriverOI(
-            final CommandXboxController controller, CommandSwerveDrivetrain drivetrain, RobotContainer robotContainer) {
+            final CommandXboxController controller, RobotContainer robotContainer) {
         super(controller);
 
         this.driveAxial = this.controller::getLeftY;
@@ -31,7 +30,7 @@ public class DriverOI extends BaseOI {
         }
         this.manualRotation = this.controller.rightStick();
 
-        this.shotConditionsMet = new Trigger(() -> {
+        this.shotConditionsMet = new Trigger(() -> true);/*new Trigger(() -> {
             boolean facingHub = drivetrain
                     .getAngleToHub(Constants.Shooter.shooterAngleOffsetFromFront)
                     .lte(Constants.Shooter.toleranceFromHub);
@@ -39,7 +38,7 @@ public class DriverOI extends BaseOI {
             boolean correctFlywheelVelocity =
                     robotContainer.shooter.getFlywheelVelocity().lte(Constants.Shooter.shooterVelocityTolerance);
             return facingHub && correctHoodAngle && correctFlywheelVelocity;
-        });
+        });*/
 
         // this.spinKicker = this.controller.rightTrigger().and(shotConditionsMet);
 
