@@ -186,6 +186,20 @@ public final class Autonomous {
                     cont.superstructure.readyAndShoot());
         });
 
+        choreoChooser.addCmd("leftPickShoot", () -> {
+            final var idle = new SwerveRequest.Idle();
+
+            var pathBuilder = cont.drivetrain.getPathBuilder();
+            Path leftPickShoot_part1 = new Path("leftPickShoot_part1");
+            Path leftPickShoot_part3 = new Path("leftPickShoot_part3");
+            return Commands.sequence(
+                    cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(Rotation2d.kZero)),
+                    pathBuilder.build(leftPickShoot_part1),
+                    cont.superstructure.pathWileINtaking("leftPickShoot_part2"),
+                    pathBuilder.build(leftPickShoot_part3),
+                    cont.superstructure.readyAndShoot());
+        });
+
         return choreoChooser;
     }
 
