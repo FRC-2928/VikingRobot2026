@@ -1,5 +1,7 @@
 package frc.robot.subsystems;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -9,8 +11,6 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.ReverseLimitValue;
-
-import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.units.measure.Angle;
 import frc.robot.Constants;
@@ -98,7 +98,7 @@ public class ClimberIOReal implements ClimberIO {
                 }
             }
         } else if (currentState == climberCommand.ClimberState.IDLE) {
-            this.lock(true, position.getValueAsDouble()); // lock the motor if the state is idle
+            this.lock(true, getInRotations(0)); // lock the motor if the state is idle
         }
     }
 
