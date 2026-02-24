@@ -158,7 +158,6 @@ public final class Autonomous {
                         // Call shoot from superclass
                         cont.superstructure.readyAndShoot()));
 
-        // TODO: imlement the sequential command with intaking
         choreoChooser.addCmd("middlePickShoot", () -> {
             final var idle = new SwerveRequest.Idle();
 
@@ -170,6 +169,20 @@ public final class Autonomous {
                     pathBuilder.build(middlePickShoot_part1),
                     cont.superstructure.pathWileINtaking("middlePickShoot_part2"),
                     pathBuilder.build(middlePickShoot_part3),
+                    cont.superstructure.readyAndShoot());
+        });
+
+        choreoChooser.addCmd("rigthPickShoot", () -> {
+            final var idle = new SwerveRequest.Idle();
+
+            var pathBuilder = cont.drivetrain.getPathBuilder();
+            Path rigthPickShoot_part1 = new Path("rigthPickShoot_part1");
+            Path rigthPickShoot_part3 = new Path("rigthPickShoot_part3");
+            return Commands.sequence(
+                    cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(Rotation2d.kZero)),
+                    pathBuilder.build(rigthPickShoot_part1),
+                    cont.superstructure.pathWileINtaking("rigthPickShoot_part2"),
+                    pathBuilder.build(rigthPickShoot_part3),
                     cont.superstructure.readyAndShoot());
         });
 
