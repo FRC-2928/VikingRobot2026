@@ -13,8 +13,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 public class DriverOI extends BaseOI {
-    public DriverOI(
-            final CommandXboxController controller, RobotContainer robotContainer) {
+    public DriverOI(final CommandXboxController controller, RobotContainer robotContainer) {
         super(controller);
 
         this.driveAxial = this.controller::getLeftY;
@@ -30,7 +29,7 @@ public class DriverOI extends BaseOI {
         }
         this.manualRotation = this.controller.rightStick();
 
-        this.shotConditionsMet = new Trigger(() -> true);/*new Trigger(() -> {
+        this.shotConditionsMet = new Trigger(() -> true); /*new Trigger(() -> {
             boolean facingHub = drivetrain
                     .getAngleToHub(Constants.Shooter.shooterAngleOffsetFromFront)
                     .lte(Constants.Shooter.toleranceFromHub);
