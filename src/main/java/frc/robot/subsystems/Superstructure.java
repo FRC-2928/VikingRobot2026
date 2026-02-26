@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 import frc.robot.RobotContainer;
 import frc.robot.commands.Intake.ExtendAndRunIntake;
+import frc.robot.oi.DriverOI;
 
 import java.util.HashMap;
 import java.util.List;
@@ -20,26 +21,31 @@ public class Superstructure extends SubsystemBase {
     public enum RobotState {
         DRIVE_HOME_ZONE,
         DRIVE_MID_ZONE,
-        AIM_HOME_ZONE
+        AIM_HOME_ZONE,
+        MANUAL_INTAKE
     }
 
     private RobotContainer cont;
+    private DriverOI driverOI;
     private RobotState currentState;
     private List<Trigger> stateTriggers;
     private Map<RobotState, Runnable> transitionFunctions;
 
-    public Superstructure(RobotContainer cont) {
+    public Superstructure(RobotContainer cont, DriverOI driverOI) {
         this.cont = cont;
+        this.driverOI = driverOI;
 
         // Init each state's command to run
         initState(RobotState.DRIVE_HOME_ZONE, idle());
         initState(RobotState.DRIVE_MID_ZONE, idle());
         initState(RobotState.AIM_HOME_ZONE, idle());
+        initState(RobotState.MANUAL_INTAKE, extendAndIntake());
 
         transitionFunctions = new HashMap<>();
 
         // Bind transition function for each state
         transitionFunctions.put(RobotState.DRIVE_HOME_ZONE, this::checkHomeZoneTransitions);
+        transitionFunctions.put(RobotState.DRIVE_HOME_ZONE, this::checkManualIntakeTransition);
     }
 
     // Initializes trigger for when given state is active, and runs given command when trigger is active
@@ -62,6 +68,12 @@ public class Superstructure extends SubsystemBase {
         // e.g. if(!poseInHomeZone()) {
         //          currentState = RobotState.DRIVE_MID_ZONE;
         // }
+    }
+
+    private void checkManualIntakeTransition() {
+        if (driverOI.intake.getAsBoolean()) {
+            currentState = RobotState.MANUAL_INTAKE;
+        }
     }
 
     // Runs flywheels and kicker. Command will not end on its own
