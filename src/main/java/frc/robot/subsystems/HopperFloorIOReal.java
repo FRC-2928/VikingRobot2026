@@ -8,9 +8,9 @@ import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
-import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 
@@ -50,14 +50,14 @@ public class HopperFloorIOReal implements HopperFloorIO {
     }
 
     @Override
-    public void setSpeed(AngularVelocity angularVelocity) {
+    public void setSpeed(double angularVelocity) {
         // Do a feed forward later
-        hopper.setControl(new DutyCycleOut(angularVelocity.in(Units.RotationsPerSecond)));
+        hopper.setControl(new DutyCycleOut(MathUtil.clamp(angularVelocity, -1, 1)));
     }
 
     @Override
     public void runHopper() {
-        hopper.setControl(new DutyCycleOut(Tuning.hopperVelocity.get()));
+        hopper.setControl(new DutyCycleOut(MathUtil.clamp(Tuning.hopperVelocity.get(), -1, 1)));
     }
 
     @Override
