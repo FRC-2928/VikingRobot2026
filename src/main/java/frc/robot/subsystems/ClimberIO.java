@@ -2,15 +2,15 @@ package frc.robot.subsystems;
 
 import org.littletonrobotics.junction.AutoLog;
 
-import frc.robot.commands.climber.climberCommand;
+import frc.robot.commands.climber.ClimberCommand;
 
 public interface ClimberIO {
     @AutoLog
     public static class ClimberIOInputs {
         public double position; // may not need to maintain the postion
         public boolean home; // boolean for the home postion of the motor
-        public climberCommand.ClimberState state;
-        public climberCommand.ClimberHeight targetheight;
+        public ClimberCommand.ClimberState state;
+        public ClimberCommand.ClimberHeight targetheight;
     }
 
     public default void updateInputs(final ClimberIOInputs inputs) {} // updates the positon value and home boolean
