@@ -52,7 +52,6 @@ public class ClimberIOReal implements ClimberIO {
     // positon values
     private double MAXheight = getInRotations(30); // inches of height increase
     private double MINheight = 0;
-    private boolean invertedDirection = false;
     private boolean engaged = false;
 
     // tracks if L1 is completed
