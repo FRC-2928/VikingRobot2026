@@ -20,4 +20,6 @@ public interface ClimberIO {
     public default void periodic() {} // runs periodically
 
     public default void ascend() {}
+
+    public default void descend() {}
 }

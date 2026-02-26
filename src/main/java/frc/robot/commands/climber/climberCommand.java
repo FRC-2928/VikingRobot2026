@@ -42,37 +42,9 @@ public class ClimberCommand extends Command {
         this.targetHeight = ClimberHeight.HOMEPOS;
     }
 
-    public void ascend() {
-        if (targetHeight == ClimberHeight.HOMEPOS) {
-            targetHeight = ClimberHeight.L1;
-            Robot.cont.climber.inputs.state = ClimberState.ASCENDING;
-
-        } else if (targetHeight == ClimberHeight.L1) {
-            targetHeight = ClimberHeight.L2;
-            Robot.cont.climber.inputs.state = ClimberState.ASCENDING;
-
-        } else if (targetHeight == ClimberHeight.L2) {
-            targetHeight = ClimberHeight.L3;
-            Robot.cont.climber.inputs.state = ClimberState.ASCENDING;
-
-        } else if (targetHeight == ClimberHeight.L3) {
-            Robot.cont.climber.inputs.state = ClimberState.IDLE;
-        }
-        Robot.cont.climber.inputs.targetheight =
-                targetHeight; // set the target height in climberIO to the target height
-    }
 
     @Override
     public void execute() {}
-
-    public void descend() {
-        if (targetHeight == ClimberHeight.L1) {
-            targetHeight = ClimberHeight.HOMEPOS;
-            Robot.cont.climber.inputs.state = ClimberState.DESCENDING;
-        }
-        Robot.cont.climber.inputs.targetheight =
-                targetHeight; // set the target height in climberIO to the target height
-    }
 
     @Override
     public void end(boolean interrupted) { // stops the climb

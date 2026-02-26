@@ -15,6 +15,8 @@ import edu.wpi.first.units.measure.Angle;
 import frc.robot.Constants;
 import frc.robot.Robot;
 import frc.robot.commands.climber.ClimberCommand;
+import frc.robot.commands.climber.ClimberCommand.ClimberHeight;
+import frc.robot.commands.climber.ClimberCommand.ClimberState;
 
 // Franklin needs to finish once the climber design is done.
 public class ClimberIOReal implements ClimberIO {
@@ -32,8 +34,6 @@ public class ClimberIOReal implements ClimberIO {
         climberConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
         climberConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = MINheight;
         climberConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
-
-        climberConfig.MotorOutput.
 
         // applying the motor configs
         climber.getConfigurator().apply(climberConfig);
@@ -162,6 +162,38 @@ public class ClimberIOReal implements ClimberIO {
     // public void setClimberHeight(ClimberCommand.ClimberHeight newHeight) {this.targetHeight = newHeight;}
 
     // public ClimberCommand.ClimberHeight getClimberHeight() {return targetHeight;}
+
+    @Override
+    public void ascend() {
+        if (targetHeight == ClimberHeight.HOMEPOS) {
+            targetHeight = ClimberHeight.L1;
+            Robot.cont.climber.inputs.state = ClimberState.ASCENDING;
+
+        } else if (targetHeight == ClimberHeight.L1) {
+            targetHeight = ClimberHeight.L2;
+            Robot.cont.climber.inputs.state = ClimberState.ASCENDING;
+
+        } else if (targetHeight == ClimberHeight.L2) {
+            targetHeight = ClimberHeight.L3;
+            Robot.cont.climber.inputs.state = ClimberState.ASCENDING;
+
+        } else if (targetHeight == ClimberHeight.L3) {
+            Robot.cont.climber.inputs.state = ClimberState.IDLE;
+        }
+        Robot.cont.climber.inputs.targetheight =
+                targetHeight; // set the target height in climberIO to the target height
+    }
+
+    @Override
+    public void descend() {
+        if (targetHeight == ClimberHeight.L1) {
+            targetHeight = ClimberHeight.HOMEPOS;
+            Robot.cont.climber.inputs.state = ClimberState.DESCENDING;
+        }
+        Robot.cont.climber.inputs.targetheight =
+                targetHeight; // set the target height in climberIO to the target height
+    } 
+
 
     @Override
     public void override(final double dutycycle) {
