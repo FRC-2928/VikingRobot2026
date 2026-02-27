@@ -91,7 +91,7 @@ public class Constants {
     // public static final Distance fieldDepth = Units.Meters.of(8.211); // Correlates to Field oriented y coordinate
 
     public static final AprilTagFieldLayout FIELD_LAYOUT =
-            AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
+            AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded); // Our district and champs both use welded field layout, not AndyMark
 
     public static final class LimelightFX {
         private LimelightFX() {
@@ -212,8 +212,8 @@ public class Constants {
             public static final PIDValues translationDynamic = /*new PIDValues(7.5, 0, 0.5, 0);*/
                     new PIDValues(0, 0, 0, 0);
             public static final PIDValues thetaDynamic = /*new PIDValues(5, 0, 0.0, 0);*/ new PIDValues(0, 0, 0, 0);
-            public static final PIDValues centerLimelight = new PIDValues(2, 0, 0, 0);
-            public static final PIDValues centerTheta = new PIDValues(4, 0, 0.2, 0);
+            public static final PIDValues centerLimelight = new PIDValues(10, 0, 0, 0);
+            public static final PIDValues centerTheta = new PIDValues(10, 0, 0, 0);
         }
 
         public static final SlotConfigs azimuth =
