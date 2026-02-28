@@ -212,8 +212,14 @@ public class Constants {
             public static final PIDValues translationDynamic = /*new PIDValues(7.5, 0, 0.5, 0);*/
                     new PIDValues(0, 0, 0, 0);
             public static final PIDValues thetaDynamic = /*new PIDValues(5, 0, 0.0, 0);*/ new PIDValues(0, 0, 0, 0);
+
+            // Auto align constants
             public static final PIDValues centerLimelight = new PIDValues(10, 0, 0, 0);
             public static final PIDValues centerTheta = new PIDValues(10, 0, 0, 0);
+            public static final Distance positionThreshold = Units.Centimeters.of(1);
+            public static final Angle headingThreshold = Units.Degrees.of(0.5);
+            public static final LinearVelocity linearSpeedThreshold = Units.MetersPerSecond.of(0.2);
+            public static final AngularVelocity angularSpeedThreshold = Units.DegreesPerSecond.of(10);
         }
 
         public static final SlotConfigs azimuth =

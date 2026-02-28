@@ -19,7 +19,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,23 +27,22 @@ import org.littletonrobotics.junction.Logger;
 public class CenterLimelight extends Command {
     private Transform2d offset;
     private Pose2d targetPose;
-    private double xSpeedPid;
-    private double ySpeedPid;
-    private double thetaPid;
+    private double xSpeed;
+    private double ySpeed;
+    private double omega;
     private PIDController centerPIDx;
     private PIDController centerPIDy;
     private PIDController centerRotaionPid;
-    private final Distance halfRobotWidth = Units.Inches.of(20); // TODO pull from constants
     private List<Pose2d> posesToCheck;
     private static final List<Integer> ladderTags = List.of(15, 31); // tags in the center of the ladder on each side
     private final CommandSwerveDrivetrain mDrivetrain;
 
 
-    public static CenterLimelight ToLadderLeft(CommandSwerveDrivetrain drivetrain) {
+    public static CenterLimelight toLadderLeft(CommandSwerveDrivetrain drivetrain) {
         return new CenterLimelight(Units.Inches.of(30), Units.Inches.of(36), Units.Degrees.of(90), ladderTags, drivetrain);
     }
 
-    public static CenterLimelight ToLadderRight(CommandSwerveDrivetrain drivetrain) {
+    public static CenterLimelight toLadderRight(CommandSwerveDrivetrain drivetrain) {
         return new CenterLimelight(Units.Inches.of(30), Units.Inches.of(-36), Units.Degrees.of(-90), ladderTags, drivetrain);
     }
 
@@ -89,17 +87,23 @@ public class CenterLimelight extends Command {
     @Override
     public void execute() {
         Pose2d robotPose = mDrivetrain.getCurrentPose2D();
-        this.xSpeedPid = centerPIDx.calculate(robotPose.getX(), this.targetPose.getX());
-        this.ySpeedPid = centerPIDy.calculate(robotPose.getY(), this.targetPose.getY());
-        this.thetaPid = centerRotaionPid.calculate(robotPose.getRotation().getRadians(), this.targetPose.getRotation().getRadians());
+        Distance xError = Units.Meters.of(this.targetPose.getX() - robotPose.getX());
+        Distance yError = Units.Meters.of(this.targetPose.getY() - robotPose.getY());
+        Angle thetaError = this.targetPose.getRotation().minus(robotPose.getRotation()).getMeasure();
+        this.xSpeed = centerPIDx.calculate(robotPose.getX(), this.targetPose.getX());
+        this.ySpeed = centerPIDy.calculate(robotPose.getY(), this.targetPose.getY());
+        this.omega = centerRotaionPid.calculate(robotPose.getRotation().getRadians(), this.targetPose.getRotation().getRadians());
         mDrivetrain.controlRobotDrivetrainAutonomus(
-            ChassisSpeeds.fromFieldRelativeSpeeds(this.xSpeedPid, this.ySpeedPid, this.thetaPid, robotPose.getRotation()));
+            ChassisSpeeds.fromFieldRelativeSpeeds(this.xSpeed, this.ySpeed, this.omega, robotPose.getRotation()));
 
         var limelight = mDrivetrain.limelightLeft;
         Logger.recordOutput("Drivetrain/Auto/Center Is Finished", false);
-        Logger.recordOutput("Drivetrain/Auto/XSpeedPid", this.xSpeedPid);
-        Logger.recordOutput("Drivetrain/Auto/YSpeedPid", this.ySpeedPid);
-        Logger.recordOutput("Drivetrain/Auto/thetaPid", this.thetaPid);
+        Logger.recordOutput("Drivetrain/Auto/XError", xError);
+        Logger.recordOutput("Drivetrain/Auto/YError", yError);
+        Logger.recordOutput("Drivetrain/Auto/ThetaError", thetaError);
+        Logger.recordOutput("Drivetrain/Auto/XSpeed", this.xSpeed);
+        Logger.recordOutput("Drivetrain/Auto/YSpeed", this.ySpeed);
+        Logger.recordOutput("Drivetrain/Auto/Omega", this.omega);
         Logger.recordOutput("Drivetrain/Auto/limelightHasValidTargets", limelight.hasValidTargets());
         Logger.recordOutput(
                 "Drivetrain/Auto/Theta",
@@ -119,11 +123,10 @@ public class CenterLimelight extends Command {
     @Override
     public boolean isFinished() {
         Pose2d robotPose = mDrivetrain.getCurrentPose2D();
-        boolean isCloseToTarget = robotPose.getTranslation().getDistance(this.targetPose.getTranslation()) < 0.01; // Within 1 cm of target translation
-        boolean isCorrectRotation = MathUtil.isNear(targetPose.getRotation().getDegrees(), robotPose.getRotation().getDegrees(), 0.5); // Within 0.5 degrees of correct rotation
-        return isCloseToTarget && isCorrectRotation;
-        // return (Math.abs(this.xSpeedPid) < 0.09) && (Math.abs(this.ySpeedPid) < 0.2) && (Math.abs(this.thetaPid) < 0.15);
-        // TODO decide if we need PID check for isFinished()
-        // Only needed if otherwise robot is going too fast when the command ends
+        boolean isCloseToTarget = robotPose.getTranslation().getDistance(this.targetPose.getTranslation()) < Constants.Drivetrain.Auto.positionThreshold.in(Units.Meters);
+        boolean isCorrectRotation = MathUtil.isNear(targetPose.getRotation().getDegrees(), robotPose.getRotation().getDegrees(), Constants.Drivetrain.Auto.headingThreshold.in(Units.Degrees));
+        boolean isLinearVelocitySmall = MathUtil.isNear(0, Math.hypot(xSpeed, ySpeed), Constants.Drivetrain.Auto.linearSpeedThreshold.in(Units.MetersPerSecond));
+        boolean isAngularVelocitySmall = MathUtil.isNear(0, omega, Constants.Drivetrain.Auto.angularSpeedThreshold.in(Units.RadiansPerSecond));
+        return isCloseToTarget && isCorrectRotation && isLinearVelocitySmall && isAngularVelocitySmall; // Only finish when robot is close to target pose AND commanded speeds are low
     }
 }
