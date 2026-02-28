@@ -144,6 +144,7 @@ public class Constants {
             public static final int climber = 17;
 
             public static final int hopper = 99;
+            public static final int indexer = 98;
 
             public static final int intakeRoller = 16;
             public static final int intakeExpansion = 20;
@@ -340,7 +341,17 @@ public class Constants {
 
         public static final double indexerGearRatio = 1.0; // Idk if this goes here
 
-        public static final AngularVelocity hopperVelocity = Units.RotationsPerSecond.of(0);
+        public static final double hopperVelocity = 0;
+    }
+
+    public static class Indexer {
+        private Indexer() {
+            throw new IllegalCallerException("Cannot instantiate `Constants.HopperFloor`");
+        }
+
+        public static final double indexerGearRatio = 1.0;
+
+        public static final AngularVelocity indexerVelocity = Units.RotationsPerSecond.of(0);
     }
 
     public static class Intake {
@@ -351,7 +362,7 @@ public class Constants {
         // Inches per rotation for each gearn turn
         public static final double extensionRatio_inchesPerRotation = 0.0;
         public static final Distance expansionMotorMaxDistance = Units.Inches.of(11.75 - 0.5);
-        public static final AngularVelocity intakeVelocity = Units.RotationsPerSecond.of(0);
+        public static final double intakeVelocity = 0;
         public static final double expensionMotorGearRatio = 3.0 * 4.5;
         public static final double rollerMotorGearRatio = 1.0;
     }

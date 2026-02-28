@@ -648,6 +648,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         }
     }
 
+    // spotless: off
     // Command to aim at hub while moving with max translation speed scaler not deadband (Overrides Rotational aspect)
     public Command aimAtHubAndMove(double vx, double vy, double speedMultipliter) {
         return this.applyRequest(() -> driveAndPoint
@@ -703,6 +704,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 (getHubX() - mCurrentSwerveState.Pose.getMeasureX().in(Units.Meters)),
                 (hubY - mCurrentSwerveState.Pose.getMeasureY().in(Units.Meters))));
     }
+    // spotless: on
 
     // Command to locate fuel and intake them w/ limelight
 

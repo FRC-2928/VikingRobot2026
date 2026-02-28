@@ -53,7 +53,6 @@ public class RobotContainer {
     public final HopperFloor hopperFloor;
 
     public RobotContainer() {
-        this.superstructure = new Superstructure(this);
         this.drivetrain = TunerConstants.createDrivetrain();
         this.shooter = new Shooter();
         this.intake = new Intake();
@@ -63,6 +62,7 @@ public class RobotContainer {
         SmartDashboard.putData("Autonomous Routine", autoChooser);
         this.driverOI = new DriverOI(joystick1, this);
         this.operatorOI = new OperatorOI(joystick2);
+        this.superstructure = new Superstructure(this, driverOI);
         autoChooser.select("SimpleFromRight");
         // TODO: implement drive mode chooser (point, turn modes). Joystick drive needs to consume the chosen mode
         // this.driveModeChooser = new LoggedDashboardChooser<>("Drive Mode", JoystickDrive.createDriveModeChooser());

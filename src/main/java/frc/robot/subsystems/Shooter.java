@@ -10,6 +10,8 @@ import frc.robot.Constants;
 import frc.robot.Constants.Shooter.AimValues;
 import frc.robot.Tuning;
 
+import org.littletonrobotics.junction.Logger;
+
 public class Shooter extends SubsystemBase {
     public Shooter() {
         this.io = switch (Constants.mode) {
@@ -31,6 +33,7 @@ public class Shooter extends SubsystemBase {
     @Override
     public void periodic() {
         this.io.updateInputs(this.inputs);
+        Logger.processInputs("Shooter", inputs);
     }
 
     @Override

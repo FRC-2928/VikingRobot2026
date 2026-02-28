@@ -75,7 +75,7 @@ public class DriverOI extends BaseOI {
 
         // this.lockWheels.whileTrue(new LockWheels(cont.drivetrain, this));
         this.resetFOD.onTrue(new InstantCommand(cont.drivetrain::resetAngle));
-        this.intake.whileTrue(cont.superstructure.extendAndIntake());
+        // this.intake.whileTrue(cont.superstructure.extendAndIntake());
         this.resetAngle.whileTrue(new RunCommand(cont.drivetrain::seedLimelightImu));
         this.resetAngle.whileFalse(new RunCommand(cont.drivetrain::setImuMode2));
         // this.spinKicker.onTrue(cont.shooter.startKicker());
