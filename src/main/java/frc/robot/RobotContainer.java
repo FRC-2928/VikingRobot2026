@@ -62,6 +62,7 @@ public class RobotContainer {
         SmartDashboard.putData("Autonomous Routine", autoChooser);
         this.driverOI = new DriverOI(joystick1, this);
         this.operatorOI = new OperatorOI(joystick2);
+        this.superstructure = new Superstructure(this, driverOI);
         autoChooser.select("SimpleFromRight");
         this.superstructure = new Superstructure(this);
         // TODO: implement drive mode chooser (point, turn modes). Joystick drive needs to consume the chosen mode

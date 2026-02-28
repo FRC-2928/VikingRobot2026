@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 import frc.robot.RobotContainer;
 import frc.robot.commands.Intake.ExtendAndRunIntake;
+import frc.robot.oi.DriverOI;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,12 +36,14 @@ public class Superstructure extends SubsystemBase {
     }
 
     private RobotContainer cont;
+    private DriverOI driverOI;
     private RobotState currentState;
     private List<Trigger> stateTriggers;
     private Map<RobotState, Runnable> transitionFunctions;
 
-    public Superstructure(RobotContainer cont) {
+    public Superstructure(RobotContainer cont, DriverOI driverOI) {
         this.cont = cont;
+        this.driverOI = driverOI;
         this.stateTriggers = new ArrayList<>();
 
         // Init each state's command to run

@@ -172,17 +172,17 @@ public final class Autonomous {
                     cont.superstructure.readyAndShoot());
         });
 
-        choreoChooser.addCmd("rigthPickShoot", () -> {
+        choreoChooser.addCmd("rightPickShoot", () -> {
             final var idle = new SwerveRequest.Idle();
 
             var pathBuilder = cont.drivetrain.getPathBuilder();
-            Path rigthPickShoot_part1 = new Path("rigthPickShoot_part1");
-            Path rigthPickShoot_part3 = new Path("rigthPickShoot_part3");
+            Path rightPickShoot_part1 = new Path("rightPickShoot_part1");
+            Path rightPickShoot_part3 = new Path("rightPickShoot_part3");
             return Commands.sequence(
                     cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(Rotation2d.kZero)),
-                    pathBuilder.build(rigthPickShoot_part1),
-                    cont.superstructure.pathWileINtaking("rigthPickShoot_part2"),
-                    pathBuilder.build(rigthPickShoot_part3),
+                    pathBuilder.build(rightPickShoot_part1),
+                    cont.superstructure.pathWileINtaking("rightPickShoot_part2"),
+                    pathBuilder.build(rightPickShoot_part3),
                     cont.superstructure.readyAndShoot());
         });
 
