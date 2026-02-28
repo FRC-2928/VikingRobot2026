@@ -47,6 +47,10 @@ public class DriverOI extends BaseOI {
         this.resetAngle = this.controller.a();
 
         this.lockWheels = this.controller.x();
+        
+        this.climb = this.controller.leftBumper();
+
+        this.unjam = this.controller.povLeft();
     }
 
     public final Supplier<Double> driveAxial;
@@ -58,9 +62,12 @@ public class DriverOI extends BaseOI {
 
     public final Trigger intake;
 
+    public final Trigger climb;
+
     // public final Trigger spinKicker;
     public final Trigger startShoot;
     public final Trigger shotConditionsMet;
+    public final Trigger unjam;
 
     public final Trigger lockWheels;
 

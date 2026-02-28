@@ -650,25 +650,17 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     // spotless: off
     // Command to aim at hub while moving with max translation speed scaler not deadband (Overrides Rotational aspect)
-    public Command aimAtHubAndMove(double vx, double vy, double speedMultipliter) {
-        return this.applyRequest(() -> driveAndPoint
-                .withVelocityX(-vy * maxSpeed * speedMultipliter) // Drive forward with negative Y (forward)
-                .withVelocityY(-vx * maxSpeed * speedMultipliter) // Drive left with negative X (left)
-                .withTargetDirection(new Rotation2d(Math.atan2(
-                                (hubY - mCurrentSwerveState.Pose.getMeasureY().in(Units.Meters)),
-                                (getHubX()
-                                        - mCurrentSwerveState.Pose.getMeasureX().in(Units.Meters)))
-                        + Math.PI)));
-    }
 
-    public Command aimAtHubAndMove(CommandXboxController joystick, double speedMultipliter, Angle offset) {
+    public Command aimAtHubAndMove(CommandXboxController joystick, double speedMultipliter) {
         return new ParallelCommandGroup(
                 this.applyRequest(() -> driveAndPoint
                         .withVelocityX(-joystick.getLeftY()
                                 * maxSpeed
                                 * speedMultipliter) // Drive forward with negative Y (forward)
                         .withVelocityY(
-                                -joystick.getLeftX() * maxSpeed * speedMultipliter) // Drive left with negative X (left)
+                                -joystick.getLeftX() 
+                                * maxSpeed 
+                                * speedMultipliter) // Drive left with negative X (left)
                         .withTargetDirection(new Rotation2d(Math.atan2(
                                                 (hubY
                                                         - mCurrentSwerveState
@@ -686,7 +678,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                                                                 != Alliance.Red
                                                 ? 0
                                                 : 0))
-                                .plus(new Rotation2d(offset)))),
+                                .plus(new Rotation2d(Math.PI/2)))),
                 new RunCommand(() -> snapToHeading =
                         new Rotation2d(mCurrentSwerveState.Pose.getRotation().getRadians())));
     }

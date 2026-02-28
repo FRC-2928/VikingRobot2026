@@ -187,6 +187,16 @@ public class Constants {
         }
     }
 
+    public static final class FIELD {
+        private FIELD(){
+            throw new IllegalCallerException("Cannot Instantiate 'Constants.FIELD'");
+        }
+
+        public static final Distance fieldLength = Units.Inch.of(651.22);
+        public static final Distance distanceToMidField = Units.Inch.of(182.11);
+
+    }
+
     public static final class PWM {
         private PWM() {
             throw new IllegalCallerException("Cannot instantiate `Constants.PWM`");

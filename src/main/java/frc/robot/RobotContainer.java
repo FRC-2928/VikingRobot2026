@@ -53,7 +53,6 @@ public class RobotContainer {
     public final HopperFloor hopperFloor;
 
     public RobotContainer() {
-        this.superstructure = new Superstructure(this);
         this.drivetrain = TunerConstants.createDrivetrain();
         this.shooter = new Shooter();
         this.intake = new Intake();
@@ -64,6 +63,7 @@ public class RobotContainer {
         this.driverOI = new DriverOI(joystick1, this);
         this.operatorOI = new OperatorOI(joystick2);
         autoChooser.select("SimpleFromRight");
+        this.superstructure = new Superstructure(this);
         // TODO: implement drive mode chooser (point, turn modes). Joystick drive needs to consume the chosen mode
         // this.driveModeChooser = new LoggedDashboardChooser<>("Drive Mode", JoystickDrive.createDriveModeChooser());
         RobotModeTriggers.autonomous()
@@ -95,7 +95,7 @@ public class RobotContainer {
 
         // Run SysId routines when holding back/start and X/Y.
         // Note that each routine should be run exactly once in a single log.
-        joystick1.x().whileTrue(drivetrain.aimAtHubAndMove(joystick1, 1.0, Units.Radians.of(0)));
+        joystick1.x().whileTrue(drivetrain.aimAtHubAndMove(joystick1, 1.0));
         joystick1.back().and(joystick1.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
         joystick1.back().and(joystick1.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
         joystick1.start().and(joystick1.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));

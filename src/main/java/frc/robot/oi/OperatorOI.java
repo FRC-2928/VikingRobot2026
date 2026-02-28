@@ -19,6 +19,10 @@ public class OperatorOI extends BaseOI {
         this.intakeIn = this.controller.a();
 
         this.foc = this.controller.rightBumper();
+
+        this.intakeOverride = this.controller.x();
+        this.climbOverride = this.controller.leftBumper();
+        this.shootOverride = this.controller.rightBumper();
     }
 
     public final Trigger climberDown;
@@ -33,6 +37,10 @@ public class OperatorOI extends BaseOI {
     public final Trigger intakeIn;
 
     public final Trigger foc;
+
+    public final Trigger shootOverride;
+    public final Trigger climbOverride;
+    public final Trigger intakeOverride;
 
     public void configureControls() {}
 }
