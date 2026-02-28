@@ -86,15 +86,14 @@ public class Superstructure extends SubsystemBase {
         // e.g. if(!poseInHomeZone()) {
         //          currentState = RobotState.DRIVE_MID_ZONE;
         // }
+        if (cont.driverOI.startShoot.getAsBoolean()) {
+            currentState = RobotState.SHOOT;
+            return;
+        }
     }
 
     private void checkShootTransitions() {
-        if (cont.driverOI.startShoot.getAsBoolean() && cont.driverOI.shotConditionsMet.getAsBoolean()) {
-            // If the shoot trigger is pressed and the robot is in a correct position to shoot, state will be set to SHOOT
-            currentState = RobotState.SHOOT;
-            return;
-        } else if (cont.driverOI.startShoot.getAsBoolean()) {
-            // If only the shoot button is pressed, it will aim at the HUB
+        if (cont.operatorOI.shootOverride.getAsBoolean()) {
             currentState = RobotState.AIM_HOME_ZONE;
             return;
         } else if (!cont.driverOI.startShoot.getAsBoolean()) {
