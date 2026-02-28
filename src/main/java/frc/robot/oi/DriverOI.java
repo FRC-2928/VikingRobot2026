@@ -29,15 +29,16 @@ public class DriverOI extends BaseOI {
         }
         this.manualRotation = this.controller.rightStick();
 
-        this.shotConditionsMet = new Trigger(() -> true); /*new Trigger(() -> {
-            boolean facingHub = drivetrain
-                    .getAngleToHub(Constants.Shooter.shooterAngleOffsetFromFront)
-                    .lte(Constants.Shooter.toleranceFromHub);
+        this.shotConditionsMet = new Trigger(() -> true);
+        new Trigger(() -> {
+            /*boolean facingHub = Robot.cont.drivetrain
+            .getAngleToHub(Constants.Shooter.shooterAngleOffsetFromFront)
+            .lte(Constants.Shooter.toleranceFromHub);*/
             boolean correctHoodAngle = robotContainer.shooter.getHoodAngle().lte(Constants.Shooter.hoodAngleTolerance);
             boolean correctFlywheelVelocity =
                     robotContainer.shooter.getFlywheelVelocity().lte(Constants.Shooter.shooterVelocityTolerance);
-            return facingHub && correctHoodAngle && correctFlywheelVelocity;
-        });*/
+            return /*facingHub &&*/ correctHoodAngle && correctFlywheelVelocity;
+        });
 
         // this.spinKicker = this.controller.rightTrigger().and(shotConditionsMet);
 
@@ -47,7 +48,7 @@ public class DriverOI extends BaseOI {
         this.resetAngle = this.controller.a();
 
         this.lockWheels = this.controller.x();
-        
+
         this.climb = this.controller.leftBumper();
 
         this.unjam = this.controller.povLeft();
@@ -86,7 +87,11 @@ public class DriverOI extends BaseOI {
         this.resetAngle.whileTrue(new RunCommand(cont.drivetrain::seedLimelightImu));
         this.resetAngle.whileFalse(new RunCommand(cont.drivetrain::setImuMode2));
         // this.spinKicker.onTrue(cont.shooter.startKicker());
-        // this.shotConditionsMet.and(getReadyToShoot).whileTrue(cont.shooter.shootWithDistance(cont.drivetrain.getDistanceFromHub(), Tuning.kickerSpeed.get()));
+        this.shotConditionsMet
+                .and(() -> cont.drivetrain
+                        .getAngleToHub(Constants.Shooter.shooterAngleOffsetFromFront)
+                        .lte(Constants.Shooter.toleranceFromHub))
+                .whileTrue(cont.superstructure.getReadyToShoot());
         this.startShoot.whileTrue(cont.superstructure.readyAndShoot());
     }
 }

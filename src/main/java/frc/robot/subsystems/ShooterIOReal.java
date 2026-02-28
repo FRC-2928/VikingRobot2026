@@ -14,6 +14,7 @@ import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.Units;
@@ -155,7 +156,8 @@ public class ShooterIOReal implements ShooterIO {
     // Rotates the hood to change angle of fuel shooting
     @Override
     public void rotateHood(Angle hoodAngle) {
-        this.hood.setControl(new PositionVoltage(hoodAngle).withSlot(0));
+        this.hood.setControl(
+                new PositionVoltage(MathUtil.clamp(hoodAngle.in(Units.Degrees), 100.0, 140.0)).withSlot(0));
     }
 
     // Runs the flywheel in the shooter. 2 motors. Based on voltage

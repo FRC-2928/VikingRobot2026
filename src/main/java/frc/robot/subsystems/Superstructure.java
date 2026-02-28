@@ -1,33 +1,22 @@
 package frc.robot.subsystems;
 
-import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.ParallelDeadlineGroup;
-import edu.wpi.first.wpilibj2.command.RunCommand;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
-
-import frc.robot.RobotContainer;
-import frc.robot.commands.Intake.ExtendAndRunIntake;
-import frc.robot.oi.DriverOI;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.littletonrobotics.junction.Logger;
+
+import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.ParallelDeadlineGroup;
+import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.RobotContainer;
+import frc.robot.commands.Intake.ExtendAndRunIntake;
+import frc.robot.oi.DriverOI;
 
 public class Superstructure extends SubsystemBase {
 
@@ -100,36 +89,39 @@ public class Superstructure extends SubsystemBase {
     }
 
     private void checkShootTransitions() {
-        // TODO: Check possible transitions out of home zone, and set currentState accordingly
-        // e.g. if(!poseInHomeZone()) {
-        //          currentState = RobotState.DRIVE_MID_ZONE;
-        // }
+        if (cont.driverOI.startShoot.getAsBoolean() && cont.driverOI.shotConditionsMet.getAsBoolean()) {
+            // If the shoot trigger is pressed and the robot is in a correct position to shoot, state will be set to SHOOT
+            currentState = RobotState.SHOOT;
+            return;
+        } else if (cont.driverOI.startShoot.getAsBoolean()) {
+            // If only the shoot button is pressed, it will aim at the HUB
+            currentState = RobotState.AIM_HOME_ZONE;
+            return;
+        } else if (!cont.driverOI.startShoot.getAsBoolean()) {
+            // If the trigger is not pressed, the robot will go into DRIVE mode
+            currentState = RobotState.DRIVE;
+        }
     }
 
     private void checkDriveTransitions() {
-        if(cont.driverOI.startShoot.getAsBoolean()){
+        if (cont.driverOI.startShoot.getAsBoolean()) {
             currentState = RobotState.SHOOT;
             return;
-        }
-
-        else if(cont.driverOI.intake.getAsBoolean()){
+        } else if (cont.driverOI.intake.getAsBoolean()) {
             currentState = RobotState.INTAKE;
             return;
-        }
-
-        else if(cont.driverOI.climb.getAsBoolean()){
+        } else if (cont.driverOI.climb.getAsBoolean()) {
             currentState = RobotState.GET_READY_CLIMB;
             return;
-        }
-
-        else if(cont.drivetrain.getCurrentPose2D().getMeasureX().gt(frc.robot.Constants.FIELD.distanceToMidField) 
-            && cont.drivetrain.getCurrentPose2D().getMeasureX().lt(frc.robot.Constants.FIELD.fieldLength
-                .minus(frc.robot.Constants.FIELD.distanceToMidField))){
-                currentState = RobotState.MID_FIELD;
-                return;
-            }
-
-        else if(cont.driverOI.unjam.getAsBoolean()){
+        } else if (cont.drivetrain.getCurrentPose2D().getMeasureX().gt(frc.robot.Constants.FIELD.distanceToMidField)
+                && cont.drivetrain
+                        .getCurrentPose2D()
+                        .getMeasureX()
+                        .lt(frc.robot.Constants.FIELD.fieldLength.minus(
+                                frc.robot.Constants.FIELD.distanceToMidField))) {
+            currentState = RobotState.MID_FIELD;
+            return;
+        } else if (cont.driverOI.unjam.getAsBoolean()) {
             currentState = RobotState.UNJAM;
             return;
         }
@@ -158,7 +150,7 @@ public class Superstructure extends SubsystemBase {
                             Distance distance = cont.drivetrain.getDistanceFromHub();
                             cont.shooter.aim(distance);
                         },
-                        cont.shooter)   
+                        cont.shooter)
                 .alongWith(cont.drivetrain.aimAtHubAndMove(cont.driverOI.controller, 0.0));
     }
 
