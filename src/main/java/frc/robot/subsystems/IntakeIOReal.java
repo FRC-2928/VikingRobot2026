@@ -35,8 +35,8 @@ public class IntakeIOReal implements IntakeIO {
     public StatusSignal<AngularVelocity> intakeAngularVelocity;
     public StatusSignal<AngularVelocity> expansionAngularVelocity;
     public StatusSignal<Angle> expansionMotorAngle;
-    private PositionVoltage retractPositionTorqueCurrentFOC;
-    final MotionMagicVoltage motionMagicVoltage;
+    private PositionVoltage retractPositionControl;
+    private final MotionMagicVoltage motionMagicVoltage;
     private PositionVoltage expansionPositionVoltage;
     private final Angle closedAngle = Units.Rotations.of(0);
     private final Angle openAngle = Units.Rotations.of(11.75);
@@ -86,7 +86,6 @@ public class IntakeIOReal implements IntakeIO {
                 new Slot1Configs().withKP(60).withKI(0).withKD(3);
 
         final TalonFXConfiguration intakeExpansionConfig = new TalonFXConfiguration();
-        // todo: config this mototr so that it turn off when limit switches.
         CurrentLimitsConfigs intakeExpansionCurrentLimitsConfigs = new CurrentLimitsConfigs()
                 .withStatorCurrentLimit(Units.Amps.of(80))
                 .withSupplyCurrentLimit(Units.Amps.of(60))
@@ -94,19 +93,13 @@ public class IntakeIOReal implements IntakeIO {
                 .withSupplyCurrentLimitEnable(true);
         // TODO determine correct currect limit switch values
         HardwareLimitSwitchConfigs hardwareLimitSwitchConfigs = new HardwareLimitSwitchConfigs()
-                /* .withForwardLimitEnable(true)
-                .withForwardLimitSource(ForwardLimitSourceValue.LimitSwitchPin)
-                .withForwardLimitRemoteSensorID(Constants.CAN.CTRE.intakeSensor)
-                .withReverseLimitEnable(true)
-                .withReverseLimitSource(ReverseLimitSourceValue.LimitSwitchPin)
-                .withReverseLimitRemoteSensorID(Constants.CAN.CTRE.intakeSensor) */
-
-                // TODO: Check if these configs are correct
+                // Forward Limits
                 .withForwardLimitRemoteCANdiS1(Constants.CAN.INTAKE_CANDI.getInstance())
                 .withForwardLimitEnable(true)
                 .withForwardLimitAutosetPositionEnable(true)
                 .withForwardLimitAutosetPositionValue(Units.Degrees.of(0))
                 .withForwardLimitType(ForwardLimitTypeValue.NormallyOpen)
+                // Reverse Limits
                 .withReverseLimitRemoteCANdiS1(Constants.CAN.INTAKE_CANDI.getInstance())
                 .withReverseLimitEnable(true)
                 .withReverseLimitAutosetPositionEnable(true)
@@ -123,6 +116,7 @@ public class IntakeIOReal implements IntakeIO {
         intakeExpansionConfig.Feedback.withSensorToMechanismRatio(
                 Constants.Intake.expensionMotorGearRatio); // May change later reduction gear ratio
 
+        // Motion Magic Configs
         var motionMagicConfigs = intakeExpansionConfig.MotionMagic;
         motionMagicConfigs.MotionMagicCruiseVelocity = 1; // Target cruise velocity of 80 rps
         motionMagicConfigs.MotionMagicAcceleration = 160; // Target acceleration of 160 rps/s (0.5 seconds)
@@ -139,18 +133,21 @@ public class IntakeIOReal implements IntakeIO {
 
         intakeExpansionMotor.getConfigurator().apply(intakeExpansionConfig); // apply the config settings
 
+        // Status Signals
         this.intakeAngularVelocity = this.intakeRollerMotor.getRotorVelocity();
         this.expansionMotorAngle = this.intakeExpansionMotor.getPosition();
         this.expansionAngularVelocity = this.intakeExpansionMotor.getRotorVelocity();
         BaseStatusSignal.setUpdateFrequencyForAll(
                 Units.Hertz.of(100), intakeAngularVelocity, expansionMotorAngle, expansionAngularVelocity);
 
-        retractPositionTorqueCurrentFOC = new PositionVoltage(Units.Rotations.zero()).withSlot(0);
+        // Retract Position voltage control
+        this.retractPositionControl = new PositionVoltage(Units.Rotations.zero()).withSlot(0);
 
-        // create a Motion Magic request, voltage output
+        // Create a Motion Magic request, voltage output
         this.motionMagicVoltage = new MotionMagicVoltage(0);
 
-        expansionPositionVoltage = new PositionVoltage(openAngle).withSlot(1);
+        // Expansion Position voltage control
+        this.expansionPositionVoltage = new PositionVoltage(openAngle).withSlot(1);
 
         if (Constants.mode == Constants.Mode.SIM) {
             TalonFXSimState simState = intakeExpansionMotor.getSimState();
