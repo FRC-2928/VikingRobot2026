@@ -1,22 +1,27 @@
 package frc.robot.subsystems;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.littletonrobotics.junction.Logger;
-
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.ParallelDeadlineGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+
 import frc.robot.RobotContainer;
 import frc.robot.commands.Intake.ExtendAndRunIntake;
+import frc.robot.commands.drivetrain.IntakeGround;
 import frc.robot.oi.DriverOI;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.littletonrobotics.junction.Logger;
 
 public class Superstructure extends SubsystemBase {
 
@@ -25,6 +30,7 @@ public class Superstructure extends SubsystemBase {
         DRIVE_MID_ZONE,
         AIM_HOME_ZONE,
         SHOOT,
+        SHOOT_MID_FIELD,
         DRIVE,
         MANUAL_INTAKE,
         INTAKE,
@@ -50,6 +56,8 @@ public class Superstructure extends SubsystemBase {
         initState(RobotState.AIM_HOME_ZONE, idle());
         initState(RobotState.SHOOT, idle());
         initState(RobotState.DRIVE, driveCommand());
+        initState(RobotState.INTAKE, new IntakeGround(true, cont, 1.0));
+        initState(RobotState.MANUAL_INTAKE, extendAndIntake());
 
         transitionFunctions = new HashMap<>();
 
@@ -83,9 +91,6 @@ public class Superstructure extends SubsystemBase {
 
     private void checkHomeZoneTransitions() {
         // TODO: Check possible transitions out of home zone, and set currentState accordingly
-        // e.g. if(!poseInHomeZone()) {
-        //          currentState = RobotState.DRIVE_MID_ZONE;
-        // }
         if (cont.driverOI.startShoot.getAsBoolean()) {
             currentState = RobotState.SHOOT;
             return;
@@ -103,8 +108,14 @@ public class Superstructure extends SubsystemBase {
     }
 
     private void checkDriveTransitions() {
-        if (cont.driverOI.startShoot.getAsBoolean()) {
+        // Only shoot if at home and when the hub is active
+        if (cont.driverOI.startShoot.getAsBoolean() && isHubActive() && cont.drivetrain.isAtHome()) {
             currentState = RobotState.SHOOT;
+            return;
+        }
+        // Shoot at home if you are not at home
+        else if (cont.driverOI.startShoot.getAsBoolean() && !cont.drivetrain.isAtHome()) {
+            currentState = RobotState.SHOOT_MID_FIELD;
             return;
         } else if (cont.driverOI.intake.getAsBoolean()) {
             currentState = RobotState.INTAKE;
@@ -172,5 +183,66 @@ public class Superstructure extends SubsystemBase {
                     cont.intake.setIntakeSpeed(0);
                     cont.intake.retract();
                 });
+    }
+
+    public boolean isHubActive() {
+        Optional<Alliance> alliance = DriverStation.getAlliance();
+        // If we have no alliance, we cannot be enabled, therefore no hub.
+        if (alliance.isEmpty()) {
+            return false;
+        }
+        // Hub is always enabled in autonomous.
+        if (DriverStation.isAutonomousEnabled()) {
+            return true;
+        }
+        // At this point, if we're not teleop enabled, there is no hub.
+        if (!DriverStation.isTeleopEnabled()) {
+            return false;
+        }
+
+        // We're teleop enabled, compute.
+        double matchTime = cont.getTeleopMatchTime();
+        double secondsLeftTeleop = 140 - matchTime;
+        String gameData = DriverStation.getGameSpecificMessage();
+        // If we have no game data, we cannot compute, assume hub is active, as its likely early in teleop.
+        if (gameData.isEmpty()) {
+            return true;
+        }
+        boolean redInactiveFirst = false;
+        switch (gameData.charAt(0)) {
+            case 'R' -> redInactiveFirst = true;
+            case 'B' -> redInactiveFirst = false;
+            default -> {
+                // If we have invalid game data, assume hub is active.
+                return true;
+            }
+        }
+
+        // Shift was is active for blue if red won auto, or red if blue won auto.
+        boolean shift1Active =
+                switch (alliance.get()) {
+                    case Red -> !redInactiveFirst;
+                    case Blue -> redInactiveFirst;
+                };
+
+        if (secondsLeftTeleop > 130) {
+            // Transition shift, hub is active.
+            return true;
+        } else if (secondsLeftTeleop > 105) {
+            // Shift 1
+            return shift1Active;
+        } else if (secondsLeftTeleop > 80) {
+            // Shift 2
+            return !shift1Active;
+        } else if (secondsLeftTeleop > 55) {
+            // Shift 3
+            return shift1Active;
+        } else if (secondsLeftTeleop > 30) {
+            // Shift 4
+            return !shift1Active;
+        } else {
+            // End game, hub always active.
+            return true;
+        }
     }
 }

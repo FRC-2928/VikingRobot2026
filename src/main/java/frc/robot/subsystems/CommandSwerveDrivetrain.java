@@ -443,6 +443,19 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         mDesiredState = state;
     }
 
+    public boolean isAtHome() {
+        double xCoordinateInInches = mCurrentSwerveState.Pose.getMeasureX().in(Units.Inches);
+        Optional<Alliance> alliance = DriverStation.getAlliance();
+        switch (alliance.get()) {
+            case Red:
+                return xCoordinateInInches > (651.22 - 183);
+            case Blue:
+                return xCoordinateInInches < 183.0;
+            default:
+                return false;
+        }
+    }
+
     // spotless: off
     private ChassisSpeeds calculateSpeedsBasedOnJoystickInputs(BaseOI controllerOI) {
         if (DriverStation.getAlliance().isEmpty()) {
@@ -658,9 +671,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                                 * maxSpeed
                                 * speedMultipliter) // Drive forward with negative Y (forward)
                         .withVelocityY(
-                                -joystick.getLeftX() 
-                                * maxSpeed 
-                                * speedMultipliter) // Drive left with negative X (left)
+                                -joystick.getLeftX() * maxSpeed * speedMultipliter) // Drive left with negative X (left)
                         .withTargetDirection(new Rotation2d(Math.atan2(
                                                 (hubY
                                                         - mCurrentSwerveState
@@ -678,7 +689,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                                                                 != Alliance.Red
                                                 ? 0
                                                 : 0))
-                                .plus(new Rotation2d(Math.PI/2)))),
+                                .plus(new Rotation2d(Math.PI / 2)))),
                 new RunCommand(() -> snapToHeading =
                         new Rotation2d(mCurrentSwerveState.Pose.getRotation().getRadians())));
     }

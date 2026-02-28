@@ -13,6 +13,7 @@ import choreo.auto.AutoChooser;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.units.Units;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -52,6 +53,8 @@ public class RobotContainer {
     private final Telemetry logger;
     public final HopperFloor hopperFloor;
 
+    private double teleopStart = 0;
+
     public RobotContainer() {
         this.drivetrain = TunerConstants.createDrivetrain();
         this.shooter = new Shooter();
@@ -62,8 +65,8 @@ public class RobotContainer {
         SmartDashboard.putData("Autonomous Routine", autoChooser);
         this.driverOI = new DriverOI(joystick1, this);
         this.operatorOI = new OperatorOI(joystick2);
-        autoChooser.select("SimpleFromRight");
         this.superstructure = new Superstructure(this);
+        autoChooser.select("SimpleFromRight");
         // TODO: implement drive mode chooser (point, turn modes). Joystick drive needs to consume the chosen mode
         // this.driveModeChooser = new LoggedDashboardChooser<>("Drive Mode", JoystickDrive.createDriveModeChooser());
         RobotModeTriggers.autonomous()
@@ -111,6 +114,13 @@ public class RobotContainer {
         return autoChooser.selectedCommand();
     }
 
+    public void setTeleopStartTime() {
+        this.teleopStart = Timer.getFPGATimestamp();
+    }
+
+    public double getTeleopMatchTime() {
+        return Timer.getFPGATimestamp() - this.teleopStart;
+    }
     // public String getDriveMode() {
     //     return this.driveModeChooser.get();
     // }
