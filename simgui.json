@@ -4,42 +4,33 @@
       "/AdvantageKit/RealOutputs/Choreo Alerts": "Alerts",
       "/FMSInfo": "FMSInfo",
       "/Pose": "Field2d",
-      "/SmartDashboard/Auto Choices": "String Chooser",
       "/SmartDashboard/Autonomous Routine": "String Chooser",
       "/SmartDashboard/Choreo Alerts": "Alerts",
       "/SmartDashboard/Module 0": "Mechanism2d",
       "/SmartDashboard/Module 1": "Mechanism2d",
       "/SmartDashboard/Module 2": "Mechanism2d",
       "/SmartDashboard/Module 3": "Mechanism2d"
-    },
-    "windows": {
-      "/SmartDashboard/Autonomous Routine": {
-        "window": {
-          "visible": true
-        }
-      }
     }
   },
   "NetworkTables": {
     "transitory": {
       "AdvantageKit": {
-        ".schema": {
-          "open": true
-        },
         "RealOutputs": {
           "Gyro": {
-            "open": true
+            "open": false
           },
           "Odometry": {
-            "open": true
+            "open": false
           },
           "OdometryEstimation": {
-            "open": true
+            "open": false
           }
-        },
+        }
+      },
+      "ShooterData": {
         "open": true
       },
-      "SmartDashboard": {
+      "Tuning": {
         "open": true
       }
     }

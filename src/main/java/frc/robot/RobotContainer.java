@@ -89,7 +89,8 @@ public class RobotContainer {
 
         joystick1.a().whileTrue(drivetrain.brake());
         // For testing purposes. TODO install new version of WPILIB and use 2026 field apriltag map
-        joystick1.rightBumper()
+        joystick1
+                .rightBumper()
                 .whileTrue(new CenterLimelight(Units.Meters.of(0.5), Units.Meters.of(0), List.of(1), drivetrain));
 
         // Run SysId routines when holding back/start and X/Y.

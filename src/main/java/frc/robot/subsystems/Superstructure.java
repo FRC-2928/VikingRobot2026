@@ -1,9 +1,5 @@
 package frc.robot.subsystems;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.ParallelDeadlineGroup;
@@ -11,8 +7,13 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+
 import frc.robot.RobotContainer;
 import frc.robot.commands.Intake.ExtendAndRunIntake;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Superstructure extends SubsystemBase {
 
@@ -49,9 +50,11 @@ public class Superstructure extends SubsystemBase {
     @Override
     public void periodic() {
         // Get the transition function for the current state and execute it
-        transitionFunctions.getOrDefault(currentState, () -> {
-            // TODO Log warning about missing transition function for current state
-        }).run();
+        transitionFunctions
+                .getOrDefault(currentState, () -> {
+                    // TODO Log warning about missing transition function for current state
+                })
+                .run();
     }
 
     private void checkHomeZoneTransitions() {
