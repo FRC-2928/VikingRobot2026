@@ -36,6 +36,11 @@ public class Shooter extends SubsystemBase {
         Logger.processInputs("Shooter", inputs);
     }
 
+    @Override
+    public void simulationPeriodic() {
+        io.simPeriodic();
+    }
+
     public void aim(Distance distance) {
         AimValues val = Constants.Shooter.lookUpTable.get(distance.in(Units.Meters));
         if (val != null) {

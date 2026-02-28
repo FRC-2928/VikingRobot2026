@@ -555,7 +555,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     public void resetAngle() {
-        this.resetAngle();
+        // this.resetAngle();
     }
 
     @Override

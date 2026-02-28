@@ -13,6 +13,15 @@ import frc.robot.RobotContainer;
 import frc.robot.commands.Intake.ExtendAndRunIntake;
 import frc.robot.oi.DriverOI;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -41,9 +50,9 @@ public class Superstructure extends SubsystemBase {
     private List<Trigger> stateTriggers;
     private Map<RobotState, Runnable> transitionFunctions;
 
-    public Superstructure(RobotContainer cont, DriverOI driverOI) {
+    public Superstructure(RobotContainer cont) {
         this.cont = cont;
-        this.driverOI = driverOI;
+        this.driverOI = cont.driverOI;
         this.stateTriggers = new ArrayList<>();
 
         // Init each state's command to run
