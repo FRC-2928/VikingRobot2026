@@ -37,7 +37,9 @@ public class Intake extends SubsystemBase {
         return isExtended;
     }
 
-    
+    public void setWantedState(IntakeIOReal.WantedState state){
+        intakeIO.setWantedState(state);
+    }
 
     public void initDefaultCommand() {
         setDefaultCommand(new RetractAndStop(this));

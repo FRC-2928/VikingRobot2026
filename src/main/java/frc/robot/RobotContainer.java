@@ -26,6 +26,7 @@ import frc.robot.oi.DriverOI;
 import frc.robot.oi.OperatorOI;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.HopperFloor;
+import frc.robot.subsystems.Indexer;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.Superstructure;
@@ -52,6 +53,7 @@ public class RobotContainer {
     public final Intake intake;
     private final Telemetry logger;
     public final HopperFloor hopperFloor;
+    public final Indexer indexer;
 
     private double teleopStart = 0;
 
@@ -59,6 +61,7 @@ public class RobotContainer {
         this.drivetrain = TunerConstants.createDrivetrain();
         this.shooter = new Shooter();
         this.intake = new Intake();
+        this.indexer = new Indexer();
         this.hopperFloor = new HopperFloor();
         this.logger = new Telemetry(MaxSpeed, drivetrain);
         this.autoChooser = Autonomous.getChoreoAutoChooser(this);
@@ -103,7 +106,7 @@ public class RobotContainer {
         joystick1.back().and(joystick1.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
         joystick1.start().and(joystick1.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
         joystick1.start().and(joystick1.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
-        joystick.b().whileTrue(superstructure.startShooting());
+        joystick1.b().whileTrue(superstructure.startShooting());
         // Reset the field-centric heading on left bumper press.
         joystick1.leftBumper().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
 

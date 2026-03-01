@@ -185,6 +185,15 @@ public class Superstructure extends SubsystemBase {
                 });
     }
 
+    public void resetSubsystems(){
+        //TODO: Implement Climber
+        cont.drivetrain.setState(CommandSwerveDrivetrain.WantedState.IDLE);
+        cont.hopperFloor.halt();
+        cont.indexer.halt();
+        cont.intake.setWantedState(IntakeIOReal.WantedState.RETRACT);
+        cont.shooter.home();
+    }
+
     public boolean isHubActive() {
         Optional<Alliance> alliance = DriverStation.getAlliance();
         // If we have no alliance, we cannot be enabled, therefore no hub.
