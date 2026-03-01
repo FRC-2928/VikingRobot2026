@@ -47,6 +47,7 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.RobotContainer;
 import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.robot.generated.TunerConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
@@ -153,7 +154,14 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
 
     private ChassisSpeeds currentChassisSpeeds = new ChassisSpeeds();
-    public final Limelight limelight = new Limelight("limelight");
+
+    public final Limelight limelightForward = new Limelight("limelight");
+    public final Limelight limelightHopper = new Limelight("limelight-hopper");
+    public final Limelight limelightIntake = new Limelight("limelight-intake");
+    public final Limelight limelightShooter = new Limelight("limelight-shooter");
+
+    public final Limelight[] limelights = {limelightIntake, limelightShooter, limelightForward};
+    
 
     // Choreo PID controllers have to be created in our code
     private final PIDController choreoXController = new PIDController(5, 0, 0);
@@ -336,7 +344,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         // apply the latest state
         // applyStates();
         mCurrentSwerveState = this.getStateCopy();
-        Logger.recordOutput("Drivetrain/Botpose", limelight.getBluePose3d());
+        Logger.recordOutput("Drivetrain/Botpose", limelightForward.getBluePose3d());
         Logger.recordOutput("Drivetrain/currentPose", mCurrentSwerveState.Pose);
         Logger.recordOutput(
                 "Drivetrain/angleFromHub",
@@ -367,28 +375,65 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             });
         }
 
-        PoseEstimate mt2 = this.limelight.getPoseMegatag2();
-        if (mt2 != null) {
-            Logger.recordOutput("Drivetrain/poseMegatag", mt2.pose);
-            boolean rejectUpdate = false;
+        // if (mt2 != null) {
+        //     Logger.recordOutput("Drivetrain/poseMegatag", mt2.pose);
+        //     boolean rejectUpdate = false;
 
-            if (mt2.tagCount == 0) {
-                rejectUpdate = true;
-            }
+        //     if (mt2.tagCount == 0) {
+        //         rejectUpdate = true;
+        //     }
 
-            Logger.recordOutput("Drivetrain/RejectUpdate", rejectUpdate);
-            if (!rejectUpdate) {
-                this.setVisionMeasurementStdDevs(VecBuilder.fill(.7, .7, 9999999));
-                this.addVisionMeasurement(mt2.pose, mt2.timestampSeconds);
-            }
-        }
+        //     Logger.recordOutput("Drivetrain/RejectUpdate", rejectUpdate);
+        //     if (!rejectUpdate) {
+        //         this.setVisionMeasurementStdDevs(VecBuilder.fill(.7, .7, 9999999));
+        //         this.addVisionMeasurement(mt2.pose, mt2.timestampSeconds);
+        //     }
+
+        // }
+        for(Limelight limelight : limelights){
+			PoseEstimate mt2 = limelight.getPoseMegatag2();
+			if (mt2 != null) {
+				Logger.recordOutput("Drivetrain/poseMegatag"+limelight.getLimelightName(), mt2.pose);
+
+				// if our angular velocity is greater than 720 degrees per second, ignore vision updates or if it doesnt see any tags		
+				Logger.recordOutput("Drivetrain/doRejectUpdate" +limelight.getLimelightName(), isUpdateable(mt2));
+				if(isUpdateable(mt2)) {
+                    //VecBuilder.fill(0.7,0.7,9999999) default trust
+					this.setVisionMeasurementStdDevs(limelight.getLimelightTrust());
+					this.addVisionMeasurement(
+						mt2.pose,
+						mt2.timestampSeconds);
+				}
+			}
+		}
+
         Logger.recordOutput("Drivetrain/Pose", mCurrentSwerveState.Pose);
-        Logger.recordOutput("Drivetrain/Imumode", limelight.getImuMode());
-        PoseEstimate mt1 = this.limelight.getPoseMegatag1();
+        Logger.recordOutput("Drivetrain/Imumode", limelightForward.getImuMode());
+        PoseEstimate mt1 = this.limelightForward.getPoseMegatag1();
         if (mt1 != null) {
             Logger.recordOutput("Drivetrain/Mt1", mt1.pose);
         }
     }
+
+    public boolean isUpdateable(PoseEstimate posEst) {
+		// if (Math.abs(this.gyroInputs.yawVelocityRadPerSec.in(Units.DegreesPerSecond)) > 720) { 
+		// 	return false;
+		// }
+		if (posEst.tagCount == 0) {
+			return false;
+		}
+		if (Double.isNaN(posEst.pose.getX()) || Double.isNaN(posEst.pose.getY()) || Double.isInfinite(posEst.pose.getX()) || Double.isInfinite(posEst.pose.getY())) {
+			return false;
+		}
+		if (Double.isNaN(posEst.pose.getRotation().getDegrees())|| Double.isInfinite(posEst.pose.getRotation().getDegrees())) {
+			return false;
+		}
+		if (posEst.pose.getX() > 100d || posEst.pose.getY() > 100d) {
+			return false;
+		}
+		
+		return true;
+	}
 
     private SystemState handleStateTransition() {
         return switch (mDesiredState) {
@@ -422,6 +467,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 //         .withSpeeds(calculateSpeedsBasedOnJoystickInputs())
                 //         .withDriveRequestType(SwerveModule.DriveRequestType.OpenLoopVoltage)
                 //         .withDesaturateWheelSpeeds(true));
+                joystickDrive(RobotContainer.getInstance().driverOI);
                 break;
             case CHOREO_PATH: {
                 // TODO: handle choreo updates... may need to synchronize at some point
@@ -557,7 +603,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     public Limelight getLimelight(String name) {
         // TODO: eventually get the limelights by their names rather than individual getters...
-        return limelight;
+        return limelightForward;
     }
 
     public AutoFactory getChoreAutoFactory() {
@@ -575,8 +621,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     @Override
     public void resetPose(final Pose2d newPose) {
         super.resetPose(newPose);
-        this.limelight.setIMUMode(1);
-        this.limelight.setRobotOrientation(newPose.getRotation().getMeasure());
+        this.limelightForward.setIMUMode(1);
+        this.limelightForward.setRobotOrientation(newPose.getRotation().getMeasure());
     }
 
     public void setAngle(final Angle angle) {
@@ -634,8 +680,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     public void disabledPeriodic() {
-        PoseEstimate mt1 = this.limelight.getPoseMegatag1();
-        if (this.limelight.hasValidTargets() && mt1 != null) {
+        PoseEstimate mt1 = this.limelightForward.getPoseMegatag1();
+        if (this.limelightForward.hasValidTargets() && mt1 != null) {
             this.resetRotation(mt1.pose.getRotation());
         }
     }
@@ -645,7 +691,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     public void setImuMode2() {
-        this.limelight.setIMUMode(2);
+        this.limelightForward.setIMUMode(2);
     }
 
     // Halts the drive wheels and moves the modules in x formation for maximum traction

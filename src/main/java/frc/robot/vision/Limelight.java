@@ -1,7 +1,10 @@
 package frc.robot.vision;
 
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.Units;
@@ -21,6 +24,7 @@ import org.littletonrobotics.junction.Logger;
 public class Limelight {
     public final NetworkTable nt;
     public final String limelightName;
+    private Vector<N3> limelightTrust;
 
     public Limelight(final String limelightName) {
         this.nt = NetworkTableInstance.getDefault().getTable(limelightName);
@@ -53,6 +57,22 @@ public class Limelight {
     public int getTargetAprilTagID() {
         return (int) LimelightHelpers.getFiducialID(this.limelightName);
     }
+
+    public String getLimelightName(){
+		return limelightName;
+	}
+
+    public void setLimelighTrust(double x, double y, double theta){
+        this.limelightTrust = VecBuilder.fill(x, y, theta);
+    }
+
+    public Vector<N3> getLimelightTrust(){
+        if(limelightTrust == null){
+            return VecBuilder.fill(0.7,0.7,9999999);
+        }
+        return limelightTrust;
+    }
+
 
     // Horizontal Offset From Crosshair To Target (LL1: -27 degrees to 27 degrees | LL2: -29.8 to 29.8 degrees)
     // @AutoLogOutput(key = "Limelight/Horizontal Offset")

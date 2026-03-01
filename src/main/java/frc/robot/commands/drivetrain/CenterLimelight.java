@@ -176,7 +176,7 @@ public class CenterLimelight extends Command {
         thetaPid = centerRotaionPid.calculate(thetaSpeed, offsetTheta.in(Units.Radians));
         mDrivetrain.controlRobotDrivetrainAutonomus(new ChassisSpeeds(xSpeedRotated, ySpeedRotated, thetaPid * 1.5));
 
-        var limelight = mDrivetrain.limelight;
+        var limelight = mDrivetrain.limelightForward;
         Logger.recordOutput("Drivetrain/Auto/XSpeed", xSpeed);
         Logger.recordOutput("Drivetrain/Auto/YSpeed", ySpeed);
         Logger.recordOutput("Drivetrain/Auto/Center Is Finished", false);
