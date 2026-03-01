@@ -29,13 +29,11 @@ public class ClimberIOReal implements ClimberIO {
         climberConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = MINheight;
         climberConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
-        //set the gear ratio for the climber motor
+        // set the gear ratio for the climber motor
         climberConfig.Feedback.SensorToMechanismRatio = 25;
 
         // applying the motor configs
         climber.getConfigurator().apply(climberConfig);
-
-
     }
 
     // climber moter, kraken x60
@@ -45,7 +43,7 @@ public class ClimberIOReal implements ClimberIO {
     private double MAXheight = 30; // inches of height increase
     private double MINheight = 0;
 
-    //call in climber.java periodic
+    // call in climber.java periodic
     public void goUp() {
         climber.setControl(new VoltageOut(Units.Volts.of(5)));
     }
@@ -58,14 +56,17 @@ public class ClimberIOReal implements ClimberIO {
         climber.setControl(new VoltageOut(Units.Volts.of(-5)));
     }
 
-    LinearFilter spikeFilter = LinearFilter.backwardFiniteDifference(1, 1, 0.2)
+    LinearFilter spikeFilter = LinearFilter.backwardFiniteDifference(1, 1, 0.2);
+
     public boolean isEngaged() {
         double current = climber.getStatorCurrent().getValueAsDouble();
 
         double currentDerivative = spikeFilter.calculate(current);
 
-        if (currentDerivative >= 150) { //Threshold of 150 Amps/sec spike
+        if (currentDerivative >= 150) { // Threshold of 150 Amps/sec spike
             return true;
+        } else {
+            return false;
         }
     }
 
@@ -76,10 +77,9 @@ public class ClimberIOReal implements ClimberIO {
 
     @Override
     public void updateInputs(final ClimberIOInputs inputs) {
-        //BaseStatusSignal.refreshAll(ClimberIO.height, climber.home); // updates the position of the climber.
+        // BaseStatusSignal.refreshAll(ClimberIO.height, climber.home); // updates the position of the climber.
         inputs.height = this.climber.getPosition().getValueAsDouble();
     }
-
 }
 
 /*

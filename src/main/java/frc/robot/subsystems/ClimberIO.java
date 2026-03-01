@@ -15,13 +15,15 @@ public interface ClimberIO {
 
     public default void override() {} // overides the climb if it is interupted
 
-    public default void periodic() {} // runs periodically 
+    public default void periodic() {} // runs periodically
 
     public default void goUp() {}
 
     public default void goDown() {}
 
-    public default void goToPosition(Distance distance) {} 
+    public default void goToPosition(Distance distance) {}
 
-    public default boolean isEngaged() {} //checks for current spikes to see if the climber has hooked on
+    public default boolean isEngaged() {
+        return false;
+    } // checks for current spikes to see if the climber has hooked on
 }

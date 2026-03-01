@@ -20,11 +20,9 @@ public class ClimberDescend extends Command {
 
     @Override
     public void initialize() {
-        // stops the robot from descending
         this.startPos = Robot.cont.climber.inputs.height;
         this.targetHeight = ClimberHeight.HOMEPOS;
     }
-
 
     @Override
     public void execute() {
@@ -43,6 +41,5 @@ public class ClimberDescend extends Command {
     @Override
     public boolean isFinished() {
         return Robot.cont.climber.inputs.home;
-        
     }
 }

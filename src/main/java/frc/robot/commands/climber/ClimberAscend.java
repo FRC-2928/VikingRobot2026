@@ -25,7 +25,6 @@ public class ClimberAscend extends Command {
         this.targetHeight = ClimberHeight.L1;
     }
 
-
     @Override
     public void execute() {
         Logger.recordOutput("Climber/Initialize/State", "Start");
@@ -42,7 +41,6 @@ public class ClimberAscend extends Command {
 
     @Override
     public boolean isFinished() {
-        return Robot.cont.climber.inputs.home;
-        
+        return Robot.cont.climber.inputs.home = false;
     }
 }
