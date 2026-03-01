@@ -1,9 +1,5 @@
 package frc.robot;
 
-import edu.wpi.first.units.Units;
-import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.wpilibj.Filesystem;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -11,6 +7,10 @@ import java.io.PrintWriter;
 
 import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
+
+import edu.wpi.first.units.Units;
+import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.wpilibj.Filesystem;
 
 public final class Tuning {
     private Tuning() {
@@ -42,8 +42,8 @@ public final class Tuning {
     public static final LoggedNetworkNumber indexerVelocity = new LoggedNetworkNumber(
             "Tuning/intakeVelocity", Constants.Indexer.indexerVelocity.in(Units.RotationsPerSecond));
 
-    public static final LoggedNetworkNumber intakeVelocity =
-            new LoggedNetworkNumber("Tuning/IntakeVelocity", Constants.Intake.intakeVelocity);
+//     public static final LoggedNetworkNumber intakeVelocity =
+//             new LoggedNetworkNumber("Tuning/IntakeVelocity", Constants.Intake.intakeVelocity);
 
     public static void writeToCSV(double hAngle, double rVelocity, Distance distanceFromTarget)
             throws FileNotFoundException {

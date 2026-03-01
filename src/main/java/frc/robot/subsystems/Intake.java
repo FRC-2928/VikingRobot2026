@@ -1,11 +1,13 @@
 package frc.robot.subsystems;
 
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-
-import frc.robot.Constants;
-import frc.robot.commands.Intake.RetractAndStop;
-
 import org.littletonrobotics.junction.Logger;
+
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
+import frc.robot.Constants.Intake.IntakeStates;
+import frc.robot.commands.Intake.RetractAndStop;
 
 public class Intake extends SubsystemBase {
     private IntakeIO intakeIO;
@@ -16,17 +18,19 @@ public class Intake extends SubsystemBase {
         initDefaultCommand();
     }
 
-    public void setIntakeSpeed(double speed) {
-        intakeIO.setSpeed(speed);
-        Logger.recordOutput("Intake/Roller Speed", speed);
-    }
-
     public void retract() {
         intakeIO.retract();
     }
 
-    public void extend() {
-        intakeIO.extend();
+    public Command extend() {
+        return new InstantCommand(() -> intakeIO.extend(), this);
+    }
+
+    public Command extendAndRun() {
+        return new InstantCommand(() -> {
+            intakeIO.extend();
+            intakeIO.setState(IntakeStates.FORWARD);
+        }, this);
     }
 
     public boolean checkExtended() {

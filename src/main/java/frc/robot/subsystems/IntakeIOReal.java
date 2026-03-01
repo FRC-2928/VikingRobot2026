@@ -26,7 +26,6 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
-
 import frc.robot.Constants;
 import frc.robot.Tuning;
 
@@ -247,9 +246,9 @@ public class IntakeIOReal implements IntakeIO {
     }
 
     @Override
-    public void setSpeed(double speed) {
+    public void setState(Constants.Intake.IntakeStates state) {
         // Do a feed forward later
-        intakeRollerMotor.setControl(new DutyCycleOut(speed));
+        intakeRollerMotor.setControl(new DutyCycleOut(state.getSpeed()));
     }
 
     @Override

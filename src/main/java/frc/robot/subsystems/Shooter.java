@@ -16,11 +16,12 @@ public class Shooter extends SubsystemBase {
     public Shooter() {
         this.io = switch (Constants.mode) {
             case REAL -> new ShooterIOReal(this);
-            default -> new ShooterIOReal(this);};
+            default -> new ShooterIOReal(this);
+        };
     }
 
     private final ShooterIO io;
-    public final ShooterIOInputsAutoLogged inputs = new ShooterIOInputsAutoLogged();
+    private final ShooterIOInputsAutoLogged inputs = new ShooterIOInputsAutoLogged();
 
     public Angle getHoodAngle() {
         return inputs.hoodAngle;

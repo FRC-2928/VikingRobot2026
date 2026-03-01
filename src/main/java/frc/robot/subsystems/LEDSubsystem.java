@@ -4,20 +4,26 @@
 
 package frc.robot.subsystems;
 
+import java.util.function.Supplier;
+
 import com.ctre.phoenix6.controls.SolidColor;
 import com.ctre.phoenix6.signals.RGBWColor;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.subsystems.Superstructure.RobotState;
 
 public class LEDSubsystem extends SubsystemBase {
-    /** Creates a new LED. */
+    /// interface to LED hardware
     private LEDIO ledIO;
+    /// robot state supplier
+    private final Supplier<RobotState> mRobotStateSupplier;
 
     private WantedAction wantedAction;
 
     private static final int kStartIndex = 8;
     private static final int kEndIndex = 9;
 
+    // TODO: remove along with LED_green
     public enum WantedAction {
         OFF,
         GREEN,
@@ -26,36 +32,45 @@ public class LEDSubsystem extends SubsystemBase {
         PURPLE
     }
 
-    public LEDSubsystem(LEDIO ledIO) {
+    public LEDSubsystem(LEDIO ledIO, Supplier<RobotState> robotStateSupplier) {
         this.ledIO = ledIO;
+        this.mRobotStateSupplier = robotStateSupplier;
     }
 
+    // TODO: remove along with LED_green
     public void setWantedAction(WantedAction wantedAction) {
         this.wantedAction = wantedAction;
     }
 
     @Override
     public void periodic() {
-        // This method will be called once per scheduler run
-        switch (wantedAction) {
-            case OFF:
+        var robotState = mRobotStateSupplier.get();
+        switch (robotState) {
+            case DISABLED: {
                 ledIO.clearAnimation();
                 ledIO.setLEDs(new SolidColor(kStartIndex, kEndIndex).withColor(new RGBWColor(0, 0, 0)));
                 break;
-            case GREEN:
+            }
+            case FREE_DRIVE: {
+                ledIO.clearAnimation();
+                ledIO.setLEDs(new SolidColor(kStartIndex, kEndIndex).withColor(new RGBWColor(0, 0, 0)));
+                break;
+            }
+            case DRIVE_TARGET_LOCK: {
                 ledIO.setLEDs(new SolidColor(kStartIndex, kEndIndex).withColor(new RGBWColor(0, 255, 0)));
                 break;
-            case RED:
+            }
+            case SHOOTING: {
                 ledIO.setLEDs(new SolidColor(kStartIndex, kEndIndex).withColor(new RGBWColor(255, 0, 0)));
                 break;
-            case BLUE:
+            }
+            case MANUAL_INTAKE: {
                 ledIO.setLEDs(new SolidColor(kStartIndex, kEndIndex).withColor(new RGBWColor(0, 0, 255)));
                 break;
-            case PURPLE:
-                ledIO.setLEDs(new SolidColor(kStartIndex, kEndIndex).withColor(new RGBWColor(255, 0, 255)));
+            }
+            default: {
                 break;
-            default:
-                break;
+            }
         }
     }
 }

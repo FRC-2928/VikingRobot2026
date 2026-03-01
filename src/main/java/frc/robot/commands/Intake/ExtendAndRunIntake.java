@@ -4,12 +4,11 @@
 
 package frc.robot.commands.Intake;
 
-import edu.wpi.first.wpilibj2.command.Command;
+import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Tuning;
 import frc.robot.subsystems.Intake;
-
-import org.littletonrobotics.junction.Logger;
 
 public class ExtendAndRunIntake extends Command {
     /** Creates a new RunIntake. */
@@ -33,7 +32,7 @@ public class ExtendAndRunIntake extends Command {
         intake.extend();
         double speed = Tuning.intakeSpeed.get();
         Logger.recordOutput("Intake/Speed", speed);
-        intake.setIntakeSpeed(speed);
+        // intake.setIntakeSpeed(speed);
         // Logger.recordOutput("Intake/Speed", speed);
         // intake.intakeIO.setSpeed();
     }
@@ -41,7 +40,7 @@ public class ExtendAndRunIntake extends Command {
     // Called once the command ends or is interrupted.
     @Override
     public void end(boolean interrupted) {
-        intake.setIntakeSpeed(0);
+        // intake.setIntakeSpeed(0);
     }
 
     // Returns true when the command should end.

@@ -1,37 +1,49 @@
 package frc.robot.subsystems;
 
-import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.ParallelDeadlineGroup;
-import edu.wpi.first.wpilibj2.command.RunCommand;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
-
-import frc.robot.RobotContainer;
-import frc.robot.commands.Intake.ExtendAndRunIntake;
-import frc.robot.commands.drivetrain.IntakeGround;
-import frc.robot.oi.DriverOI;
-
-import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
 
+import com.ctre.phoenix6.BaseStatusSignal;
+
+import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.RobotContainer;
+import frc.robot.commands.Intake.ExtendAndRunIntake;
+
 public class Superstructure extends SubsystemBase {
 
+    public enum StateIntent {
+        ACTION_TOGGLE_TARGET_LOCK_MODE,
+        ACTION_SHOOT_OVERRIDE,
+        ACTION_NONE
+    }
+
+    public enum OverrideIntent {
+        OVERRIDE_SHOOT_MODE,
+        OVERRIDE_INTAKE_MODE,
+        OVERRIDE_NONE
+    }
+
     public enum RobotState {
-        DRIVE_HOME_ZONE,
-        DRIVE_MID_ZONE,
-        AIM_HOME_ZONE,
-        SHOOT,
-        SHOOT_MID_FIELD,
-        DRIVE,
+        DISABLED,
+        AUTONOMOUS,
+        FREE_DRIVE,
+        DRIVE_TARGET_LOCK,
+        SHOOTING,
         MANUAL_INTAKE,
         INTAKE,
         MID_FIELD,
@@ -39,33 +51,99 @@ public class Superstructure extends SubsystemBase {
         UNJAM
     }
 
-    private RobotContainer cont;
-    private DriverOI driverOI;
-    private RobotState currentState;
+    // --------------------- Class Members ---------------------
+    /// singleton instance of the Superstructure
+    private static Superstructure sInstance = null;
+    /// Convenience reference to the RobotContainer instance
+    private final RobotContainer mRobotContainer;
+    /// Map of Subsystems to their desired signals to be refreshed
+    private Map<SubsystemBase, List<BaseStatusSignal>> mSubsystemSignalsMap;
+    /// Current state of the subsystem
+    private RobotState currentState = RobotState.DISABLED;  // disabled by default
+    /// Stored (previous) state of the subsystem -- used for handling state overrides
+    private RobotState prevState = null;
+    /// List of triggers for the states
     private List<Trigger> stateTriggers;
+    /// Map of RobotStates to transition validation functions
     private Map<RobotState, Runnable> transitionFunctions;
 
-    public Superstructure(RobotContainer cont) {
-        this.cont = cont;
-        this.driverOI = cont.driverOI;
-        this.stateTriggers = new ArrayList<>();
+    // --------------------- Internal State Variables ---------------------
+    /// boolean tracking the target lock state
+    private boolean mTargetLockRequested = false;
+
+    // Overrides
+    /**
+     * Enumeration of different overrides -- represented as bitflags
+     */
+    private enum StateOverrides {
+        OVERRIDE_SHOOTING,    // bit 0
+        OVERRIDE_INTAKING     // bit 1
+        // ... future overrides would be bit 2, 3, etc.
+    }
+
+    /// Set tracking which overrides are currently active
+    private EnumSet<StateOverrides> mActiveOverrides = EnumSet.noneOf(StateOverrides.class);
+    // Metrics
+    /// counter tracking the incidence rate of multiple simultaneous override requests
+    private int mSimultaneousOverrideRequests = 0;
+    /// counter tracking the incidence rate of clearing overrides without any active
+    private int mNoActiveOverridesCount = 0;
+
+    /**
+     * Singleton creator for the Superstructure -- creates a new instance if one is not available
+     *
+     * @param robotContainer the @c RobotContainer instance to use
+     * @return a fully initialized Superstructure instance
+     */
+    public static synchronized Superstructure create(RobotContainer robotContainer) {
+        if (sInstance != null) {
+            return sInstance;
+        }
+
+        sInstance = new Superstructure(robotContainer);
+        return sInstance;
+    }
+
+    /**
+     * Singleton accessor -- intended to be invoked after an instance is already available via create()
+     *
+     * @return the singleton instance of the Superstructure
+     */
+    public static synchronized Superstructure getInstance() {
+        return sInstance;
+    }
+
+    /**
+     * Constructor for the Superstructure
+     *
+     * @param robotContainer the @c RobotContainer convenience reference
+     */
+    private Superstructure(RobotContainer robotContainer) {
+        this.mRobotContainer = robotContainer;
 
         // Init each state's command to run
-        initState(RobotState.DRIVE_HOME_ZONE, idle());
-        initState(RobotState.DRIVE_MID_ZONE, idle());
-        initState(RobotState.AIM_HOME_ZONE, idle());
-        initState(RobotState.SHOOT, idle());
-        initState(RobotState.DRIVE, driveCommand());
-        initState(RobotState.INTAKE, new IntakeGround(true, cont, 1.0));
+        initState(RobotState.DISABLED, handleDisabled());
+        initState(RobotState.AUTONOMOUS, handleAutonomous());
+        initState(RobotState.FREE_DRIVE, freeDrive());
+        initState(RobotState.DRIVE_TARGET_LOCK, driveTargetLock());
         initState(RobotState.MANUAL_INTAKE, extendAndIntake());
+        initState(RobotState.SHOOTING, startShooting());
 
         transitionFunctions = new HashMap<>();
 
-        // Bind transition function for each state
-        transitionFunctions.put(RobotState.DRIVE_HOME_ZONE, this::checkHomeZoneTransitions);
-        transitionFunctions.put(RobotState.SHOOT, this::checkShootTransitions);
-        transitionFunctions.put(RobotState.DRIVE, this::checkDriveTransitions);
-        this.currentState = RobotState.DRIVE;
+        // Bind transition function for each state -- these functions determine if the state should be changed
+        // this should really be a map... inbounds + triggers set a requested state and then we look up the current state
+        // in the map and find the valid transition state if one exists or reject the transition...
+        // in the current impl we have to check if we need to transition to, for example, disabled in every state...
+        transitionFunctions.put(RobotState.DISABLED, this::checkTransitionFromDisabled);
+        transitionFunctions.put(RobotState.AUTONOMOUS, this::checkTransitionFromAutonomous);
+        transitionFunctions.put(RobotState.FREE_DRIVE, this::checkTransitionFromFreeDrive);
+        transitionFunctions.put(RobotState.DRIVE_TARGET_LOCK, this::checkTransitionFromTargetLock);
+        transitionFunctions.put(RobotState.SHOOTING, this::checkTransitionFromShooting);
+        transitionFunctions.put(RobotState.MANUAL_INTAKE, this::checkManualIntakeTransition);
+
+        Logger.recordOutput("Superstructure/SimultaneousOverrideRequests", mSimultaneousOverrideRequests);
+        Logger.recordOutput("Superstructure/NoActiveOverridesCount", mNoActiveOverridesCount);
     }
 
     // Initializes trigger for when given state is active, and runs given command when trigger is active
@@ -73,116 +151,246 @@ public class Superstructure extends SubsystemBase {
         stateTriggers.add(new Trigger(() -> this.currentState == state).whileTrue(runWhenCurrentState));
     }
 
+    /**
+     * Applies the provided @c StateIntent and transitions the internal state machine accordingly
+     *
+     * @param intent the requested @c StateIntent
+     */
+    public void toggleIntent(StateIntent intent) {
+        switch (intent) {
+            case ACTION_TOGGLE_TARGET_LOCK_MODE: {
+                mTargetLockRequested = !mTargetLockRequested;
+                break;
+            }
+            default: {
+                // no-op
+                break;
+            }
+        }
+    }
+
+    /**
+     * Handles override requests and transitions the internal state machine accordingly
+     * @return the command to run for the shoot override request
+     */
+    public Command requestShootOverride() {
+        return new InstantCommand(() -> requestOverride(OverrideIntent.OVERRIDE_SHOOT_MODE), this);
+    }
+
+    /**
+     * Clears the override state and returns the robot to the previously-active state
+     * @return the command to clear the override state
+     */
+    public Command clearOverrideCommand() {
+        return new InstantCommand(() -> requestOverride(OverrideIntent.OVERRIDE_NONE), this);
+    }
+
+    /**
+     * Handles override requests and transitions the internal state machine accordingly
+     *
+     * @param intent the requested @c OverrideIntent
+     */
+    private synchronized void requestOverride(OverrideIntent intent) {
+        if (intent == OverrideIntent.OVERRIDE_NONE) {
+            if (mActiveOverrides.isEmpty()) {
+                // No overrides to clear
+                mNoActiveOverridesCount++;
+                Logger.recordOutput("Superstructure/NoActiveOverridesCount", mNoActiveOverridesCount);
+                return;
+            }
+
+            // Clear all active overrides
+            mActiveOverrides.clear();
+            
+            // Restore previous state
+            if (prevState != null) {
+                currentState = prevState;
+                prevState = null;
+            }
+            return;
+        }
+        
+        // Check if any override is already active
+        if (!mActiveOverrides.isEmpty()) {
+            // Reject the override request
+            mSimultaneousOverrideRequests++;
+            Logger.recordOutput("Superstructure/SimultaneousOverrideCount", mSimultaneousOverrideRequests);
+            return;
+        }
+
+        // Save current state before applying override so we can safely transition back once the override is done
+        prevState = currentState;
+        
+        switch (intent) {
+            case OVERRIDE_SHOOT_MODE: {
+                // Add OVERRIDE_SHOOTING to the set of active overrides
+                mActiveOverrides.add(StateOverrides.OVERRIDE_SHOOTING);  // Internally: 01 (bit 0 is now 1)
+                currentState = RobotState.SHOOTING;  // transition directly into shooting mode
+                Logger.recordOutput("Superstructure/OverrideState", "SHOOTING");
+                break;
+            }
+            case OVERRIDE_INTAKE_MODE:
+                break;
+            // ... other overrides here
+            case OVERRIDE_NONE:
+            default:
+                break;
+        }
+    }
+
+    /**
+     * Utility function to get a supplier of the robot state
+     *
+     * @return a supplier for the current @c RobotState
+     */
+    public Supplier<RobotState> getRobotStateSupplier() {
+        return () -> currentState;
+    }
+
+    /**
+     * Executes periodic logic for the Superstructure, including state transitions
+     */
     @Override
     public void periodic() {
-        // Get the transition function for the current state and execute it
-        transitionFunctions
-                .getOrDefault(currentState, () -> {
-                    // TODO Log warning about missing transition function for current state
-                })
-                .run();
-        Logger.recordOutput("RobotState/Shooter Velocity", cont.shooter.getFlywheelVelocity());
-        Logger.recordOutput("RobotState/Ready to Shoot", cont.driverOI.shotConditionsMet.getAsBoolean());
-        Logger.recordOutput("RobotState/Intake Deployed", cont.intake.checkExtended());
-        Logger.recordOutput("RobotState/Current State", currentState.toString());
-        Logger.recordOutput("RobotState/ShootTrigger", cont.driverOI.startShoot.getAsBoolean());
-        Logger.recordOutput("RobotState/Superstructure", stateTriggers.get(4).getAsBoolean());
+        RobotState lastState;
+        do {
+            lastState = currentState;  // track the most recent state of the robot in case it changes
+            // Get the transition function for the current state and execute it
+            transitionFunctions
+                    .getOrDefault(currentState, () -> {
+                        // TODO Log warning about missing transition function for current state
+                    })
+                    .run();
+        } while (currentState != lastState);
     }
 
-    private void checkHomeZoneTransitions() {
-        // TODO: Check possible transitions out of home zone, and set currentState accordingly
-        if (cont.driverOI.startShoot.getAsBoolean()) {
-            currentState = RobotState.SHOOT;
-            return;
+    private Command handleDisabled() {
+        // TODO: implement this... no-op state, put everything into a ground/idle state...
+        return new InstantCommand();
+    }
+
+    private Command handleAutonomous() {
+        // TODO: implement this... probably set drivetrain to auto mode... just a no-op state internally
+        // since auto routines will control drivetrain through direct invocations...
+        return new InstantCommand();
+    }
+
+    private Command freeDrive() {
+        return mRobotContainer.drivetrain.freeDrive();
+    }
+
+    private Command handleShooting() {
+        // TODO: implement this
+        return new InstantCommand();
+    }
+
+    private Command driveTargetLock() {
+        return new ParallelCommandGroup(
+                mRobotContainer.drivetrain.targetLock(),
+                prepareShooter());
+            // .andThen(nowShootTheBalls());
+    }
+
+    private Command extendIntakeCommand()
+    {
+        return mRobotContainer.intake.extend();
+    }
+
+    private void checkTransitionFromDisabled() {
+        if (DriverStation.isAutonomousEnabled()) {
+            currentState = RobotState.AUTONOMOUS;
         }
     }
 
-    private void checkShootTransitions() {
-        if (cont.operatorOI.shootOverride.getAsBoolean()) {
-            currentState = RobotState.AIM_HOME_ZONE;
-            return;
-        } else if (!cont.driverOI.startShoot.getAsBoolean()) {
-            // If the trigger is not pressed, the robot will go into DRIVE mode
-            currentState = RobotState.DRIVE;
+    private void checkTransitionFromAutonomous() {
+        // should never happen -- precautionary fallback though
+        if (DriverStation.isTeleopEnabled()) {
+            currentState = RobotState.FREE_DRIVE;
+        }
+
+        // robot state should ALWAYS transition through disabled in between match phases...
+        // we'll set the expectation appropriately...
+        if (DriverStation.isDisabled()) {
+            currentState = RobotState.DISABLED;
         }
     }
 
-    private void checkDriveTransitions() {
-        // Only shoot if at home and when the hub is active
-        if (cont.driverOI.startShoot.getAsBoolean() && isHubActive() && cont.drivetrain.isAtHome()) {
-            currentState = RobotState.SHOOT;
-            return;
-        }
-        // Shoot at home if you are not at home
-        else if (cont.driverOI.startShoot.getAsBoolean() && !cont.drivetrain.isAtHome()) {
-            currentState = RobotState.SHOOT_MID_FIELD;
-            return;
-        } else if (cont.driverOI.intake.getAsBoolean()) {
-            currentState = RobotState.INTAKE;
-            return;
-        } else if (cont.driverOI.climb.getAsBoolean()) {
-            currentState = RobotState.GET_READY_CLIMB;
-            return;
-        } else if (cont.drivetrain.getCurrentPose2D().getMeasureX().gt(frc.robot.Constants.FIELD.distanceToMidField)
-                && cont.drivetrain
-                        .getCurrentPose2D()
-                        .getMeasureX()
-                        .lt(frc.robot.Constants.FIELD.fieldLength.minus(
-                                frc.robot.Constants.FIELD.distanceToMidField))) {
-            currentState = RobotState.MID_FIELD;
-            return;
-        } else if (cont.driverOI.unjam.getAsBoolean()) {
-            currentState = RobotState.UNJAM;
-            return;
+    private void checkTransitionFromFreeDrive() {
+        if (mTargetLockRequested) {
+            currentState = RobotState.DRIVE_TARGET_LOCK;
         }
     }
 
-    public Command driveCommand() {
-        return cont.drivetrain.joystickDrive(cont.driverOI);
+    private void checkTransitionFromTargetLock() {
+        // TODO: implement
+        if (!mTargetLockRequested) {
+            currentState = RobotState.FREE_DRIVE;
+            return;
+        }
+
+        // if we're here then target lock mode is still active...
+        // so we need to check if we're able to transition into other modes...
+        // if (mRobotContainer.drivetrain.atTargetLockPose())
+    }
+
+    private void checkTransitionFromShooting() {
+        // Override has been cleared - state already restored by requestOverride()
+        // This function handles any other transitions out of shooting if needed
+        // For now, shooting state is only exited via override cancellation
+    }
+
+    private void checkManualIntakeTransition() {
+        // if (driverOI.intake.getAsBoolean()) {
+        //     currentState = RobotState.MANUAL_INTAKE;
+        // }
     }
 
     // Runs flywheels and kicker. Command will not end on its own
     public Command startShooting() {
         return new RunCommand(
-                        () -> {
-                            Distance distance = cont.drivetrain.getDistanceFromHub();
-                            cont.shooter.shoot(distance);
-                        },
-                        cont.shooter)
-                .alongWith(cont.drivetrain.brake())
-                .alongWith(cont.hopperFloor.runHopperCommand());
+                () -> {
+                    Distance distance = mRobotContainer.drivetrain.getDistanceFromHub();
+                    mRobotContainer.shooter.shoot(distance);
+                },
+                mRobotContainer.shooter)
+            .alongWith(mRobotContainer.drivetrain.brake())
+            .alongWith(mRobotContainer.hopperFloor.runHopperCommand());
     }
 
     // Spins up flywheels to speed and turns hood to correct angle. Command will not end on its own
-    public Command getReadyToShoot() {
+    public Command prepareShooter() {
         return new RunCommand(
-                        () -> {
-                            Distance distance = cont.drivetrain.getDistanceFromHub();
-                            cont.shooter.aim(distance);
-                        },
-                        cont.shooter)
-                .alongWith(cont.drivetrain.aimAtHubAndMove(cont.driverOI.controller, 0.0));
+                () -> {
+                    Distance distance = mRobotContainer.drivetrain.getDistanceFromHub();
+                    mRobotContainer.shooter.aim(distance);
+                },
+                mRobotContainer.shooter)
+            .alongWith(mRobotContainer.drivetrain.aimAtHubAndMove(mRobotContainer.driverOI.controller, 0));
     }
 
-    public Command readyAndShoot() {
-        return new SequentialCommandGroup(getReadyToShoot().until(cont.driverOI.shotConditionsMet), startShooting());
+    public Command shootAutomated() {
+        return new SequentialCommandGroup(prepareShooter(), startShooting());
     }
 
     // Stops robot from shooting
     public Command idle() {
-        return new RunCommand(() -> cont.shooter.home());
+        return new InstantCommand(
+            () -> {
+                mRobotContainer.drivetrain.setState(CommandSwerveDrivetrain.WantedState.TELEOP_DRIVE);      
+            });
     }
 
     public Command extendAndIntake() {
-        return new ExtendAndRunIntake(cont.intake);
+        return new ExtendAndRunIntake(mRobotContainer.intake);
     }
 
-    public Command pathWileINtaking(String pathFileName) {
-        return new ParallelDeadlineGroup(cont.drivetrain.runPath(pathFileName), this.extendAndIntake())
-                .finallyDo(() -> {
-                    cont.intake.setIntakeSpeed(0);
-                    cont.intake.retract();
-                });
+    public Command pathWhileIntaking(String pathFileName) {
+        return new InstantCommand();
+        // return new ParallelDeadlineGroup(mRobotContainer.drivetrain.runPath(pathFileName), this.extendAndIntake())
+        //         .finallyDo(() -> {
+        //             mRobotContainer.intake.;
+        //             mRobotContainer.intake.retract();
+        //         });
     }
 
     public void resetSubsystems() {
@@ -210,7 +418,7 @@ public class Superstructure extends SubsystemBase {
         }
 
         // We're teleop enabled, compute.
-        double matchTime = cont.getTeleopMatchTime();
+        double matchTime = mRobotContainer.getTeleopMatchTime();
         double secondsLeftTeleop = 140 - matchTime;
         String gameData = DriverStation.getGameSpecificMessage();
         // If we have no game data, we cannot compute, assume hub is active, as its likely early in teleop.
