@@ -11,7 +11,6 @@ import org.littletonrobotics.junction.Logger;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 
-import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -349,8 +348,7 @@ public class Superstructure extends SubsystemBase {
     public Command startShooting() {
         return new RunCommand(
                 () -> {
-                    Distance distance = mRobotContainer.drivetrain.getDistanceFromHub();
-                    mRobotContainer.shooter.shoot(distance);
+                    mRobotContainer.shooter.shoot();
                 },
                 mRobotContainer.shooter)
             .alongWith(mRobotContainer.drivetrain.brake())
@@ -361,8 +359,7 @@ public class Superstructure extends SubsystemBase {
     public Command prepareShooter() {
         return new RunCommand(
                 () -> {
-                    Distance distance = mRobotContainer.drivetrain.getDistanceFromHub();
-                    mRobotContainer.shooter.aim(distance);
+                    mRobotContainer.shooter.aim();
                 },
                 mRobotContainer.shooter)
             .alongWith(mRobotContainer.drivetrain.aimAtHubAndMove(mRobotContainer.driverOI.controller, 0));

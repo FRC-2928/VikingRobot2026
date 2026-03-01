@@ -1,27 +1,30 @@
 package frc.robot.subsystems;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-
 import frc.robot.Constants;
 import frc.robot.Constants.Shooter.AimValues;
+import frc.robot.RobotContainer;
 import frc.robot.Tuning;
 
-import org.littletonrobotics.junction.Logger;
-
 public class Shooter extends SubsystemBase {
-    public Shooter() {
+    public Shooter(RobotContainer cont) {
         this.io = switch (Constants.mode) {
             case REAL -> new ShooterIOReal(this);
             default -> new ShooterIOReal(this);
         };
+        this.cont = cont;
     }
 
     private final ShooterIO io;
     private final ShooterIOInputsAutoLogged inputs = new ShooterIOInputsAutoLogged();
+    private final RobotContainer cont;
 
     public Angle getHoodAngle() {
         return inputs.hoodAngle;
@@ -42,16 +45,16 @@ public class Shooter extends SubsystemBase {
         io.simPeriodic();
     }
 
-    public void aim(Distance distance) {
-        AimValues val = Constants.Shooter.lookUpTable.get(distance.in(Units.Meters));
+    public void aim() {
+        AimValues val = Constants.Shooter.lookUpTable.get(cont.drivetrain.getDistanceFromHub().in(Units.Meters));
         if (val != null) {
             this.io.runFlywheelsVelocity(val.shooterVelocity);
             this.io.rotateHood(val.hoodAngle);
         }
     }
 
-    public void shoot(Distance distance) {
-        aim(distance);
+    public void shoot() {
+        //aim();
         this.io.runKicker(Units.Volts.of(Tuning.kickerSpeed.get()));
     }
 
@@ -59,5 +62,32 @@ public class Shooter extends SubsystemBase {
         this.io.runFlywheelsVelocity(Units.DegreesPerSecond.zero());
         this.io.rotateHood(Units.Degrees.zero());
         this.io.runKicker(Units.Volts.zero());
+    }
+
+    public Command aimAtHub() {
+        return new FunctionalCommand(
+            this::aim,
+            () -> {},
+            (interrupted) -> {} /* TODO: probably want to go to home if we're interrupted, tbd though */,
+            this::isAimed,
+            this
+        );
+    }
+
+    public boolean isAimed() {
+        boolean correctHoodAngle = cont.shooter.getHoodAngle().lte(Constants.Shooter.hoodAngleTolerance);
+        boolean correctFlywheelVelocity =
+            cont.shooter.getFlywheelVelocity().lte(Constants.Shooter.shooterVelocityTolerance);
+        return correctHoodAngle && correctFlywheelVelocity;
+    }
+
+    public Command shootCommand() {
+        return new FunctionalCommand(
+            this::shoot, 
+            () -> {}, 
+            (interrupted) -> {}, 
+            null, 
+            this
+        );
     }
 }

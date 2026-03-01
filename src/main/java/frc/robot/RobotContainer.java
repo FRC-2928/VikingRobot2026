@@ -79,7 +79,7 @@ public class RobotContainer {
         // registered subsystems -- this is an optimization that should help reduce CAN usage 
         this.mSuperstructure = Superstructure.create(this);
         this.drivetrain = TunerConstants.createDrivetrain();
-        this.shooter = new Shooter();
+        this.shooter = new Shooter(this);
         this.intake = new Intake();
         this.indexer = new Indexer();
         this.hopperFloor = new HopperFloor();
