@@ -1,7 +1,5 @@
 package frc.robot.subsystems;
 
-import org.littletonrobotics.junction.Logger;
-
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
@@ -56,7 +54,7 @@ public class IntakeIOReal implements IntakeIO {
             LinearSystemId.createDCMotorSystem(DCMotor.getKrakenX60(1), 0.001, Constants.Intake.rollerMotorGearRatio),
             DCMotor.getKrakenX60(1));
 
-    //Intake States
+    // Intake States
     public enum WantedState {
         INTAKE,
         STOP,
@@ -176,19 +174,18 @@ public class IntakeIOReal implements IntakeIO {
         }
     }
 
-
     private SystemState handleStateTransition() {
         return switch (mDesiredState) {
             case STOP -> SystemState.STOP;
             case INTAKE -> {
-                if(!checkExtended()){
-                   yield SystemState.EXTEND;
+                if (!checkExtended()) {
+                    yield SystemState.EXTEND;
                 }
                 yield SystemState.INTAKE;
             }
             case EXTEND -> {
-                if(!checkExtended()){
-                   yield SystemState.EXTEND;
+                if (!checkExtended()) {
+                    yield SystemState.EXTEND;
                 }
                 yield mCurrentState;
             }
@@ -208,15 +205,15 @@ public class IntakeIOReal implements IntakeIO {
                 setSpeed(Tuning.intakeSpeed.get());
                 break;
             case EXTEND:
-                if(checkExtended()){
+                if (checkExtended()) {
                     setWantedState(WantedState.STOP);
                     break;
                 }
                 extend();
             case RETRACT:
-                if(checkRetracted()){
-                   setWantedState(WantedState.STOP);
-                   break;
+                if (checkRetracted()) {
+                    setWantedState(WantedState.STOP);
+                    break;
                 }
                 retract();
                 break;
@@ -230,20 +227,22 @@ public class IntakeIOReal implements IntakeIO {
     }
 
     @Override
-    public void setWantedState(WantedState state){
+    public void setWantedState(WantedState state) {
         mDesiredState = state;
     }
 
     private boolean checkExtended() {
         // Rotations value is actually inches because of configured gear ratio
-        Boolean isExtended = (Units.Inches.of(expansionMotorAngle.getValue().in(Units.Rotations)).gte(Constants.Intake.expansionMotorMaxDistance));
+        Boolean isExtended = (Units.Inches.of(expansionMotorAngle.getValue().in(Units.Rotations))
+                .gte(Constants.Intake.expansionMotorMaxDistance));
         return isExtended;
     }
 
     private boolean checkRetracted() {
         // Rotations value is actually inches because of configured gear ratio
         // TODO: Find acutal retracted value
-        Boolean isRetracted = (Units.Inches.of(expansionMotorAngle.getValue().in(Units.Rotations)).lte(Units.Inches.of(0)));
+        Boolean isRetracted = (Units.Inches.of(expansionMotorAngle.getValue().in(Units.Rotations))
+                .lte(Units.Inches.of(0)));
         return isRetracted;
     }
 
@@ -276,7 +275,6 @@ public class IntakeIOReal implements IntakeIO {
                 Units.InchesPerSecond.of(expansionAngularVelocity.getValue().in(Units.RotationsPerSecond));
     }
 
-    
     @Override
     public void simPeriodic() {
         // 1) Fetch the TalonFXSimState for each motor controller. Sim state will

@@ -35,7 +35,7 @@ public class Indexer extends SubsystemBase {
         return new InstantCommand(() -> this.io.setSpeed(0));
     }
 
-    public void halt(){
+    public void halt() {
         this.io.setSpeed(0);
     }
 

@@ -29,6 +29,5 @@ public interface IntakeIO {
 
     public default void stateMachinePeriodic() {}
 
-    public default void setWantedState(IntakeIOReal.WantedState state){}
-
+    public default void setWantedState(IntakeIOReal.WantedState state) {}
 }

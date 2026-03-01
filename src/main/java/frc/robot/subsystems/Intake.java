@@ -1,6 +1,5 @@
 package frc.robot.subsystems;
 
-import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Constants;
@@ -37,7 +36,7 @@ public class Intake extends SubsystemBase {
         return isExtended;
     }
 
-    public void setWantedState(IntakeIOReal.WantedState state){
+    public void setWantedState(IntakeIOReal.WantedState state) {
         intakeIO.setWantedState(state);
     }
 

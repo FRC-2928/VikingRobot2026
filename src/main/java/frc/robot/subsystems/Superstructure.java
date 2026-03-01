@@ -185,8 +185,8 @@ public class Superstructure extends SubsystemBase {
                 });
     }
 
-    public void resetSubsystems(){
-        //TODO: Implement Climber
+    public void resetSubsystems() {
+        // TODO: Implement Climber
         cont.drivetrain.setState(CommandSwerveDrivetrain.WantedState.IDLE);
         cont.hopperFloor.halt();
         cont.indexer.halt();

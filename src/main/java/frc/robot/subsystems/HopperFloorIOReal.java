@@ -1,7 +1,5 @@
 package frc.robot.subsystems;
 
-import org.littletonrobotics.junction.Logger;
-
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
@@ -22,6 +20,8 @@ import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 
 import frc.robot.Constants;
 import frc.robot.Tuning;
+
+import org.littletonrobotics.junction.Logger;
 
 public class HopperFloorIOReal implements HopperFloorIO {
     private TalonFX hopper;
@@ -59,7 +59,7 @@ public class HopperFloorIOReal implements HopperFloorIO {
     public void setSpeed(double angularVelocity) {
         // Do a feed forward later
         hopper.setControl(new DutyCycleOut(MathUtil.clamp(angularVelocity, -1, 1)));
-        Logger.recordOutput("HopperFloorIOReal/setSpeed",angularVelocity);
+        Logger.recordOutput("HopperFloorIOReal/setSpeed", angularVelocity);
     }
 
     @Override
