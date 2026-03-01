@@ -1,15 +1,16 @@
 package frc.robot.subsystems;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Constants;
-import frc.robot.subsystems.HopperFloorIO.HopperFloorIOInputs;
 
 public class HopperFloor extends SubsystemBase {
     private HopperFloorIO io;
-    public HopperFloorIOInputs hopperIOInputs = new HopperFloorIOInputs();
+    public HopperFloorIOInputsAutoLogged hopperIOInputsAutoLogged = new HopperFloorIOInputsAutoLogged();
 
     public HopperFloor() {
         this.io = switch (Constants.mode) {
@@ -23,9 +24,12 @@ public class HopperFloor extends SubsystemBase {
 
     @Override
     public void periodic() {
-        this.io.updateInputs(this.hopperIOInputs);
+        this.io.updateInputs(this.hopperIOInputsAutoLogged);
+        Logger.processInputs("HopperFloor",this.hopperIOInputsAutoLogged);
     }
 
     @Override
-    public void simulationPeriodic() {}
+    public void simulationPeriodic() {
+        io.simPeriodic();
+    }
 }
