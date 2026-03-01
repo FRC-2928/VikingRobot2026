@@ -14,6 +14,7 @@ import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.Units;
@@ -24,6 +25,8 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 
 import frc.robot.Constants;
+
+import org.littletonrobotics.junction.Logger;
 
 public class ShooterIOReal implements ShooterIO {
 
@@ -58,11 +61,11 @@ public class ShooterIOReal implements ShooterIO {
         this.hood = new TalonFX(Constants.CAN.CTRE.hood, Constants.CAN.CTRE.bus);
 
         final Slot0Configs flywheelsSlot0Config =
-                new Slot0Configs().withKP(0).withKI(0).withKD(0);
+                new Slot0Configs().withKP(10).withKI(.1).withKD(1);
         final Slot0Configs hoodSlot0Config =
-                new Slot0Configs().withKP(0).withKI(0).withKD(0);
+                new Slot0Configs().withKP(10).withKI(.1).withKD(1);
         final Slot0Configs kickerSlot0Config =
-                new Slot0Configs().withKP(0).withKI(0).withKD(0);
+                new Slot0Configs().withKP(10).withKI(.1).withKD(1);
 
         //
         // Flywheels
@@ -153,7 +156,8 @@ public class ShooterIOReal implements ShooterIO {
     // Rotates the hood to change angle of fuel shooting
     @Override
     public void rotateHood(Angle hoodAngle) {
-        this.hood.setControl(new PositionVoltage(hoodAngle));
+        this.hood.setControl(
+                new PositionVoltage(MathUtil.clamp(hoodAngle.in(Units.Degrees), 100.0, 140.0)).withSlot(0));
     }
 
     // Runs the flywheel in the shooter. 2 motors. Based on voltage
@@ -165,7 +169,7 @@ public class ShooterIOReal implements ShooterIO {
     // Runs the flywheel in the shooter. 2 motors. Based on velocity
     @Override
     public void runFlywheelsVelocity(AngularVelocity speed) {
-        this.flywheelA.setControl(new VelocityVoltage(speed));
+        this.flywheelA.setControl(new VelocityVoltage(speed).withSlot(0));
     }
 
     // Runs the kicker. Shoots ball into flywheels.
@@ -176,6 +180,8 @@ public class ShooterIOReal implements ShooterIO {
 
     @Override
     public void simPeriodic() {
+        System.out.println("Shooter Being Simulated");
+
         TalonFXSimState flywheelASimState = flywheelA.getSimState();
         TalonFXSimState flywheelBSimState = flywheelB.getSimState();
         TalonFXSimState kickerSimState = kicker.getSimState();
@@ -188,15 +194,19 @@ public class ShooterIOReal implements ShooterIO {
 
         Voltage flywheelAVoltage = flywheelASimState.getMotorVoltageMeasure();
         flywheelADCMotorSim.setInputVoltage(addFriction(flywheelAVoltage.in(Units.Volts), 0.2));
+        Logger.recordOutput("Shooter/FlywheelAVoltage", flywheelAVoltage.in(Units.Volts));
 
-        Voltage flywheelBVoltage = flywheelASimState.getMotorVoltageMeasure();
-        flywheelADCMotorSim.setInputVoltage(addFriction(flywheelBVoltage.in(Units.Volts), 0.2));
+        Voltage flywheelBVoltage = flywheelBSimState.getMotorVoltageMeasure();
+        flywheelBDCMotorSim.setInputVoltage(addFriction(flywheelBVoltage.in(Units.Volts), 0.2));
+        Logger.recordOutput("Shooter/FlywheelBVoltage", flywheelBVoltage.in(Units.Volts));
 
-        Voltage hoodVoltage = flywheelASimState.getMotorVoltageMeasure();
-        flywheelADCMotorSim.setInputVoltage(addFriction(hoodVoltage.in(Units.Volts), 0.2));
+        Voltage hoodVoltage = hoodSimState.getMotorVoltageMeasure();
+        hoodDCMotorSim.setInputVoltage(addFriction(hoodVoltage.in(Units.Volts), 0.2));
+        Logger.recordOutput("Shooter/HoodVoltage", hoodVoltage.in(Units.Volts));
 
-        Voltage kickerVoltage = flywheelASimState.getMotorVoltageMeasure();
-        flywheelADCMotorSim.setInputVoltage(addFriction(kickerVoltage.in(Units.Volts), 0.2));
+        Voltage kickerVoltage = kickerSimState.getMotorVoltageMeasure();
+        kickerDCMotorSim.setInputVoltage(addFriction(kickerVoltage.in(Units.Volts), 0.2));
+        Logger.recordOutput("Shooter/KickerVoltage", kickerVoltage.in(Units.Volts));
 
         flywheelADCMotorSim.update(0.02);
         flywheelBDCMotorSim.update(0.02);

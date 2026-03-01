@@ -36,11 +36,14 @@ public final class Tuning {
 
     public static final LoggedNetworkBoolean publishData = new LoggedNetworkBoolean("Tuning/PublishData", false);
 
-    public static final LoggedNetworkNumber hopperVelocity = new LoggedNetworkNumber(
-            "Tuning/hopperVelocity", Constants.HopperFloor.hopperVelocity.in(Units.RotationsPerSecond));
+    public static final LoggedNetworkNumber hopperVelocity =
+            new LoggedNetworkNumber("Tuning/hopperVelocity", Constants.HopperFloor.hopperVelocity);
 
-    public static final LoggedNetworkNumber intakeVelocity = new LoggedNetworkNumber(
-            "Tuning/IntakeVelocity", Constants.Intake.intakeVelocity.in(Units.DegreesPerSecond));
+    public static final LoggedNetworkNumber indexerVelocity = new LoggedNetworkNumber(
+            "Tuning/intakeVelocity", Constants.Indexer.indexerVelocity.in(Units.RotationsPerSecond));
+
+    public static final LoggedNetworkNumber intakeVelocity =
+            new LoggedNetworkNumber("Tuning/IntakeVelocity", Constants.Intake.intakeVelocity);
 
     public static void writeToCSV(double hAngle, double rVelocity, Distance distanceFromTarget)
             throws FileNotFoundException {

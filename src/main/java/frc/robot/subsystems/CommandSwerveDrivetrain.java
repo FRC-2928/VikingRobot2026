@@ -443,6 +443,19 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         mDesiredState = state;
     }
 
+    public boolean isAtHome() {
+        double xCoordinateInInches = mCurrentSwerveState.Pose.getMeasureX().in(Units.Inches);
+        Optional<Alliance> alliance = DriverStation.getAlliance();
+        switch (alliance.get()) {
+            case Red:
+                return xCoordinateInInches > (651.22 - 183);
+            case Blue:
+                return xCoordinateInInches < 183.0;
+            default:
+                return false;
+        }
+    }
+
     // spotless: off
     private ChassisSpeeds calculateSpeedsBasedOnJoystickInputs(BaseOI controllerOI) {
         if (DriverStation.getAlliance().isEmpty()) {
@@ -555,7 +568,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     public void resetAngle() {
-        this.resetAngle();
+        // this.resetAngle();
     }
 
     @Override
@@ -648,19 +661,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         }
     }
 
+    // spotless: off
     // Command to aim at hub while moving with max translation speed scaler not deadband (Overrides Rotational aspect)
-    public Command aimAtHubAndMove(double vx, double vy, double speedMultipliter) {
-        return this.applyRequest(() -> driveAndPoint
-                .withVelocityX(-vy * maxSpeed * speedMultipliter) // Drive forward with negative Y (forward)
-                .withVelocityY(-vx * maxSpeed * speedMultipliter) // Drive left with negative X (left)
-                .withTargetDirection(new Rotation2d(Math.atan2(
-                                (hubY - mCurrentSwerveState.Pose.getMeasureY().in(Units.Meters)),
-                                (getHubX()
-                                        - mCurrentSwerveState.Pose.getMeasureX().in(Units.Meters)))
-                        + Math.PI)));
-    }
 
-    public Command aimAtHubAndMove(CommandXboxController joystick, double speedMultipliter, Angle offset) {
+    public Command aimAtHubAndMove(CommandXboxController joystick, double speedMultipliter) {
         return new ParallelCommandGroup(
                 this.applyRequest(() -> driveAndPoint
                         .withVelocityX(-joystick.getLeftY()
@@ -685,7 +689,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                                                                 != Alliance.Red
                                                 ? 0
                                                 : 0))
-                                .plus(new Rotation2d(offset)))),
+                                .plus(new Rotation2d(Math.PI / 2)))),
                 new RunCommand(() -> snapToHeading =
                         new Rotation2d(mCurrentSwerveState.Pose.getRotation().getRadians())));
     }
@@ -703,6 +707,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 (getHubX() - mCurrentSwerveState.Pose.getMeasureX().in(Units.Meters)),
                 (hubY - mCurrentSwerveState.Pose.getMeasureY().in(Units.Meters))));
     }
+    // spotless: on
 
     // Command to locate fuel and intake them w/ limelight
 

@@ -144,6 +144,7 @@ public class Constants {
             public static final int climber = 17;
 
             public static final int hopper = 99;
+            public static final int indexer = 98;
 
             public static final int intakeRoller = 16;
             public static final int intakeExpansion = 20;
@@ -184,6 +185,15 @@ public class Constants {
                 return sInstance;
             }
         }
+    }
+
+    public static final class FIELD {
+        private FIELD() {
+            throw new IllegalCallerException("Cannot Instantiate 'Constants.FIELD'");
+        }
+
+        public static final Distance fieldLength = Units.Inch.of(651.22);
+        public static final Distance distanceToMidField = Units.Inch.of(182.11);
     }
 
     public static final class PWM {
@@ -340,7 +350,17 @@ public class Constants {
 
         public static final double indexerGearRatio = 66.0 / 14.0; // Idk if this goes here
 
-        public static final AngularVelocity hopperVelocity = Units.RotationsPerSecond.of(1);
+        public static final double hopperVelocity = 0;
+    }
+
+    public static class Indexer {
+        private Indexer() {
+            throw new IllegalCallerException("Cannot instantiate `Constants.HopperFloor`");
+        }
+
+        public static final double indexerGearRatio = 1.0;
+
+        public static final AngularVelocity indexerVelocity = Units.RotationsPerSecond.of(1);
     }
 
     public static class Intake {
@@ -351,7 +371,7 @@ public class Constants {
         // Inches per rotation for each gearn turn
         public static final double extensionRatio_inchesPerRotation = 0.0;
         public static final Distance expansionMotorMaxDistance = Units.Inches.of(11.75 - 0.5);
-        public static final AngularVelocity intakeVelocity = Units.RotationsPerSecond.of(0);
+        public static final double intakeVelocity = 0;
         public static final double expensionMotorGearRatio = 3.0 * 4.5;
         public static final double rollerMotorGearRatio = 1.0;
     }

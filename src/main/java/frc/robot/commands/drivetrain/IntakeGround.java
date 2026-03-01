@@ -56,9 +56,9 @@ public class IntakeGround extends Command {
         if (this.correction) {
             drivetrain.setControl(drivetrain
                     .driveAndPoint
-                    .withVelocityX((robotContainer.joystick.getLeftX() * speedMultiplier + this.calculateSpeedX())
+                    .withVelocityX((robotContainer.joystick1.getLeftX() * speedMultiplier + this.calculateSpeedX())
                             * robotContainer.MaxSpeed)
-                    .withVelocityY((robotContainer.joystick.getLeftY() * speedMultiplier + this.calculateSpeedY())
+                    .withVelocityY((robotContainer.joystick1.getLeftY() * speedMultiplier + this.calculateSpeedY())
                             * robotContainer.MaxSpeed));
         }
     }

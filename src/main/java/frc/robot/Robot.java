@@ -116,6 +116,7 @@ public class Robot extends LoggedRobot {
         if (mAutonomousCommand != null) {
             CommandScheduler.getInstance().cancel(mAutonomousCommand);
         }
+        mRobotContainer.setTeleopStartTime();
     }
 
     @Override

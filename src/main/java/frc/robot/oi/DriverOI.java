@@ -8,14 +8,12 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
 import frc.robot.RobotContainer;
-import frc.robot.subsystems.CommandSwerveDrivetrain;
 
 import java.util.List;
 import java.util.function.Supplier;
 
 public class DriverOI extends BaseOI {
-    public DriverOI(
-            final CommandXboxController controller, CommandSwerveDrivetrain drivetrain, RobotContainer robotContainer) {
+    public DriverOI(final CommandXboxController controller, RobotContainer robotContainer) {
         super(controller);
 
         this.driveAxial = this.controller::getLeftY;
@@ -31,14 +29,15 @@ public class DriverOI extends BaseOI {
         }
         this.manualRotation = this.controller.rightStick();
 
-        this.shotConditionsMet = new Trigger(() -> {
-            boolean facingHub = drivetrain
-                    .getAngleToHub(Constants.Shooter.shooterAngleOffsetFromFront)
-                    .lte(Constants.Shooter.toleranceFromHub);
+        this.shotConditionsMet = new Trigger(() -> true);
+        new Trigger(() -> {
+            /*boolean facingHub = Robot.cont.drivetrain
+            .getAngleToHub(Constants.Shooter.shooterAngleOffsetFromFront)
+            .lte(Constants.Shooter.toleranceFromHub);*/
             boolean correctHoodAngle = robotContainer.shooter.getHoodAngle().lte(Constants.Shooter.hoodAngleTolerance);
             boolean correctFlywheelVelocity =
                     robotContainer.shooter.getFlywheelVelocity().lte(Constants.Shooter.shooterVelocityTolerance);
-            return facingHub && correctHoodAngle && correctFlywheelVelocity;
+            return /*facingHub &&*/ correctHoodAngle && correctFlywheelVelocity;
         });
 
         // this.spinKicker = this.controller.rightTrigger().and(shotConditionsMet);
@@ -49,6 +48,10 @@ public class DriverOI extends BaseOI {
         this.resetAngle = this.controller.a();
 
         this.lockWheels = this.controller.x();
+
+        this.climb = this.controller.leftBumper();
+
+        this.unjam = this.controller.povLeft();
     }
 
     public final Supplier<Double> driveAxial;
@@ -60,9 +63,12 @@ public class DriverOI extends BaseOI {
 
     public final Trigger intake;
 
+    public final Trigger climb;
+
     // public final Trigger spinKicker;
     public final Trigger startShoot;
     public final Trigger shotConditionsMet;
+    public final Trigger unjam;
 
     public final Trigger lockWheels;
 
@@ -77,11 +83,15 @@ public class DriverOI extends BaseOI {
 
         // this.lockWheels.whileTrue(new LockWheels(cont.drivetrain, this));
         this.resetFOD.onTrue(new InstantCommand(cont.drivetrain::resetAngle));
-        this.intake.whileTrue(cont.superstructure.extendAndIntake());
+        // this.intake.whileTrue(cont.superstructure.extendAndIntake());
         this.resetAngle.whileTrue(new RunCommand(cont.drivetrain::seedLimelightImu));
         this.resetAngle.whileFalse(new RunCommand(cont.drivetrain::setImuMode2));
         // this.spinKicker.onTrue(cont.shooter.startKicker());
-        // this.shotConditionsMet.and(getReadyToShoot).whileTrue(cont.shooter.shootWithDistance(cont.drivetrain.getDistanceFromHub(), Tuning.kickerSpeed.get()));
+        this.shotConditionsMet
+                .and(() -> cont.drivetrain
+                        .getAngleToHub(Constants.Shooter.shooterAngleOffsetFromFront)
+                        .lte(Constants.Shooter.toleranceFromHub))
+                .whileTrue(cont.superstructure.getReadyToShoot());
         this.startShoot.whileTrue(cont.superstructure.readyAndShoot());
     }
 }

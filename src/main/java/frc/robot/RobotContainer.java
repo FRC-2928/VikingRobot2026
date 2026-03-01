@@ -13,6 +13,7 @@ import choreo.auto.AutoChooser;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.units.Units;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -22,6 +23,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.commands.drivetrain.CenterLimelight;
 import frc.robot.generated.TunerConstants;
 import frc.robot.oi.DriverOI;
+import frc.robot.oi.OperatorOI;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.HopperFloor;
 import frc.robot.subsystems.Intake;
@@ -33,7 +35,7 @@ import java.util.List;
 public class RobotContainer {
     // TODO organize Driver and Operator bindings
     public final DriverOI driverOI;
-    // public final OperatorOI operatorOI = new OperatorOI(new CommandXboxController(1));
+    public final OperatorOI operatorOI;
     // public final LoggedDashboardChooser<String> driveModeChooser;
     public final AutoChooser autoChooser;
     public double MaxSpeed =
@@ -41,7 +43,8 @@ public class RobotContainer {
     private double MaxAngularRate =
             RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
 
-    public final CommandXboxController joystick = new CommandXboxController(0);
+    public final CommandXboxController joystick1 = new CommandXboxController(0);
+    public final CommandXboxController joystick2 = new CommandXboxController(1);
 
     public final Superstructure superstructure;
     public final CommandSwerveDrivetrain drivetrain;
@@ -50,8 +53,9 @@ public class RobotContainer {
     private final Telemetry logger;
     public final HopperFloor hopperFloor;
 
+    private double teleopStart = 0;
+
     public RobotContainer() {
-        this.superstructure = new Superstructure(this);
         this.drivetrain = TunerConstants.createDrivetrain();
         this.shooter = new Shooter();
         this.intake = new Intake();
@@ -59,7 +63,9 @@ public class RobotContainer {
         this.logger = new Telemetry(MaxSpeed, drivetrain);
         this.autoChooser = Autonomous.getChoreoAutoChooser(this);
         SmartDashboard.putData("Autonomous Routine", autoChooser);
-        this.driverOI = new DriverOI(joystick, drivetrain, this);
+        this.driverOI = new DriverOI(joystick1, this);
+        this.operatorOI = new OperatorOI(joystick2);
+        this.superstructure = new Superstructure(this);
         autoChooser.select("SimpleFromRight");
         // TODO: implement drive mode chooser (point, turn modes). Joystick drive needs to consume the chosen mode
         // this.driveModeChooser = new LoggedDashboardChooser<>("Drive Mode", JoystickDrive.createDriveModeChooser());
@@ -84,21 +90,22 @@ public class RobotContainer {
         RobotModeTriggers.disabled()
                 .whileTrue(drivetrain.applyRequest(() -> idle).ignoringDisable(true));
 
-        joystick.a().whileTrue(drivetrain.brake());
+        joystick1.a().whileTrue(drivetrain.brake());
         // For testing purposes. TODO install new version of WPILIB and use 2026 field apriltag map
-        joystick.rightBumper()
+        joystick1
+                .rightBumper()
                 .whileTrue(new CenterLimelight(Units.Meters.of(0.5), Units.Meters.of(0), List.of(1), drivetrain));
 
         // Run SysId routines when holding back/start and X/Y.
         // Note that each routine should be run exactly once in a single log.
-        joystick.x().whileTrue(drivetrain.aimAtHubAndMove(joystick, 1.0, Units.Radians.of(0)));
-        joystick.back().and(joystick.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
-        joystick.back().and(joystick.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
-        joystick.start().and(joystick.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
-        joystick.start().and(joystick.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
+        joystick1.x().whileTrue(drivetrain.aimAtHubAndMove(joystick1, 1.0));
+        joystick1.back().and(joystick1.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
+        joystick1.back().and(joystick1.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
+        joystick1.start().and(joystick1.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
+        joystick1.start().and(joystick1.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
         joystick.b().whileTrue(superstructure.startShooting());
         // Reset the field-centric heading on left bumper press.
-        joystick.leftBumper().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
+        joystick1.leftBumper().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
 
         drivetrain.registerTelemetry(logger::telemeterize);
     }
@@ -107,6 +114,13 @@ public class RobotContainer {
         return autoChooser.selectedCommand();
     }
 
+    public void setTeleopStartTime() {
+        this.teleopStart = Timer.getFPGATimestamp();
+    }
+
+    public double getTeleopMatchTime() {
+        return Timer.getFPGATimestamp() - this.teleopStart;
+    }
     // public String getDriveMode() {
     //     return this.driveModeChooser.get();
     // }
