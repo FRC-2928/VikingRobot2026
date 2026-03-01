@@ -338,9 +338,9 @@ public class Constants {
             throw new IllegalCallerException("Cannot instantiate `Constants.HopperFloor`");
         }
 
-        public static final double indexerGearRatio = 1.0; // Idk if this goes here
+        public static final double indexerGearRatio = 66.0 / 14.0; // Idk if this goes here
 
-        public static final AngularVelocity hopperVelocity = Units.RotationsPerSecond.of(0);
+        public static final AngularVelocity hopperVelocity = Units.RotationsPerSecond.of(1);
     }
 
     public static class Intake {
