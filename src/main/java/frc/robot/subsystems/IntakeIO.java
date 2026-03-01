@@ -26,4 +26,9 @@ public interface IntakeIO {
     public default void simulationInit() {}
 
     public default void simPeriodic() {}
+
+    public default void stateMachinePeriodic() {}
+
+    public default void setWantedState(IntakeIOReal.WantedState state){}
+
 }

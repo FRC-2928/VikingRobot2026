@@ -1,5 +1,7 @@
 package frc.robot.subsystems;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
@@ -28,6 +30,7 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 
 import frc.robot.Constants;
+import frc.robot.Tuning;
 
 public class IntakeIOReal implements IntakeIO {
     private TalonFX intakeRollerMotor;
@@ -40,6 +43,8 @@ public class IntakeIOReal implements IntakeIO {
     private PositionVoltage expansionPositionVoltage;
     private final Angle closedAngle = Units.Rotations.of(0);
     private final Angle openAngle = Units.Rotations.of(11.75);
+    private WantedState mDesiredState = WantedState.STOP;
+    private SystemState mCurrentState = SystemState.STOP;
 
     // For Simualtion
     private DCMotorSim expansionDCMotorSim = new DCMotorSim(
@@ -50,6 +55,21 @@ public class IntakeIOReal implements IntakeIO {
     private DCMotorSim rollerDCMotorSim = new DCMotorSim(
             LinearSystemId.createDCMotorSystem(DCMotor.getKrakenX60(1), 0.001, Constants.Intake.rollerMotorGearRatio),
             DCMotor.getKrakenX60(1));
+
+    //Intake States
+    public enum WantedState {
+        INTAKE,
+        STOP,
+        EXTEND,
+        RETRACT
+    }
+
+    public enum SystemState {
+        INTAKE,
+        STOP,
+        EXTEND,
+        RETRACT
+    }
 
     // Data goten at 02/11/26 Wednesday
     // Hopper extemsion: 11 iches and 3 quarters
@@ -159,6 +179,77 @@ public class IntakeIOReal implements IntakeIO {
         }
     }
 
+
+    private SystemState handleStateTransition() {
+        return switch (mDesiredState) {
+            case STOP -> SystemState.STOP;
+            case INTAKE -> {
+                if(!checkExtended()){
+                   yield SystemState.EXTEND;
+                }
+                yield SystemState.INTAKE;
+            }
+            case EXTEND -> {
+                if(!checkExtended()){
+                   yield SystemState.EXTEND;
+                }
+                yield mCurrentState;
+            }
+            case RETRACT -> SystemState.RETRACT;
+            default -> SystemState.STOP;
+        };
+    }
+
+    private void applyStates() {
+        switch (mCurrentState) {
+            default:
+                break;
+            case STOP:
+                setSpeed(0);
+                break;
+            case INTAKE:
+                setSpeed(Tuning.intakeSpeed.get());
+                break;
+            case EXTEND:
+                if(checkExtended()){
+                    setWantedState(WantedState.STOP);
+                    break;
+                }
+                extend();
+            case RETRACT:
+                if(checkRetracted()){
+                   setWantedState(WantedState.STOP);
+                   break;
+                }
+                retract();
+                break;
+        }
+    }
+
+    @Override
+    public void stateMachinePeriodic() {
+        mCurrentState = handleStateTransition();
+        applyStates();
+    }
+
+    @Override
+    public void setWantedState(WantedState state){
+        mDesiredState = state;
+    }
+
+    private boolean checkExtended() {
+        // Rotations value is actually inches because of configured gear ratio
+        Boolean isExtended = (Units.Inches.of(expansionMotorAngle.getValue().in(Units.Rotations)).gte(Constants.Intake.expansionMotorMaxDistance));
+        return isExtended;
+    }
+
+    private boolean checkRetracted() {
+        // Rotations value is actually inches because of configured gear ratio
+        // TODO: Find acutal retracted value
+        Boolean isRetracted = (Units.Inches.of(expansionMotorAngle.getValue().in(Units.Rotations)).lte(Units.Inches.of(0)));
+        return isRetracted;
+    }
+
     @Override
     public void setSpeed(double speed) {
         // Do a feed forward later
@@ -188,6 +279,7 @@ public class IntakeIOReal implements IntakeIO {
                 Units.InchesPerSecond.of(expansionAngularVelocity.getValue().in(Units.RotationsPerSecond));
     }
 
+    
     @Override
     public void simPeriodic() {
         // 1) Fetch the TalonFXSimState for each motor controller. Sim state will

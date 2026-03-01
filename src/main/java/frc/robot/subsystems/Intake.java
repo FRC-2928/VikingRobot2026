@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Constants;
@@ -36,6 +37,8 @@ public class Intake extends SubsystemBase {
         return isExtended;
     }
 
+    
+
     public void initDefaultCommand() {
         setDefaultCommand(new RetractAndStop(this));
     }
@@ -45,6 +48,7 @@ public class Intake extends SubsystemBase {
         this.checkExtended(); // Testing only
 
         this.intakeIO.updateInputs(this.intakeInputs);
+        this.intakeIO.stateMachinePeriodic();
         Logger.processInputs("Intake", this.intakeInputs);
     }
 

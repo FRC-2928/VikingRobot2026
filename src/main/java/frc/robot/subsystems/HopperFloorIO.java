@@ -18,5 +18,7 @@ public interface HopperFloorIO {
 
     public default void simPeriodic() {}
 
+    public default void simulationInit() {}
+
     public default void runHopper() {}
 }
