@@ -55,7 +55,7 @@ public class RobotContainer {
     public Intake intake;
     private Telemetry logger;
     public HopperFloor hopperFloor;
-    public final Indexer indexer;
+    public Indexer indexer;
     public LEDSubsystem ledSubsystem;
     private double teleopStart = 0;
 
@@ -126,7 +126,7 @@ public class RobotContainer {
         joystick1.back().and(joystick1.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
         joystick1.start().and(joystick1.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
         joystick1.start().and(joystick1.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
-        joystick1.b().whileTrue(superstructure.startShooting());
+        joystick1.b().whileTrue(mSuperstructure.startShooting());
         // Reset the field-centric heading on left bumper press.
         joystick1.leftBumper().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
 

@@ -395,11 +395,11 @@ public class Superstructure extends SubsystemBase {
 
     public void resetSubsystems() {
         // TODO: Implement Climber
-        cont.drivetrain.setState(CommandSwerveDrivetrain.WantedState.IDLE);
-        cont.hopperFloor.halt();
-        cont.indexer.halt();
-        cont.intake.setWantedState(IntakeIOReal.WantedState.RETRACT);
-        cont.shooter.home();
+        mRobotContainer.drivetrain.setState(CommandSwerveDrivetrain.WantedState.IDLE);
+        mRobotContainer.hopperFloor.halt();
+        mRobotContainer.indexer.halt();
+        mRobotContainer.intake.setWantedState(IntakeIOReal.WantedState.RETRACT);
+        mRobotContainer.shooter.home();
     }
 
     public boolean isHubActive() {

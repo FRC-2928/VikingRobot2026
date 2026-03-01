@@ -28,6 +28,7 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.Constants;
 import frc.robot.Tuning;
+import frc.robot.Constants.Intake.IntakeStates;
 
 public class IntakeIOReal implements IntakeIO {
     private TalonFX intakeRollerMotor;
@@ -198,10 +199,10 @@ public class IntakeIOReal implements IntakeIO {
             default:
                 break;
             case STOP:
-                setSpeed(0);
+                setState(IntakeStates.OFF);
                 break;
             case INTAKE:
-                setSpeed(Tuning.intakeSpeed.get());
+                setState(IntakeStates.FORWARD);
                 break;
             case EXTEND:
                 if (checkExtended()) {
