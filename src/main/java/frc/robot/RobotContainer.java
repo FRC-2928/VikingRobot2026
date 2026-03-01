@@ -8,10 +8,11 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 
-import choreo.auto.AutoChooser;
+import java.util.List;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
+import choreo.auto.AutoChooser;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -19,7 +20,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
-
 import frc.robot.commands.drivetrain.CenterLimelight;
 import frc.robot.generated.TunerConstants;
 import frc.robot.oi.DriverOI;
@@ -27,17 +27,19 @@ import frc.robot.oi.OperatorOI;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.HopperFloor;
 import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.LEDIOReal;
+import frc.robot.subsystems.LEDSubsystem;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.Superstructure;
 
-import java.util.List;
-
 public class RobotContainer {
+    /// singleton instance of the RobotContainer
+    private static RobotContainer sInstance = null;
     // TODO organize Driver and Operator bindings
-    public final DriverOI driverOI;
-    public final OperatorOI operatorOI;
+    public DriverOI driverOI;
+    public OperatorOI operatorOI;
     // public final LoggedDashboardChooser<String> driveModeChooser;
-    public final AutoChooser autoChooser;
+    public AutoChooser autoChooser;
     public double MaxSpeed =
             1.0 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
     private double MaxAngularRate =
@@ -46,26 +48,44 @@ public class RobotContainer {
     public final CommandXboxController joystick1 = new CommandXboxController(0);
     public final CommandXboxController joystick2 = new CommandXboxController(1);
 
-    public final Superstructure superstructure;
-    public final CommandSwerveDrivetrain drivetrain;
-    public final Shooter shooter;
-    public final Intake intake;
-    private final Telemetry logger;
-    public final HopperFloor hopperFloor;
-
+    public Superstructure mSuperstructure;
+    public CommandSwerveDrivetrain drivetrain;
+    public Shooter shooter;
+    public Intake intake;
+    private Telemetry logger;
+    public HopperFloor hopperFloor;
+    public LEDSubsystem ledSubsystem;
     private double teleopStart = 0;
 
-    public RobotContainer() {
+    public static synchronized RobotContainer getInstance() {
+        if (sInstance != null) {
+            return sInstance;
+        }
+
+        sInstance = new RobotContainer();
+        sInstance.init();
+        return sInstance;
+    }
+
+    private RobotContainer() {
+        // Empty
+    }
+
+    private void init() {
+        // always instantiate the Superstructure first to ensure its periodic() is always the first to be invoked
+        // this is useful for having the Superstructure orchestrate the status signal refreshes for all
+        // registered subsystems -- this is an optimization that should help reduce CAN usage 
+        this.mSuperstructure = Superstructure.create(this);
         this.drivetrain = TunerConstants.createDrivetrain();
         this.shooter = new Shooter();
         this.intake = new Intake();
         this.hopperFloor = new HopperFloor();
         this.logger = new Telemetry(MaxSpeed, drivetrain);
         this.autoChooser = Autonomous.getChoreoAutoChooser(this);
+        this.ledSubsystem = new LEDSubsystem(new LEDIOReal(), mSuperstructure.getRobotStateSupplier());
         SmartDashboard.putData("Autonomous Routine", autoChooser);
-        this.driverOI = new DriverOI(joystick1, this);
+        this.driverOI = new DriverOI(joystick1, mSuperstructure);
         this.operatorOI = new OperatorOI(joystick2);
-        this.superstructure = new Superstructure(this);
         autoChooser.select("SimpleFromRight");
         // TODO: implement drive mode chooser (point, turn modes). Joystick drive needs to consume the chosen mode
         // this.driveModeChooser = new LoggedDashboardChooser<>("Drive Mode", JoystickDrive.createDriveModeChooser());
@@ -77,7 +97,7 @@ public class RobotContainer {
     }
 
     private void configureBindings() {
-        this.driverOI.configureControls(this);
+        this.driverOI.configureControls();
         // this.operatorOI.configureControls();
 
         // Note that X is defined as forward according to WPILib convention,

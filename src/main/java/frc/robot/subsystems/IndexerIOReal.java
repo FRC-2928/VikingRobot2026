@@ -10,9 +10,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.measure.AngularVelocity;
-
 import frc.robot.Constants;
-import frc.robot.Tuning;
 
 public class IndexerIOReal implements IndexerIO {
     public TalonFX indexer;
@@ -49,7 +47,7 @@ public class IndexerIOReal implements IndexerIO {
 
     @Override
     public void runIndexer() {
-        indexer.setControl(new DutyCycleOut(MathUtil.clamp(Tuning.intakeVelocity.get(), -1, 1)));
+        // indexer.setControl(new DutyCycleOut(MathUtil.clamp(Tuning.intakeVelocity.get(), -1, 1)));
     }
 
     @Override

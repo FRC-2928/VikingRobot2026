@@ -38,7 +38,8 @@ public class Robot extends LoggedRobot {
         Logger.addDataReceiver(new WPILOGWriter());
         Logger.addDataReceiver(new NT4Publisher());
         Logger.start();
-        mRobotContainer = new RobotContainer();
+
+        mRobotContainer = RobotContainer.getInstance();
 
         DriverStation.silenceJoystickConnectionWarning(true);
     }

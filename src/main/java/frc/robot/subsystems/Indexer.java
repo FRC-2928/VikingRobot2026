@@ -10,12 +10,13 @@ import frc.robot.subsystems.IndexerIO.IndexerIOInputs;
 
 public class Indexer extends SubsystemBase {
     private IndexerIO io;
-    public IndexerIOInputs indexerIOInputs = new IndexerIOInputs();
+    private IndexerIOInputs indexerIOInputs = new IndexerIOInputs();
 
     public Indexer() {
         this.io = switch (Constants.mode) {
             case REAL -> new IndexerIOReal();
-            default -> new IndexerIOReal();};
+            default -> new IndexerIOReal();
+        };
     }
 
     public Command runIndexerCommand() {
@@ -27,7 +28,7 @@ public class Indexer extends SubsystemBase {
         this.io.updateInputs(this.indexerIOInputs);
     }
 
-    public Command runForwarCommand() {
+    public Command runForwardCommand() {
         return new InstantCommand(() -> this.io.runIndexer());
     }
 

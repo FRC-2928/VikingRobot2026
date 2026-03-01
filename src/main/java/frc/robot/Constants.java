@@ -1,5 +1,7 @@
 package frc.robot;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.AudioConfigs;
@@ -27,8 +29,6 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
-
-import org.littletonrobotics.junction.Logger;
 
 public class Constants {
     private static Mode currentMode() {
@@ -368,12 +368,23 @@ public class Constants {
             throw new IllegalCallerException("Dont Call this (Constants.Intake)");
         }
 
-        // Inches per rotation for each gearn turn
-        public static final double extensionRatio_inchesPerRotation = 0.0;
         public static final Distance expansionMotorMaxDistance = Units.Inches.of(11.75 - 0.5);
-        public static final double intakeVelocity = 0;
         public static final double expensionMotorGearRatio = 3.0 * 4.5;
         public static final double rollerMotorGearRatio = 1.0;
+        public enum IntakeStates {
+            FORWARD(1.0),
+            REVERSE(-1.0),
+            OFF(0);
+
+            private double mSpeed;
+            private IntakeStates(double speed) {
+                mSpeed = speed;
+            }
+
+            public double getSpeed() {
+                return mSpeed;
+            }
+        }
     }
 
     public static class Climber {

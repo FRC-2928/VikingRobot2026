@@ -11,11 +11,9 @@ import com.ctre.phoenix6.hardware.CANdle;
 import com.ctre.phoenix6.signals.StatusLedWhenActiveValue;
 import com.ctre.phoenix6.signals.StripTypeValue;
 
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-
 import frc.robot.Constants;
 
-public class LEDIOReal extends SubsystemBase {
+public class LEDIOReal implements LEDIO {
     /** Creates a new LEDIOReal. */
     private CANdle candle;
 

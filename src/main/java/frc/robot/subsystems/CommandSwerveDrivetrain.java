@@ -1,10 +1,14 @@
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
 
-import choreo.auto.AutoFactory;
+import java.util.Optional;
+import java.util.function.Supplier;
+
+import org.littletonrobotics.junction.Logger;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
@@ -16,6 +20,7 @@ import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveRequest.FieldCentricFacingAngle;
 
+import choreo.auto.AutoFactory;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
@@ -35,12 +40,13 @@ import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.FunctionalCommand;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-
 import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.robot.generated.TunerConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
@@ -48,11 +54,6 @@ import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
 import frc.robot.oi.BaseOI;
 import frc.robot.vision.Limelight;
-
-import java.util.Optional;
-import java.util.function.Supplier;
-
-import org.littletonrobotics.junction.Logger;
 
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements
@@ -694,6 +695,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                         new Rotation2d(mCurrentSwerveState.Pose.getRotation().getRadians())));
     }
 
+    public Rotation2d getRotationToHub() {
+        return new Rotation2d(getAngleToHub(Degrees.of(0)));
+    }
+
     public Angle getAngleToHub(Angle offset) {
         return Units.Radians.of(Math.atan2(
                         (hubY - mCurrentSwerveState.Pose.getMeasureY().in(Units.Meters)),
@@ -767,5 +772,48 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     @Override
     public Optional<Pose2d> samplePoseAt(double timestampSeconds) {
         return super.samplePoseAt(Utils.fpgaToCurrentTime(timestampSeconds));
+    }
+
+    /**
+     * Command factory to provide Free Drive operation mode
+     *
+     * @return A command to operate the drivetrain in free drive mode
+     */
+    public Command freeDrive() {
+        return new InstantCommand(() -> setState(WantedState.TELEOP_DRIVE), this);
+    }
+
+    /**
+     * Command factory to provide Target Lock operation mode
+     *
+     * @return A command to operate the drivetrain in target lock mode
+     */
+    public Command targetLock() {
+        return new FunctionalCommand(
+            this::initTargetLock,
+            () -> {} /* empty execute block; already covered by subsystem periodic */,
+            (interrupted) -> {} /* TODO: should probably set brake mode, or no-op depending on interrupt... */,
+            this::isAtTargetHeading,
+            this
+        );
+    }
+
+    /**
+     * Helper for initializing rotation lock -- sets the desired target based on current pose
+     */
+    private void initTargetLock() {
+        snapToHeading = getRotationToHub();
+        setState(WantedState.ROTATION_LOCK);
+    }
+
+    /**
+     * Helper for checking if we have reached our target heading
+     * @return Whether the current heading is within the tolerance of the target heading
+     */
+    private boolean isAtTargetHeading() {
+        Rotation2d rotationalError = mCurrentSwerveState.Pose.getRotation().minus(snapToHeading);
+        // TODO: determine appropriate thresholds
+        var inRange = Degrees.of(rotationalError.getDegrees()).isNear(Degrees.zero(), Degrees.of(5));
+        return inRange;
     }
 }

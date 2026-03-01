@@ -1,15 +1,13 @@
 package frc.robot.commands.drivetrain;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj2.command.Command;
-
 import frc.robot.RobotContainer;
-import frc.robot.Tuning;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Intake;
-
-import org.littletonrobotics.junction.Logger;
 
 public class IntakeGround extends Command {
     public static double lastTime =
@@ -51,7 +49,7 @@ public class IntakeGround extends Command {
     @Override
     public void execute() {
         // TODO: get reasonable speed
-        intake.setIntakeSpeed(Tuning.intakeVelocity.get());
+        // intake.setIntakeSpeed(Tuning.intakeVelocity.get());
 
         if (this.correction) {
             drivetrain.setControl(drivetrain
@@ -79,7 +77,7 @@ public class IntakeGround extends Command {
 
     @Override
     public void end(final boolean interrupted) {
-        robotContainer.intake.setIntakeSpeed(0);
+        // robotContainer.intake.setIntakeSpeed(0);
         robotContainer.drivetrain.halt();
     }
 

@@ -1,16 +1,19 @@
 package frc.robot;
 
-import choreo.Choreo;
-import choreo.auto.AutoChooser;
-import choreo.auto.AutoFactory;
-import choreo.trajectory.SwerveSample;
-import choreo.trajectory.Trajectory;
+import java.util.Optional;
+
+import org.littletonrobotics.junction.Logger;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 
+import choreo.Choreo;
+import choreo.auto.AutoChooser;
+import choreo.auto.AutoFactory;
+import choreo.trajectory.SwerveSample;
+import choreo.trajectory.Trajectory;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -22,15 +25,10 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
-
 import frc.robot.commands.drivetrain.CenterLimelight;
 import frc.robot.commands.drivetrain.VoltageRampCommand;
 import frc.robot.lib.BLine.Path;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
-
-import java.util.Optional;
-
-import org.littletonrobotics.junction.Logger;
 
 public final class Autonomous {
     public static SendableChooser<Command> createAutonomousChooser(RobotContainer cont) {
@@ -40,7 +38,7 @@ public final class Autonomous {
         // Set global constraints before creating any paths
         Path.setDefaultGlobalConstraints(new Path.DefaultGlobalConstraints(
                 Constants.Drivetrain.maxVelocity.in(Units.MetersPerSecond), // maxVelocityMetersPerSec
-                // TODO: Find acutal values
+                // TODO: Find actual values
                 12.0, // maxAccelerationMetersPerSec2
                 Constants.Drivetrain.maxAngularVelocity.in(Units.DegreesPerSecond), // maxVelocityDegPerSec
                 860, // maxAccelerationDegPerSec2
@@ -70,8 +68,8 @@ public final class Autonomous {
                 new SequentialCommandGroup(
                         // Go Backward for 10 sec
                         cont.drivetrain.driveForDuration(new ChassisSpeeds(-2, 0, 0), Units.Seconds.of(1)),
-                        // Call shoot from superclass
-                        cont.superstructure.readyAndShoot()));
+                        // Call shoot from superstructure
+                        cont.mSuperstructure.shootAutomated()));
 
         chooser.addOption("[testing] voltage ramp", new VoltageRampCommand(cont.drivetrain));
         return chooser;
@@ -104,7 +102,7 @@ public final class Autonomous {
             return Commands.sequence(
                     cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(Rotation2d.kZero)),
                     pathBuilder.build(path1_shootPickShoot),
-                    cont.superstructure.readyAndShoot());
+                    cont.mSuperstructure.shootAutomated());
         });
 
         choreoChooser.addCmd("path2_shootPickShoot", () -> {
@@ -115,7 +113,7 @@ public final class Autonomous {
             return Commands.sequence(
                     cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(Rotation2d.kZero)),
                     pathBuilder.build(path2_shootPickShoot),
-                    cont.superstructure.readyAndShoot());
+                    cont.mSuperstructure.shootAutomated());
         });
 
         choreoChooser.addCmd("path3_middlePickShoot", () -> {
@@ -126,7 +124,7 @@ public final class Autonomous {
             return Commands.sequence(
                     cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(Rotation2d.kZero)),
                     pathBuilder.build(path3_middlePickShoot),
-                    cont.superstructure.readyAndShoot());
+                    cont.mSuperstructure.shootAutomated());
         });
 
         choreoChooser.addCmd(
@@ -156,7 +154,7 @@ public final class Autonomous {
                         // Go Backward for 10 sec
                         cont.drivetrain.driveForDuration(new ChassisSpeeds(-2, 0, 0), Units.Seconds.of(1)),
                         // Call shoot from superclass
-                        cont.superstructure.readyAndShoot()));
+                        cont.mSuperstructure.shootAutomated()));
 
         choreoChooser.addCmd("middlePickShoot", () -> {
             final var idle = new SwerveRequest.Idle();
@@ -167,9 +165,9 @@ public final class Autonomous {
             return Commands.sequence(
                     cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(Rotation2d.kZero)),
                     pathBuilder.build(middlePickShoot_part1),
-                    cont.superstructure.pathWileINtaking("middlePickShoot_part2"),
+                    cont.mSuperstructure.pathWhileIntaking("middlePickShoot_part2"),
                     pathBuilder.build(middlePickShoot_part3),
-                    cont.superstructure.readyAndShoot());
+                    cont.mSuperstructure.prepareShooter());
         });
 
         choreoChooser.addCmd("rightPickShoot", () -> {
@@ -181,9 +179,9 @@ public final class Autonomous {
             return Commands.sequence(
                     cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(Rotation2d.kZero)),
                     pathBuilder.build(rightPickShoot_part1),
-                    cont.superstructure.pathWileINtaking("rightPickShoot_part2"),
+                    cont.mSuperstructure.pathWhileIntaking("rightPickShoot_part2"),
                     pathBuilder.build(rightPickShoot_part3),
-                    cont.superstructure.readyAndShoot());
+                    cont.mSuperstructure.shootAutomated());
         });
 
         choreoChooser.addCmd("leftPickShoot", () -> {
@@ -195,9 +193,9 @@ public final class Autonomous {
             return Commands.sequence(
                     cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(Rotation2d.kZero)),
                     pathBuilder.build(leftPickShoot_part1),
-                    cont.superstructure.pathWileINtaking("leftPickShoot_part2"),
+                    cont.mSuperstructure.pathWhileIntaking("leftPickShoot_part2"),
                     pathBuilder.build(leftPickShoot_part3),
-                    cont.superstructure.readyAndShoot());
+                    cont.mSuperstructure.shootAutomated());
         });
 
         return choreoChooser;

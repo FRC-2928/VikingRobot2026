@@ -1,11 +1,12 @@
 package frc.robot.subsystems;
 
+import org.littletonrobotics.junction.AutoLog;
+
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
-
-import org.littletonrobotics.junction.AutoLog;
+import frc.robot.Constants;
 
 public interface IntakeIO {
     @AutoLog
@@ -15,7 +16,7 @@ public interface IntakeIO {
         public LinearVelocity expansionAngularVelocity = Units.InchesPerSecond.zero();
     }
 
-    public default void setSpeed(double speed) {}
+    public default void setState(Constants.Intake.IntakeStates state) {}
 
     public default void extend() {}
 
