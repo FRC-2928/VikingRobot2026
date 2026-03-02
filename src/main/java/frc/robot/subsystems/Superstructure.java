@@ -352,7 +352,8 @@ public class Superstructure extends SubsystemBase {
                 },
                 mRobotContainer.shooter)
             .alongWith(mRobotContainer.drivetrain.brake())
-            .alongWith(mRobotContainer.hopperFloor.runHopperCommand());
+            .alongWith(mRobotContainer.hopperFloor.runHopperCommand())
+            .alongWith(mRobotContainer.indexer.runIndexerCommand());
     }
 
     // Spins up flywheels to speed and turns hood to correct angle. Command will not end on its own
@@ -362,7 +363,7 @@ public class Superstructure extends SubsystemBase {
                     mRobotContainer.shooter.aim();
                 },
                 mRobotContainer.shooter)
-            .alongWith(mRobotContainer.drivetrain.aimAtHubAndMove(mRobotContainer.driverOI.controller, 0));
+            .alongWith(mRobotContainer.drivetrain.aimAtHubAndMove(mRobotContainer.driverOI, 0));
     }
 
     public Command shootAutomated() {

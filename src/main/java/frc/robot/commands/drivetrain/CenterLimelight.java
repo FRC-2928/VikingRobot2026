@@ -100,6 +100,8 @@ public class CenterLimelight extends Command {
                 Units.Inches.of(10), Units.Inches.of(-8), Units.Radians.of(Math.PI), List.of(2, 12), drivetrain);
     }
 
+    
+
     public CenterLimelight(
             Distance offsetX, Distance offsetY, final List<Integer> tagsToCheck, CommandSwerveDrivetrain drivetrain) {
         this(offsetX, offsetY, Units.Radians.of(0), tagsToCheck, drivetrain);
@@ -176,7 +178,7 @@ public class CenterLimelight extends Command {
         thetaPid = centerRotaionPid.calculate(thetaSpeed, offsetTheta.in(Units.Radians));
         mDrivetrain.controlRobotDrivetrainAutonomus(new ChassisSpeeds(xSpeedRotated, ySpeedRotated, thetaPid * 1.5));
 
-        var limelight = mDrivetrain.limelightForward;
+        var limelight = mDrivetrain.limelightLeft;
         Logger.recordOutput("Drivetrain/Auto/XSpeed", xSpeed);
         Logger.recordOutput("Drivetrain/Auto/YSpeed", ySpeed);
         Logger.recordOutput("Drivetrain/Auto/Center Is Finished", false);

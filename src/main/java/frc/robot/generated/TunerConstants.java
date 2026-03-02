@@ -103,7 +103,7 @@ public class TunerConstants {
 
     public static final SwerveDrivetrainConstants DrivetrainConstants = new SwerveDrivetrainConstants()
             .withCANBusName(Constants.CAN.CTRE.bus.getName())
-            .withPigeon2Id(Constants.CAN.CTRE.pigeon)
+            .withPigeon2Id(kPigeonId)
             .withPigeon2Configs(pigeonConfigs);
 
     private static final SwerveModuleConstantsFactory<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>

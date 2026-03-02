@@ -121,7 +121,7 @@ public class RobotContainer {
 
         // Run SysId routines when holding back/start and X/Y.
         // Note that each routine should be run exactly once in a single log.
-        joystick1.x().whileTrue(drivetrain.aimAtHubAndMove(joystick1, 1.0));
+        joystick1.x().whileTrue(drivetrain.aimAtHubAndMove(driverOI, 1.0));
         joystick1.back().and(joystick1.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
         joystick1.back().and(joystick1.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
         joystick1.start().and(joystick1.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));

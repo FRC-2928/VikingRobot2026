@@ -61,7 +61,7 @@ public class Robot extends LoggedRobot {
         m_timeAndJoystickReplay.update();
         CommandScheduler.getInstance().run();
         LoggedPowerDistribution.getInstance(Constants.CAN.Misc.pdh, ModuleType.kRev);
-        mRobotContainer.drivetrain.limelightForward.setThrottleRate(isEnabled() ? 0 : 100);
+        mRobotContainer.drivetrain.limelightLeft.setThrottleRate(isEnabled() ? 0 : 100);
 
         // Update shooter data collector (checks for dashboard input)
         shooterDataCollector.periodic();
@@ -84,7 +84,7 @@ public class Robot extends LoggedRobot {
 
     @Override
     public void disabledInit() {
-        mRobotContainer.drivetrain.limelightForward.setIMUMode(1);
+        mRobotContainer.drivetrain.limelightLeft.setIMUMode(1);
     }
 
     @Override
@@ -106,7 +106,7 @@ public class Robot extends LoggedRobot {
 
     @Override
     public void autonomousPeriodic() {
-        mRobotContainer.drivetrain.limelightForward.setIMUMode(2);
+        mRobotContainer.drivetrain.limelightLeft.setIMUMode(2);
     }
 
     @Override
