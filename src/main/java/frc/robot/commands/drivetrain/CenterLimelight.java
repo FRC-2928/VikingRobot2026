@@ -32,11 +32,10 @@ public class CenterLimelight extends Command {
     private double omega;
     private PIDController centerPIDx;
     private PIDController centerPIDy;
-    private PIDController centerRotaionPid;
+    private PIDController centerRotationPid;
     private List<Pose2d> posesToCheck;
     private static final List<Integer> ladderTags = List.of(15, 31); // tags in the center of the ladder on each side
     private final CommandSwerveDrivetrain mDrivetrain;
-
 
     public static CenterLimelight toLadderLeft(CommandSwerveDrivetrain drivetrain) {
         return new CenterLimelight(Units.Inches.of(30), Units.Inches.of(36), Units.Degrees.of(90), ladderTags, drivetrain);
@@ -45,8 +44,6 @@ public class CenterLimelight extends Command {
     public static CenterLimelight toLadderRight(CommandSwerveDrivetrain drivetrain) {
         return new CenterLimelight(Units.Inches.of(30), Units.Inches.of(-36), Units.Degrees.of(-90), ladderTags, drivetrain);
     }
-
-    
 
     public CenterLimelight(
             Distance offsetX, Distance offsetY, final List<Integer> tagsToCheck, CommandSwerveDrivetrain drivetrain) {
@@ -67,8 +64,8 @@ public class CenterLimelight extends Command {
             new Rotation2d(offsetTheta).plus(Rotation2d.kPi));          // theta offset + half rotation (pi radians), so offset of 0 means robot front will face the tag
         this.centerPIDx = Constants.Drivetrain.Auto.centerLimelight.createController();
         this.centerPIDy = Constants.Drivetrain.Auto.centerLimelight.createController();
-        this.centerRotaionPid = Constants.Drivetrain.Auto.centerTheta.createController();
-        this.centerRotaionPid.enableContinuousInput(-Math.PI, Math.PI);
+        this.centerRotationPid = Constants.Drivetrain.Auto.centerTheta.createController();
+        this.centerRotationPid.enableContinuousInput(-Math.PI, Math.PI);
         this.posesToCheck = tagsToCheck.stream()    // Using Java stream to convert list of integer (tag IDs) to list of Pose2d (tag poses)
                                 .map(Constants.FIELD_LAYOUT::getTagPose)
                                 .filter(Optional::isPresent)
@@ -80,8 +77,11 @@ public class CenterLimelight extends Command {
     // Called when the command is initially scheduled.
     @Override
     public void initialize() {
-        this.targetPose = mDrivetrain.getCurrentPose2D().nearest(posesToCheck).plus(this.offset);
-        Logger.recordOutput("Drivetrain/Auto/targetPose", this.targetPose);
+        // Among posesToCheck, choose the pose closest to robot's current position
+        Pose2d nearestTargetablePose = mDrivetrain.getCurrentPose2D().nearest(posesToCheck);
+        // Apply x, y, and theta offset to the nearest pose (using Transform2D "plus") to get the blue origin pose that we want to go to
+        this.targetPose = nearestTargetablePose.plus(this.offset);
+        Logger.recordOutput("Drivetrain/Auto/TargetPose", this.targetPose);
     }
 
     @Override
@@ -90,9 +90,11 @@ public class CenterLimelight extends Command {
         Distance xError = Units.Meters.of(this.targetPose.getX() - robotPose.getX());
         Distance yError = Units.Meters.of(this.targetPose.getY() - robotPose.getY());
         Angle thetaError = this.targetPose.getRotation().minus(robotPose.getRotation()).getMeasure();
+        // Get PID outputs based on error between current pose and target pose (both blue origin)
         this.xSpeed = centerPIDx.calculate(robotPose.getX(), this.targetPose.getX());
         this.ySpeed = centerPIDy.calculate(robotPose.getY(), this.targetPose.getY());
-        this.omega = centerRotaionPid.calculate(robotPose.getRotation().getRadians(), this.targetPose.getRotation().getRadians());
+        this.omega = centerRotationPid.calculate(robotPose.getRotation().getRadians(), this.targetPose.getRotation().getRadians());
+        // Convert blue origin chassis speed to robot relative chassis speed and apply control
         mDrivetrain.controlRobotDrivetrainAutonomus(
             ChassisSpeeds.fromFieldRelativeSpeeds(this.xSpeed, this.ySpeed, this.omega, robotPose.getRotation()));
 
@@ -127,6 +129,10 @@ public class CenterLimelight extends Command {
         boolean isCorrectRotation = MathUtil.isNear(targetPose.getRotation().getDegrees(), robotPose.getRotation().getDegrees(), Constants.Drivetrain.Auto.headingThreshold.in(Units.Degrees));
         boolean isLinearVelocitySmall = MathUtil.isNear(0, Math.hypot(xSpeed, ySpeed), Constants.Drivetrain.Auto.linearSpeedThreshold.in(Units.MetersPerSecond));
         boolean isAngularVelocitySmall = MathUtil.isNear(0, omega, Constants.Drivetrain.Auto.angularSpeedThreshold.in(Units.RadiansPerSecond));
+        Logger.recordOutput("Drivetrain/Auto/CloseToTarget", isCloseToTarget);
+        Logger.recordOutput("Drivetrain/Auto/CloseToRotation", isCorrectRotation);
+        Logger.recordOutput("Drivetrain/Auto/LinearVelocitySmall", isLinearVelocitySmall);
+        Logger.recordOutput("Drivetrain/Auto/AngularVelocitySmall", isAngularVelocitySmall);
         return isCloseToTarget && isCorrectRotation && isLinearVelocitySmall && isAngularVelocitySmall; // Only finish when robot is close to target pose AND commanded speeds are low
     }
 }
