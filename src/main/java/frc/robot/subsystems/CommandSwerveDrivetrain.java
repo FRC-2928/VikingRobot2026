@@ -24,10 +24,8 @@ import com.ctre.phoenix6.swerve.SwerveRequest.FieldCentricFacingAngle;
 import choreo.auto.AutoFactory;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
@@ -42,12 +40,12 @@ import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.Subsystem;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.RobotContainer;
 import frc.robot.LimelightHelpers.PoseEstimate;
@@ -255,8 +253,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      */
     public CommandSwerveDrivetrain(
             SwerveDrivetrainConstants drivetrainConstants, SwerveModuleConstants<?, ?, ?>... modules) {
-
         super(drivetrainConstants, modules);
+        CommandScheduler.getInstance().registerSubsystem(this);
+
         if (Utils.isSimulation()) {
             startSimThread();
         }
@@ -288,6 +287,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             double odometryUpdateFrequency,
             SwerveModuleConstants<?, ?, ?>... modules) {
         super(drivetrainConstants, odometryUpdateFrequency, modules);
+        CommandScheduler.getInstance().registerSubsystem(this);
+
         if (Utils.isSimulation()) {
             startSimThread();
         }
@@ -328,6 +329,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 odometryStandardDeviation,
                 visionStandardDeviation,
                 modules);
+        CommandScheduler.getInstance().registerSubsystem(this);
+
         if (Utils.isSimulation()) {
             startSimThread();
         }
@@ -361,7 +364,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     @Override
     public void periodic() {
-        System.out.println("whereisthis call");
         // handle state transitions as applicable
         mCurrentState = handleStateTransition();
         // apply the latest state
@@ -504,6 +506,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             case DRIVE_TO_POINT:
                 // TODO: this is basically CenterLimelight...
                 centerLimelight(new Pose2d());
+                break;
+            case IDLE:
+                this.halt();
                 break;
         }
     }
