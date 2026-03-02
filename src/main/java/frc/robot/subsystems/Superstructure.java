@@ -151,9 +151,6 @@ public class Superstructure extends SubsystemBase {
         transitionFunctions.put(RobotState.DRIVE_TARGET_LOCK, this::checkTransitionFromTargetLock);
         transitionFunctions.put(RobotState.SHOOTING, this::checkTransitionFromShooting);
         transitionFunctions.put(RobotState.MANUAL_INTAKE, this::checkManualIntakeTransition);
-
-        Logger.recordOutput("Superstructure/SimultaneousOverrideRequests", mSimultaneousOverrideRequests);
-        Logger.recordOutput("Superstructure/NoActiveOverridesCount", mNoActiveOverridesCount);
     }
 
     /**
@@ -206,6 +203,7 @@ public class Superstructure extends SubsystemBase {
 
             // Clear all active overrides
             mActiveOverrides.clear();
+            Logger.recordOutput("Superstructure/OverrideState", "NONE");
             
             // Restore previous state
             if (prevState != null) {
@@ -257,16 +255,22 @@ public class Superstructure extends SubsystemBase {
      */
     @Override
     public void periodic() {
+        Logger.recordOutput("Superstructure/SimultaneousOverrideRequests", mSimultaneousOverrideRequests);
+        Logger.recordOutput("Superstructure/NoActiveOverridesCount", mNoActiveOverridesCount);
+
         RobotState lastState;
         do {
             lastState = currentState;  // track the most recent state of the robot in case it changes
             // Get the transition function for the current state and execute it
             transitionFunctions
                     .getOrDefault(currentState, () -> {
-                        // TODO Log warning about missing transition function for current state
+                        Logger.recordOutput("Superstructure/ErrorCurrentStateMissingTransitionFunction", true);
+                        System.out.println(String.format("[ERROR] Missing transition function for current state: %s", currentState));
                     })
                     .run();
         } while (currentState != lastState);
+
+        Logger.recordOutput("Superstructure/CurrentState", currentState);
     }
 
     private Command handleDisabled() {
@@ -304,6 +308,10 @@ public class Superstructure extends SubsystemBase {
     private void checkTransitionFromDisabled() {
         if (DriverStation.isAutonomousEnabled()) {
             currentState = RobotState.AUTONOMOUS;
+        }
+
+        if (DriverStation.isTeleopEnabled()) {
+            currentState = RobotState.FREE_DRIVE;
         }
     }
 
