@@ -1,5 +1,7 @@
 package frc.robot.subsystems;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
@@ -23,10 +25,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
-
 import frc.robot.Constants;
-
-import org.littletonrobotics.junction.Logger;
 
 public class ShooterIOReal implements ShooterIO {
 
@@ -247,6 +246,36 @@ public class ShooterIOReal implements ShooterIO {
             motorVoltage += frictionVoltage;
         }
         return motorVoltage;
+    }
+
+    // --------------------- Nudge State ---------------------
+    private double angleNudgeDegrees = 0.0;
+    private double speedNudgeRPS = 0.0;
+
+    @Override
+    public void nudgeAngleUp() {
+        this.angleNudgeDegrees += 2.0;
+    }
+
+    @Override
+    public void nudgeAngleDown() {
+        this.angleNudgeDegrees -= 2.0;
+    }
+
+    @Override
+    public void nudgeSpeedUp() {
+        this.speedNudgeRPS += 2.0;
+    }
+
+    @Override
+    public void nudgeSpeedDown() {
+        this.speedNudgeRPS -= 2.0;
+    }
+
+    @Override
+    public void resetNudges() {
+        this.angleNudgeDegrees = 0.0;
+        this.speedNudgeRPS = 0.0;
     }
 
     @Override

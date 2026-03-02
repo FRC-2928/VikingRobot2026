@@ -81,6 +81,27 @@ public class Shooter extends SubsystemBase {
         return correctHoodAngle && correctFlywheelVelocity;
     }
 
+    public void nudgeAngleUp() {
+        this.io.nudgeAngleUp();
+    }
+
+    public void nudgeAngleDown() {
+        this.io.nudgeAngleDown();
+    }
+
+    public void nudgeSpeedUp() {
+        this.io.nudgeSpeedUp();
+    }
+
+    public void nudgeSpeedDown() {
+        this.io.nudgeSpeedDown();
+    }
+
+    public void resetNudges() {
+        this.io.resetNudges();
+    }
+
+
     public Command shootCommand() {
         return new FunctionalCommand(
             this::shoot, 

@@ -1,11 +1,11 @@
 package frc.robot.subsystems;
 
+import org.littletonrobotics.junction.AutoLog;
+
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
-
-import org.littletonrobotics.junction.AutoLog;
 
 public interface ShooterIO {
     @AutoLog
@@ -26,4 +26,15 @@ public interface ShooterIO {
     public default void simPeriodic() {}
 
     public default void updateInputs(final ShooterIOInputs inputs) {}
+
+    public default void nudgeAngleUp() {}
+
+    public default void nudgeAngleDown() {}
+
+    public default void nudgeSpeedUp() {}
+
+    public default void nudgeSpeedDown() {}
+
+    public default void resetNudges() {}
+
 }

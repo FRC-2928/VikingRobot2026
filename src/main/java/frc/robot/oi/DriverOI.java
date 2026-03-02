@@ -22,13 +22,6 @@ public class DriverOI extends BaseOI {
     /// Trigger to handle shoot override
     private final Trigger shootOverride;
 
-    public final Supplier<Double> driveAxial;
-    public final Supplier<Double> driveLateral;
-
-    public final Supplier<Double> driveFORX;
-    public final Supplier<Double> driveFORY;
-    public final Trigger manualRotation;
-
     // public final Trigger intake;
 
     // public final Trigger spinKicker;
@@ -39,10 +32,6 @@ public class DriverOI extends BaseOI {
     public final Trigger lockWheels;
 
     public final Trigger resetFOD;
-    public final List<Integer> reefTags = List.of(6, 7, 8, 9, 10, 11, 17, 18, 19, 20, 21, 22);
-    public final List<Integer> proccesorTags = List.of(3, 16);
-    public final List<Integer> humanStationTags = List.of(1, 2, 12, 13);
-    public final List<Integer> bargeTags = List.of(4, 5, 14, 15);
     public final Trigger resetAngle;
 
     public DriverOI(final CommandXboxController controller, Superstructure superstructure) {
@@ -50,20 +39,8 @@ public class DriverOI extends BaseOI {
 
         this.mSuperstructure = superstructure;
         this.shootOverride = this.controller.rightTrigger();
-        this.driveAxial = this.controller::getLeftY;
-        this.driveLateral = this.controller::getLeftX;
-        // this.intake = this.controller.b();
-        // left bumper toggles
+        // left bumper toggles into/out of rotation locked mode
         this.toggleRotationLockedMode = this.controller.leftBumper();
-
-        if (Constants.mode == Mode.REAL) {
-            this.driveFORX = this.controller::getRightX;
-            this.driveFORY = () -> -this.controller.getRightY();
-        } else {
-            this.driveFORX = () -> this.hid.getRawAxis(2);
-            this.driveFORY = () -> this.hid.getRawAxis(3);
-        }
-        this.manualRotation = this.controller.rightStick();
 
         // this.shotConditionsMet = new Trigger(() -> true);
         // new Trigger(() -> {
@@ -76,21 +53,15 @@ public class DriverOI extends BaseOI {
         //     return /*facingHub &&*/ correctHoodAngle && correctFlywheelVelocity;
         // });
 
-        // this.spinKicker = this.controller.rightTrigger().and(shotConditionsMet);
-
-        // this.startShoot = this.controller.leftTrigger();
         this.resetFOD = this.controller.y();
-
         this.resetAngle = this.controller.a();
-
         this.lockWheels = this.controller.x();
-
-        // this.climb = this.controller.leftBumper();
-
         this.unjam = this.controller.povLeft();
     }
 
     public void configureControls() {
+        // FIXME: this call only works because in Java synchronized methods are reentrant...
+        // normally this would be a deadlock... we should seek to avoid such patterns...
         var cont = RobotContainer.getInstance();
         // this.lockWheels.whileTrue(new LockWheels(cont.drivetrain, this));
         this.resetFOD.onTrue(new InstantCommand(cont.drivetrain::resetAngle));

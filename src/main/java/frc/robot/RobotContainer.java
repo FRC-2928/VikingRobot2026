@@ -100,16 +100,11 @@ public class RobotContainer {
 
         // init the superstructure now that all subsystems have been instantiated
         mSuperstructure.init();
-        System.out.println("init done");
     }
 
     private void configureBindings() {
         this.driverOI.configureControls();
         // this.operatorOI.configureControls();
-
-        // Note that X is defined as forward according to WPILib convention,
-        // and Y is defined as to the left according to WPILib convention.
-        // drivetrain.setDefaultCommand(drivetrain.joystickDrive(driverOI));
 
         // Idle while the robot is disabled. This ensures the configured
         // neutral mode is applied to the drive motors while disabled.
@@ -130,9 +125,8 @@ public class RobotContainer {
         joystick1.back().and(joystick1.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
         joystick1.start().and(joystick1.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
         joystick1.start().and(joystick1.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
-        joystick1.b().whileTrue(mSuperstructure.startShooting());
         // Reset the field-centric heading on left bumper press.
-        joystick1.leftBumper().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
+        joystick1.rightBumper().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
 
         drivetrain.registerTelemetry(logger::telemeterize);
     }
