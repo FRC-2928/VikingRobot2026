@@ -122,19 +122,6 @@ public class Constants {
         public static final class CTRE {
             public static final CANBus bus = new CANBus("canivore");
 
-            public static final int pigeon = 0;
-
-            public static final int swerveFrontLeftAzimuth = 16;
-            public static final int swerveFrontLeftDrive = 15;
-
-            public static final int swerveFrontRightAzimuth = 3;
-            public static final int swerveFrontRightDrive = 4;
-
-            public static final int swerveBackLeftAzimuth = 17;
-            public static final int swerveBackLeftDrive = 18;
-
-            public static final int swerveBackRightAzimuth = 1;
-            public static final int swerveBackRightDrive = 2;
 
             public static final int kicker = 1; // TODO: find a good place for kicker and hood
             public static final int hood = 1;
