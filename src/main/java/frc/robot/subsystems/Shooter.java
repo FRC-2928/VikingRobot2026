@@ -86,7 +86,7 @@ public class Shooter extends SubsystemBase {
             this::shoot, 
             () -> {}, 
             (interrupted) -> {}, 
-            null, 
+            () -> { return false; },
             this
         );
     }
