@@ -123,30 +123,30 @@ public class Constants {
             public static final CANBus bus = new CANBus("canivore");
 
 
-            public static final int kicker = 1; // TODO: find a good place for kicker and hood
-            public static final int hood = 1;
-            public static final int shooterFlywheelA = 1;
-            public static final int shooterFlywheelB = 4;
+            public static final int kicker = 16; // TODO: find a good place for kicker and hood
+            public static final int hood = 25;
+            public static final int shooterFlywheelA = 27;
+            public static final int shooterFlywheelB = 26;
 
-            public static final int climber = 17;
+            public static final int climber = 24;
 
-            public static final int hopper = 99;
-            public static final int indexer = 98;
+            public static final int hopper = 23;
+            public static final int indexer = 31;
 
-            public static final int intakeRoller = 16;
-            public static final int intakeExpansion = 20;
+            public static final int intakeRoller = 99;
+            public static final int intakeExpansion = 30;
 
-            public static final int candle = 97;
+            public static final int candle = 99;
         }
 
         public static final class INTAKE_CANDI {
             /// Singleton instance of the CANdi for the Banana
             private static CANdi sInstance = null;
             /// CAN ID of the CANdi bridging the intake limit switch to the CAN bus
-            private static final int canId = 7;
+            private static final int canId = 99;
             /// Digital Inputs Configs for the CANdi
             private static final DigitalInputsConfigs dioConfigs = new DigitalInputsConfigs()
-                    // S1In --> Expension??
+                    // S1In --> Expansion??
                     .withS1CloseState(
                             S1CloseStateValue.CloseWhenLow) // Intake Expansion limit switch -- closed when low
                     .withS1FloatState(S1FloatStateValue.PullHigh) // Intake Expansion limit switch -- high when open

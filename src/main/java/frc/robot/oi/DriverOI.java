@@ -29,7 +29,7 @@ public class DriverOI extends BaseOI {
     public final Supplier<Double> driveFORY;
     public final Trigger manualRotation;
 
-    public final Trigger intake;
+    // public final Trigger intake;
 
     // public final Trigger spinKicker;
     // private final Trigger startShoot;
@@ -52,7 +52,7 @@ public class DriverOI extends BaseOI {
         this.shootOverride = this.controller.rightTrigger();
         this.driveAxial = this.controller::getLeftY;
         this.driveLateral = this.controller::getLeftX;
-        this.intake = this.controller.b();
+        // this.intake = this.controller.b();
         // left bumper toggles
         this.toggleRotationLockedMode = this.controller.leftBumper();
 

@@ -79,7 +79,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public enum WantedState {
         SYS_ID,
         TELEOP_DRIVE,
-        CHOREO_PATH,
+        AUTONOMOUS,
         ROTATION_LOCK,
         DRIVE_TO_POINT,
         IDLE
@@ -88,7 +88,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public enum SystemState {
         SYS_ID,
         TELEOP_DRIVE,
-        CHOREO_PATH,
+        AUTONOMOUS,
         ROTATION_LOCK,
         DRIVE_TO_POINT,
         IDLE
@@ -132,6 +132,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
             .withDeadband(maxSpeed * 0.1)
             .withRotationalDeadband(maxAngularRate * 0.1) // Add a 10% deadband
+            .withDriveRequestType(DriveRequestType.OpenLoopVoltage) // Use open-loop control for drive motors
+            .withDesaturateWheelSpeeds(true);
+
+    private final SwerveRequest.ApplyFieldSpeeds driveApplyFieldSpeeds = new SwerveRequest.ApplyFieldSpeeds()
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage) // Use open-loop control for drive motors
             .withDesaturateWheelSpeeds(true);
 
@@ -357,24 +361,14 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     @Override
     public void periodic() {
+        System.out.println("whereisthis call");
         // handle state transitions as applicable
-        // mCurrentState = handleStateTransition();
+        mCurrentState = handleStateTransition();
         // apply the latest state
-        // applyStates();
+        applyStates();
         mCurrentSwerveState = this.getStateCopy();
-        Logger.recordOutput("Drivetrain/Botpose", limelightLeft.getBluePose3d());
         Logger.recordOutput("Drivetrain/currentPose", mCurrentSwerveState.Pose);
-        Logger.recordOutput(
-                "Drivetrain/angleFromHub",
-                this.getAngleToHub(Units.Radians.of(0)).in(Units.Degrees));
-        Logger.recordOutput(
-                "Drivetrain/TargetHeading", snapToHeading.getMeasure().in(Units.Degrees));
-        Logger.recordOutput(
-                "Drivetrain/DistanceFromHub", this.getDistanceFromHub().in(Units.Meters));
-        Logger.recordOutput(
-                "Drivetrain/relativeDistanceFromHub",
-                mCurrentSwerveState.Pose.relativeTo(
-                        new Pose2d(Units.Meters.of(getHubX()), Units.Meters.of(hubY), new Rotation2d())));
+        Logger.recordOutput("Drivetrain/currentState", mCurrentState);
 
         /*
          * Periodically try to apply the operator perspective.
@@ -457,8 +451,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return switch (mDesiredState) {
             case SYS_ID -> SystemState.SYS_ID;
             case TELEOP_DRIVE -> SystemState.TELEOP_DRIVE;
-            case CHOREO_PATH -> {
-                yield SystemState.CHOREO_PATH;
+            case AUTONOMOUS -> {
+                yield SystemState.AUTONOMOUS;
                 // if (mCurrentState != SystemState.CHOREO_PATH) {
                 //     choreoTimer.restart();
                 //     choreoSampleToBeApplied = desiredChoreoTrajectory.sampleAt(choreoTimer.get(), false);
@@ -479,7 +473,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             default:
             case SYS_ID:
                 break;
-            case TELEOP_DRIVE:
+            case TELEOP_DRIVE: {
+                this.setControl((driveApplyFieldSpeeds.withSpeeds(calculateSpeedsBasedOnJoystickInputs(RobotContainer.getInstance().driverOI))));
                 // FIXME: this needs to be our internal call...
                 // applyRequest(new SwerveRequest.ApplyFieldSpeeds()
                 //         .withSpeeds(calculateSpeedsBasedOnJoystickInputs())
@@ -487,11 +482,17 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 //         .withDesaturateWheelSpeeds(true));
                 joystickDrive(RobotContainer.getInstance().driverOI);
                 break;
-            case CHOREO_PATH: {
-                // TODO: handle choreo updates... may need to synchronize at some point
+            }
+            case AUTONOMOUS: {
+                // TODO: handle autonomous updates... may need to synchronize at some point
+                // currently a no-op since the auto factory commands directly call controlRobotDrivetrainAutonomus
                 break;
             }
-            case ROTATION_LOCK:
+            case ROTATION_LOCK: {
+                this.setControl((driveAndPoint
+                            .withVelocityX(calculateSpeedsBasedOnJoystickInputs(RobotContainer.getInstance().driverOI).vxMetersPerSecond)
+                            .withVelocityY(calculateSpeedsBasedOnJoystickInputs(RobotContainer.getInstance().driverOI).vyMetersPerSecond)
+                            .withTargetDirection(snapToHeading)));
                 // FIXME: this needs to be our internal call...
                 aimAtHubAndMove(RobotContainer.getInstance().driverOI, 0);
                 // io.setSwerveState(driveAtAngle
@@ -499,6 +500,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 //         .withVelocityY(calculateSpeedsBasedOnJoystickInputs().vyMetersPerSecond)
                 //         .withTargetDirection(desiredRotationForRotationLockState));
                 break;
+            }
             case DRIVE_TO_POINT:
                 // TODO: this is basically CenterLimelight...
                 centerLimelight(new Pose2d());
@@ -674,7 +676,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return limelightLeft;
     }
 
-    public AutoFactory getChoreAutoFactory() {
+    public AutoFactory getChoreoAutoFactory() {
         return autoFactory;
     }
 

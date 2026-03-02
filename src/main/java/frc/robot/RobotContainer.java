@@ -97,6 +97,10 @@ public class RobotContainer {
                         autoChooser.selectedCommandScheduler()); // Schedules the selected auto command during auto mode
         configureBindings();
         Tuning.hoodAngle.get(); // try to load tuning controls if available
+
+        // init the superstructure now that all subsystems have been instantiated
+        mSuperstructure.init();
+        System.out.println("init done");
     }
 
     private void configureBindings() {
@@ -105,7 +109,7 @@ public class RobotContainer {
 
         // Note that X is defined as forward according to WPILib convention,
         // and Y is defined as to the left according to WPILib convention.
-        drivetrain.setDefaultCommand(drivetrain.joystickDrive(driverOI));
+        // drivetrain.setDefaultCommand(drivetrain.joystickDrive(driverOI));
 
         // Idle while the robot is disabled. This ensures the configured
         // neutral mode is applied to the drive motors while disabled.

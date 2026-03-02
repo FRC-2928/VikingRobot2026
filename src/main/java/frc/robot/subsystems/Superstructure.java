@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -11,6 +12,8 @@ import org.littletonrobotics.junction.Logger;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 
+import edu.wpi.first.units.Units;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -119,7 +122,15 @@ public class Superstructure extends SubsystemBase {
      */
     private Superstructure(RobotContainer robotContainer) {
         this.mRobotContainer = robotContainer;
+        this.stateTriggers = new ArrayList<>();
+    }
 
+    // Initializes trigger for when given state is active, and runs given command when trigger is active
+    private void initState(RobotState state, Command runWhenCurrentState) {
+        stateTriggers.add(new Trigger(() -> this.currentState == state).whileTrue(runWhenCurrentState));
+    }
+
+    public void init() {
         // Init each state's command to run
         initState(RobotState.DISABLED, handleDisabled());
         initState(RobotState.AUTONOMOUS, handleAutonomous());
@@ -143,11 +154,6 @@ public class Superstructure extends SubsystemBase {
 
         Logger.recordOutput("Superstructure/SimultaneousOverrideRequests", mSimultaneousOverrideRequests);
         Logger.recordOutput("Superstructure/NoActiveOverridesCount", mNoActiveOverridesCount);
-    }
-
-    // Initializes trigger for when given state is active, and runs given command when trigger is active
-    private void initState(RobotState state, Command runWhenCurrentState) {
-        stateTriggers.add(new Trigger(() -> this.currentState == state).whileTrue(runWhenCurrentState));
     }
 
     /**
@@ -362,8 +368,8 @@ public class Superstructure extends SubsystemBase {
                 () -> {
                     mRobotContainer.shooter.aim();
                 },
-                mRobotContainer.shooter)
-            .alongWith(mRobotContainer.drivetrain.aimAtHubAndMove(mRobotContainer.driverOI, 0));
+                mRobotContainer.shooter);
+            // .alongWith(mRobotContainer.drivetrain.aimAtHubAndMove(mRobotContainer.driverOI.controller, 0));
     }
 
     public Command shootAutomated() {

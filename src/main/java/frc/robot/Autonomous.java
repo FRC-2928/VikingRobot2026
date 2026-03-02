@@ -33,7 +33,7 @@ import frc.robot.subsystems.CommandSwerveDrivetrain;
 public final class Autonomous {
     public static SendableChooser<Command> createAutonomousChooser(RobotContainer cont) {
         final SendableChooser<Command> chooser = new SendableChooser<>();
-        AutoFactory autoFactory = cont.drivetrain.getChoreAutoFactory();
+        AutoFactory autoFactory = cont.drivetrain.getChoreoAutoFactory();
 
         // Set global constraints before creating any paths
         Path.setDefaultGlobalConstraints(new Path.DefaultGlobalConstraints(
@@ -81,7 +81,7 @@ public final class Autonomous {
 
     public static AutoChooser getChoreoAutoChooser(RobotContainer cont) {
         final AutoChooser choreoChooser = new AutoChooser();
-        AutoFactory autoFactory = cont.drivetrain.getChoreAutoFactory();
+        AutoFactory autoFactory = cont.drivetrain.getChoreoAutoFactory();
 
         choreoChooser.addCmd("BLine-ForwardBack", () -> {
             final var idle = new SwerveRequest.Idle();
@@ -126,27 +126,6 @@ public final class Autonomous {
                     pathBuilder.build(path3_middlePickShoot),
                     cont.mSuperstructure.shootAutomated());
         });
-
-        choreoChooser.addCmd(
-                "SimpleFromRight",
-                () -> Commands.sequence(
-                        // autoFactory.resetOdometry("SimpleFromRight"),
-                        autoFactory.trajectoryCmd("StartToF"),
-                        Commands.deadline(new WaitCommand(2), CenterLimelight.CenterLimelightF(cont.drivetrain)),
-                        autoFactory.trajectoryCmd("FToB2Reverse"),
-                        Commands.deadline(
-                                new WaitCommand(2), CenterLimelight.CenterLimelightB2Reverse(cont.drivetrain)),
-                        autoFactory.trajectoryCmd("B1ReverseToC"),
-                        Commands.deadline(new WaitCommand(2), CenterLimelight.CenterLimelightC(cont.drivetrain)),
-                        autoFactory.trajectoryCmd("CToB1Reverse"),
-                        Commands.deadline(
-                                new WaitCommand(2), CenterLimelight.CenterLimelightB2Reverse(cont.drivetrain)),
-                        autoFactory.trajectoryCmd("B1ReverseToD"),
-                        Commands.deadline(new WaitCommand(2), CenterLimelight.CenterLimelightD(cont.drivetrain))
-                        // Robot.cont.drivetrain.haltCommand()
-                        ));
-
-        choreoChooser.addCmd("SimpleScore", () -> Commands.sequence(autoFactory.trajectoryCmd("SimpleScore")));
 
         choreoChooser.addCmd(
                 "Auto0_goBackwardAndShoot",

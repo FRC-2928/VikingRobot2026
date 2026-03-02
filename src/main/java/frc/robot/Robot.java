@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
+import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.utils.ShooterDataCollector;
 import frc.robot.utils.ShooterDataCollectorIO;
 import frc.robot.utils.ShooterDataCollectorIOReal;
@@ -98,6 +99,7 @@ public class Robot extends LoggedRobot {
     @Override
     public void autonomousInit() {
         mAutonomousCommand = mRobotContainer.getAutonomousCommand();
+        mRobotContainer.drivetrain.setState(CommandSwerveDrivetrain.WantedState.AUTONOMOUS);
 
         if (mAutonomousCommand != null) {
             CommandScheduler.getInstance().schedule(mAutonomousCommand);
