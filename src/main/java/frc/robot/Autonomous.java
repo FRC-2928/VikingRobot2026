@@ -60,8 +60,6 @@ public final class Autonomous {
                         Autonomous.setInitialPose("forwardBack", cont.drivetrain),
                         autoFactory.trajectoryCmd("forwardBack")));
 
-        chooser.addOption("Center On Limelight", new CenterLimelight(cont.drivetrain));
-
         // Backs out 1 meter and shoots the balls
         chooser.addOption(
                 "Auto0_goBackwardAndShoot",
