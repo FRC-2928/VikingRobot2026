@@ -7,6 +7,7 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.Shooter.AimValues;
@@ -20,6 +21,7 @@ public class Shooter extends SubsystemBase {
             default -> new ShooterIOReal(this);
         };
         this.cont = cont;
+        this.setDefaultCommand(homeCommand());
     }
 
     private final ShooterIO io;
@@ -68,7 +70,11 @@ public class Shooter extends SubsystemBase {
         return new FunctionalCommand(
             this::aim,
             () -> {},
-            (interrupted) -> {} /* TODO: probably want to go to home if we're interrupted, tbd though */,
+            (interrupted) -> {
+                if (interrupted) {
+                    home();
+                }
+            },
             this::isAimed,
             this
         );
@@ -101,12 +107,19 @@ public class Shooter extends SubsystemBase {
         this.io.resetNudges();
     }
 
+    public Command homeCommand() {
+        return new RunCommand(this::home, this);
+    }
 
     public Command shootCommand() {
         return new FunctionalCommand(
-            this::shoot, 
+            this::shoot,
             () -> {}, 
-            (interrupted) -> {}, 
+            (interrupted) -> {
+                if (interrupted) {
+                    home();
+                }
+            },
             () -> { return false; },
             this
         );
