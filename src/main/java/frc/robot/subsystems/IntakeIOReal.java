@@ -30,9 +30,9 @@ import frc.robot.Constants;
 import frc.robot.Constants.Intake.IntakeStates;
 
 public class IntakeIOReal implements IntakeIO {
-    private TalonFX intakeRollerMotor;
+    // private TalonFX intakeRollerMotor;
     private TalonFX intakeExpansionMotor;
-    public StatusSignal<AngularVelocity> intakeAngularVelocity;
+    // public StatusSignal<AngularVelocity> intakeAngularVelocity;
     public StatusSignal<AngularVelocity> expansionAngularVelocity;
     public StatusSignal<Angle> expansionMotorAngle;
     private PositionVoltage retractPositionControl;
@@ -74,7 +74,7 @@ public class IntakeIOReal implements IntakeIO {
 
     public IntakeIOReal() {
         // The Intake Roller motor
-        this.intakeRollerMotor = new TalonFX(Constants.CAN.RIO.intakeRoller, Constants.CAN.RIO.bus);
+        // this.intakeRollerMotor = new TalonFX(Constants.CAN.RIO.intakeRoller, Constants.CAN.RIO.bus);
 
         final TalonFXConfiguration intakeRollerConfig = new TalonFXConfiguration();
         CurrentLimitsConfigs intakeRollerCurrentLimitsConfigs = new CurrentLimitsConfigs()
@@ -88,7 +88,7 @@ public class IntakeIOReal implements IntakeIO {
         intakeRollerConfig
                 .withMotorOutput(intakeRollerOutputConfigs)
                 .withCurrentLimits(intakeRollerCurrentLimitsConfigs);
-        intakeRollerMotor.getConfigurator().apply(intakeRollerConfig); // apply the config settings
+        // intakeRollerMotor.getConfigurator().apply(intakeRollerConfig); // apply the config settings
 
         // The Intake Expansion motor
         this.intakeExpansionMotor = new TalonFX(Constants.CAN.CTRE.intakeExpansion, Constants.CAN.CTRE.bus);
@@ -151,11 +151,11 @@ public class IntakeIOReal implements IntakeIO {
         intakeExpansionMotor.getConfigurator().apply(intakeExpansionConfig); // apply the config settings
 
         // Status Signals
-        this.intakeAngularVelocity = this.intakeRollerMotor.getRotorVelocity();
+        // this.intakeAngularVelocity = this.intakeRollerMotor.getRotorVelocity();
         this.expansionMotorAngle = this.intakeExpansionMotor.getPosition();
         this.expansionAngularVelocity = this.intakeExpansionMotor.getRotorVelocity();
         BaseStatusSignal.setUpdateFrequencyForAll(
-                Units.Hertz.of(100), intakeAngularVelocity, expansionMotorAngle, expansionAngularVelocity);
+                Units.Hertz.of(100),/* intakeAngularVelocity, */expansionMotorAngle, expansionAngularVelocity);
 
         // Retract Position voltage control
         this.retractPositionControl = new PositionVoltage(Units.Rotations.zero()).withSlot(0);
@@ -248,7 +248,7 @@ public class IntakeIOReal implements IntakeIO {
     @Override
     public void setState(Constants.Intake.IntakeStates state) {
         // Do a feed forward later
-        intakeRollerMotor.setControl(new DutyCycleOut(state.getSpeed()));
+        // intakeRollerMotor.setControl(new DutyCycleOut(state.getSpeed()));
     }
 
     @Override
@@ -266,8 +266,8 @@ public class IntakeIOReal implements IntakeIO {
 
     @Override
     public void updateInputs(IntakeInputs intakeInputs) {
-        BaseStatusSignal.refreshAll(intakeAngularVelocity, expansionMotorAngle, expansionAngularVelocity);
-        intakeInputs.angularVelocity = intakeAngularVelocity.getValue();
+        BaseStatusSignal.refreshAll(/*intakeAngularVelocity,*/ expansionMotorAngle, expansionAngularVelocity);
+        // intakeInputs.angularVelocity = intakeAngularVelocity.getValue();
         intakeInputs.expansionMotorAngle =
                 Units.Inches.of(expansionMotorAngle.getValue().in(Units.Rotations));
         intakeInputs.expansionAngularVelocity =
@@ -279,18 +279,18 @@ public class IntakeIOReal implements IntakeIO {
         // 1) Fetch the TalonFXSimState for each motor controller. Sim state will
         //      provide output voltage to the motor and we will update it with simulated motor pos/vel
         TalonFXSimState expansionMotorSimState = intakeExpansionMotor.getSimState();
-        TalonFXSimState rollerMotorSimState = intakeRollerMotor.getSimState();
+        // TalonFXSimState rollerMotorSimState = intakeRollerMotor.getSimState();
 
         // 2) Set supply voltage to the motor controllers (this can simulate battery load/brownout)
         expansionMotorSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
-        rollerMotorSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
+        // rollerMotorSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
 
         // 3) Get voltage output from motor controllers, and set input voltage to the motor sims
         Voltage expansionMotorVoltage = expansionMotorSimState.getMotorVoltageMeasure();
         expansionDCMotorSim.setInputVoltage(addFriction(expansionMotorVoltage.in(Units.Volts), 0.2));
 
-        Voltage rollerMotorVoltage = rollerMotorSimState.getMotorVoltageMeasure();
-        rollerDCMotorSim.setInputVoltage(addFriction(rollerMotorVoltage.in(Units.Volts), 0.2));
+        // Voltage rollerMotorVoltage = rollerMotorSimState.getMotorVoltageMeasure();
+        // rollerDCMotorSim.setInputVoltage(addFriction(rollerMotorVoltage.in(Units.Volts), 0.2));
 
         // 4) Update motor sim with a time step. This will have the motor sim move based on input voltage and give us
         // back the new motor position
@@ -303,10 +303,10 @@ public class IntakeIOReal implements IntakeIO {
         expansionMotorSimState.setRotorVelocity(
                 expansionDCMotorSim.getAngularVelocity().times(Constants.Intake.expensionMotorGearRatio));
 
-        rollerMotorSimState.setRawRotorPosition(
-                rollerDCMotorSim.getAngularPosition().times(Constants.Intake.rollerMotorGearRatio));
-        rollerMotorSimState.setRotorVelocity(
-                rollerDCMotorSim.getAngularVelocity().times(Constants.Intake.rollerMotorGearRatio));
+        // rollerMotorSimState.setRawRotorPosition(
+        //         rollerDCMotorSim.getAngularPosition().times(Constants.Intake.rollerMotorGearRatio));
+        // rollerMotorSimState.setRotorVelocity(
+        //         rollerDCMotorSim.getAngularVelocity().times(Constants.Intake.rollerMotorGearRatio));
 
         // 5) Set the Limit Swiches
         expansionMotorSimState.setReverseLimit(
