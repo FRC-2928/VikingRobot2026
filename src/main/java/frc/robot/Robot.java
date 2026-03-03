@@ -16,6 +16,7 @@ import frc.robot.utils.ShooterDataCollector;
 import frc.robot.utils.ShooterDataCollectorIO;
 import frc.robot.utils.ShooterDataCollectorIOReal;
 import frc.robot.utils.ShooterLookupTableBuilder;
+import frc.robot.vision.Limelight;
 
 import org.littletonrobotics.junction.LoggedPowerDistribution;
 import org.littletonrobotics.junction.LoggedRobot;
@@ -86,6 +87,9 @@ public class Robot extends LoggedRobot {
     @Override
     public void disabledInit() {
         mRobotContainer.drivetrain.limelightLeft.setIMUMode(1);
+        for(Limelight limelight : mRobotContainer.drivetrain.limelights) {
+            limelight.setThrottleRate(100);
+        }
     }
 
     @Override
@@ -100,7 +104,9 @@ public class Robot extends LoggedRobot {
     public void autonomousInit() {
         mAutonomousCommand = mRobotContainer.getAutonomousCommand();
         mRobotContainer.drivetrain.setState(CommandSwerveDrivetrain.WantedState.AUTONOMOUS);
-
+        for(Limelight limelight : mRobotContainer.drivetrain.limelights) {
+            limelight.setThrottleRate(1);
+        }
         if (mAutonomousCommand != null) {
             CommandScheduler.getInstance().schedule(mAutonomousCommand);
         }
@@ -120,6 +126,9 @@ public class Robot extends LoggedRobot {
             CommandScheduler.getInstance().cancel(mAutonomousCommand);
         }
         mRobotContainer.setTeleopStartTime();
+        for(Limelight limelight : mRobotContainer.drivetrain.limelights) {
+            limelight.setThrottleRate(1);
+        }
     }
 
     @Override

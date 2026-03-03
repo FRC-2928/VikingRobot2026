@@ -11,7 +11,9 @@ import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
 import com.ctre.phoenix6.BaseStatusSignal;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -24,7 +26,9 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.RobotContainer;
+import frc.robot.Constants.Intake.IntakeStates;
 import frc.robot.commands.Intake.ExtendAndRunIntake;
+import frc.robot.subsystems.Intake.WantedState;
 
 public class Superstructure extends SubsystemBase {
 
@@ -257,6 +261,7 @@ public class Superstructure extends SubsystemBase {
     public void periodic() {
         Logger.recordOutput("Superstructure/SimultaneousOverrideRequests", mSimultaneousOverrideRequests);
         Logger.recordOutput("Superstructure/NoActiveOverridesCount", mNoActiveOverridesCount);
+        Logger.recordOutput("Superstructure/hoodAngle", Math.round(mRobotContainer.shooter.getHoodAngle().in(Units.Degrees)));
 
         RobotState lastState;
         do {
@@ -296,7 +301,7 @@ public class Superstructure extends SubsystemBase {
     private Command driveTargetLock() {
         return new ParallelCommandGroup(
                 mRobotContainer.drivetrain.targetLock(),
-                prepareShooter());
+                prepareShooter())
             .andThen(startShooting());
     }
 
@@ -410,7 +415,7 @@ public class Superstructure extends SubsystemBase {
         mRobotContainer.drivetrain.setState(CommandSwerveDrivetrain.WantedState.IDLE);
         mRobotContainer.hopperFloor.halt();
         mRobotContainer.indexer.halt();
-        mRobotContainer.intake.setWantedState(IntakeIOReal.WantedState.RETRACT);
+        mRobotContainer.intake.setWantedState(Intake.WantedState.RETRACT);
         mRobotContainer.shooter.home();
     }
 

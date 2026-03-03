@@ -166,7 +166,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     //intake
     public final Limelight limelightForward = new Limelight("limelight-forward");
 
-    public final Limelight[] limelights = {limelightRight, limelightBack, limelightForward};
+    public final Limelight[] limelights = {limelightRight, limelightBack, limelightForward, limelightForward};
 
     private double xSpeed;
     private double xSpeedPid;
@@ -813,6 +813,19 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                                                 ? 0
                                                 : 0))
                                 .plus(new Rotation2d(Math.PI / 2)))),
+                new RunCommand(() -> snapToHeading =
+                        new Rotation2d(mCurrentSwerveState.Pose.getRotation().getRadians())));
+    }
+
+    public Command aimAtHomeAndMove(BaseOI controllerOI, double speedMultipliter) {
+        return new ParallelCommandGroup(
+                this.applyRequest(() -> driveAndPoint
+                        .withVelocityX(-controllerOI.controller.getLeftY()
+                                * maxSpeed
+                                * speedMultipliter) // Drive forward with negative Y (forward)
+                        .withVelocityY(
+                                -controllerOI.controller.getLeftX() * maxSpeed * speedMultipliter) // Drive left with negative X (left)
+                        .withTargetDirection(new Rotation2d((DriverStation.getAlliance().get() == Alliance.Red)? Math.PI : 0))),
                 new RunCommand(() -> snapToHeading =
                         new Rotation2d(mCurrentSwerveState.Pose.getRotation().getRadians())));
     }
