@@ -71,7 +71,7 @@ public class ShooterIOReal implements ShooterIO {
         //
         final TalonFXConfiguration flywheelsConfig = new TalonFXConfiguration();
 
-        flywheelsConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        flywheelsConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         flywheelsConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
         // Peak Output Amps
