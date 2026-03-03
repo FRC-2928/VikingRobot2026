@@ -361,10 +361,9 @@ public class Superstructure extends SubsystemBase {
     private void checkTransitionFromFreeDrive() {
         if (mTargetLockRequested) {
             currentState = RobotState.DRIVE_TARGET_LOCK;
-        } 
-        // else if () {
-        //     currentState = RobotState.AUTO_INTAKE;
-        // }
+        } else if (StateIntent.ACTION_INTAKE_AUTO.isIntended) {
+            currentState = RobotState.AUTO_INTAKE;
+        }
     }
 
     private void checkTransitionFromTargetLock() {
