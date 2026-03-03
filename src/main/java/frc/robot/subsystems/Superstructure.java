@@ -35,7 +35,21 @@ public class Superstructure extends SubsystemBase {
     public enum StateIntent {
         ACTION_TOGGLE_TARGET_LOCK_MODE,
         ACTION_SHOOT_OVERRIDE,
-        ACTION_NONE
+        ACTION_INTAKE_MANUAL,
+        ACTION_INTAKE_AUTO,
+        ACTION_NONE;
+
+        private StateIntent() {
+            isIntended = false;
+        }
+
+        boolean isIntended;
+
+        public void setIsIntended(boolean isIntended) { this.isIntended = isIntended; }
+
+        public boolean getIsInteded() { return isIntended; }
+
+        public void toggleIntent() { this.isIntended = !isIntended; }
     }
 
     public enum OverrideIntent {
@@ -51,7 +65,7 @@ public class Superstructure extends SubsystemBase {
         DRIVE_TARGET_LOCK,
         SHOOTING,
         MANUAL_INTAKE,
-        INTAKE,
+        AUTO_INTAKE,
         MID_FIELD,
         GET_READY_CLIMB,
         UNJAM
@@ -141,6 +155,7 @@ public class Superstructure extends SubsystemBase {
         initState(RobotState.FREE_DRIVE, freeDrive());
         initState(RobotState.DRIVE_TARGET_LOCK, driveTargetLock());
         initState(RobotState.MANUAL_INTAKE, extendAndIntake());
+        initState(RobotState.AUTO_INTAKE, autoIntake());
         initState(RobotState.SHOOTING, startShooting());
 
         transitionFunctions = new HashMap<>();
@@ -155,6 +170,7 @@ public class Superstructure extends SubsystemBase {
         transitionFunctions.put(RobotState.DRIVE_TARGET_LOCK, this::checkTransitionFromTargetLock);
         transitionFunctions.put(RobotState.SHOOTING, this::checkTransitionFromShooting);
         transitionFunctions.put(RobotState.MANUAL_INTAKE, this::checkManualIntakeTransition);
+        transitionFunctions.put(RobotState.AUTO_INTAKE, this::checkTransitionFromAutoIntake);
     }
 
     /**
@@ -162,7 +178,7 @@ public class Superstructure extends SubsystemBase {
      *
      * @param intent the requested @c StateIntent
      */
-    public void toggleIntent(StateIntent intent) {
+    private void toggleIntent(StateIntent intent) {
         switch (intent) {
             case ACTION_TOGGLE_TARGET_LOCK_MODE: {
                 mTargetLockRequested = !mTargetLockRequested;
@@ -173,6 +189,14 @@ public class Superstructure extends SubsystemBase {
                 break;
             }
         }
+    }
+
+    public Command setIntent(StateIntent intent, boolean intended) {
+        return new InstantCommand(() -> intent.setIsIntended(intended));
+    }
+
+    public Command toggleStateIntent(StateIntent intent) {
+        return new InstantCommand(() -> toggleIntent(intent));
     }
 
     /**
@@ -302,6 +326,7 @@ public class Superstructure extends SubsystemBase {
         return new ParallelCommandGroup(
                 mRobotContainer.drivetrain.targetLock(),
                 prepareShooter())
+                prepareShooter())
             .andThen(startShooting());
     }
 
@@ -336,6 +361,8 @@ public class Superstructure extends SubsystemBase {
     private void checkTransitionFromFreeDrive() {
         if (mTargetLockRequested) {
             currentState = RobotState.DRIVE_TARGET_LOCK;
+        } else if () {
+            currentState = RobotState.AUTO_INTAKE;
         }
     }
 
@@ -361,6 +388,12 @@ public class Superstructure extends SubsystemBase {
         // if (driverOI.intake.getAsBoolean()) {
         //     currentState = RobotState.MANUAL_INTAKE;
         // }
+    }
+
+    private void checkTransitionFromAutoIntake() {
+        if (!StateIntent.ACTION_INTAKE_AUTO.getIsInteded()) {
+            currentState = RobotState.FREE_DRIVE;
+        }
     }
 
     // Runs flywheels and kicker. Command will not end on its own
@@ -399,6 +432,10 @@ public class Superstructure extends SubsystemBase {
 
     public Command extendAndIntake() {
         return new ExtendAndRunIntake(mRobotContainer.intake);
+    }
+
+    public Command autoIntake() {
+        return new IntakeGround(true, mRobotContainer, 1.0);
     }
 
     public Command pathWhileIntaking(String pathFileName) {

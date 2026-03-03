@@ -57,8 +57,8 @@ public class IndexerIOReal implements IndexerIO {
 
     @Override
     public void updateInputs(IndexerIOInputs indexerInputs) {
-        BaseStatusSignal.refreshAll(indexerVelocity);
-        indexerInputs.angularVelocity = indexerVelocity.getValue();
+        // BaseStatusSignal.refreshAll(indexerVelocity);
+        // indexerInputs.angularVelocity = indexerVelocity.getValue();
     }
 
     @Override

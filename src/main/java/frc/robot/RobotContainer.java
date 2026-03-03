@@ -56,7 +56,7 @@ public class RobotContainer {
     private Telemetry logger;
     public HopperFloor hopperFloor;
     public Indexer indexer;
-    public LEDSubsystem ledSubsystem;
+    // public LEDSubsystem ledSubsystem;
     private double teleopStart = 0;
 
     public static synchronized RobotContainer getInstance() {
@@ -85,7 +85,7 @@ public class RobotContainer {
         this.hopperFloor = new HopperFloor();
         this.logger = new Telemetry(MaxSpeed, drivetrain);
         this.autoChooser = Autonomous.getChoreoAutoChooser(this);
-        this.ledSubsystem = new LEDSubsystem(new LEDIOReal(), mSuperstructure.getRobotStateSupplier());
+        // this.ledSubsystem = new LEDSubsystem(new LEDIOReal(), mSuperstructure.getRobotStateSupplier());
         SmartDashboard.putData("Autonomous Routine", autoChooser);
         this.driverOI = new DriverOI(joystick1, mSuperstructure);
         this.operatorOI = new OperatorOI(joystick2);

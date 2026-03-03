@@ -1,16 +1,12 @@
 package frc.robot.oi;
 
-import java.util.List;
-import java.util.function.Supplier;
-
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.Constants;
-import frc.robot.Constants.Mode;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.Superstructure;
+import frc.robot.subsystems.Superstructure.StateIntent;
 
 public class DriverOI extends BaseOI {
     /// Class Members
@@ -34,6 +30,8 @@ public class DriverOI extends BaseOI {
     public final Trigger resetFOD;
     public final Trigger resetAngle;
 
+    public final Trigger autoIntake;
+
     public DriverOI(final CommandXboxController controller, Superstructure superstructure) {
         super(controller);
 
@@ -52,6 +50,7 @@ public class DriverOI extends BaseOI {
         //             robotContainer.shooter.getFlywheelVelocity().lte(Constants.Shooter.shooterVelocityTolerance);
         //     return /*facingHub &&*/ correctHoodAngle && correctFlywheelVelocity;
         // });
+        this.autoIntake = this.controller.leftTrigger();
 
         this.resetFOD = this.controller.y();
         this.resetAngle = this.controller.a();
@@ -68,13 +67,13 @@ public class DriverOI extends BaseOI {
         // this.intake.whileTrue(cont.superstructure.extendAndIntake());
         this.resetAngle.whileTrue(new RunCommand(cont.drivetrain::seedLimelightImu));
         this.resetAngle.whileFalse(new RunCommand(cont.drivetrain::setImuMode2));
-        var toggleRotationLockedModeCmd = new InstantCommand(
-            () -> mSuperstructure.toggleIntent(Superstructure.StateIntent.ACTION_TOGGLE_TARGET_LOCK_MODE),
-            mSuperstructure);
-        this.toggleRotationLockedMode.onTrue(toggleRotationLockedModeCmd);
+        this.toggleRotationLockedMode.onTrue(mSuperstructure.toggleStateIntent(Superstructure.StateIntent.ACTION_TOGGLE_TARGET_LOCK_MODE));
         this.shootOverride
             .onTrue(mSuperstructure.requestShootOverride())
             .onFalse(mSuperstructure.clearOverrideCommand());
+        this.autoIntake
+            .onTrue(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_AUTO, true))
+            .onFalse(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_AUTO, false));
         // this.spinKicker.onTrue(cont.shooter.startKicker());
         // this.shotConditionsMet
         //         .and(() -> cont.drivetrain
