@@ -1,6 +1,8 @@
 package frc.robot.oi;
 
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.RobotContainer;
@@ -15,11 +17,17 @@ public class OperatorOI extends BaseOI {
         this.nudgeShooterSpeedUp = this.controller.povRight();
         this.nudgeShooterSpeedDown = this.controller.povLeft();
 
+        this.nudgeClimberUp = this.controller.rightBumper();
+        this.nudgeClimberDown = this.controller.leftBumper();
+
         this.resetNudges = this.controller.leftStick();
     }
 
     public final Trigger nudgeShooterAngleUp;
     public final Trigger nudgeShooterAngleDown;
+
+    public final Trigger nudgeClimberUp;
+    public final Trigger nudgeClimberDown;
 
     public final Trigger nudgeShooterSpeedUp;
     public final Trigger nudgeShooterSpeedDown;
@@ -43,12 +51,23 @@ public class OperatorOI extends BaseOI {
     */
 
     public void configureControls() {
-        this.nudgeShooterAngleDown.onTrue(new InstantCommand(RobotContainer.getInstance().shooter::nudgeAngleDown, RobotContainer.getInstance().shooter));
-        this.nudgeShooterAngleUp.onTrue(new InstantCommand(RobotContainer.getInstance().shooter::nudgeAngleUp, RobotContainer.getInstance().shooter));
+        var cont = RobotContainer.getInstance();
+        this.nudgeShooterAngleDown.onTrue(new InstantCommand(cont.shooter::nudgeAngleDown, cont.shooter));
+        this.nudgeShooterAngleUp.onTrue(new InstantCommand(cont.shooter::nudgeAngleUp, cont.shooter));
 
-        this.nudgeShooterSpeedDown.onTrue(new InstantCommand(RobotContainer.getInstance().shooter::nudgeSpeedDown, RobotContainer.getInstance().shooter));
-        this.nudgeShooterSpeedUp.onTrue(new InstantCommand(RobotContainer.getInstance().shooter::nudgeSpeedUp, RobotContainer.getInstance().shooter));
+        this.nudgeShooterSpeedDown.onTrue(new InstantCommand(cont.shooter::nudgeSpeedDown, cont.shooter));
+        this.nudgeShooterSpeedUp.onTrue(new InstantCommand(cont.shooter::nudgeSpeedUp, cont.shooter));
 
-        this.resetNudges.onTrue(new InstantCommand(RobotContainer.getInstance().shooter::resetNudges));
+        this.nudgeClimberUp.onTrue(new InstantCommand(() -> 
+            cont.climber.moveClimberToggle(), 
+            cont.climber)
+        );
+        this.nudgeClimberUp.onTrue((new RunCommand(() -> {
+            cont.climber.climberIdle(); 
+            cont.climber.changeClimberToggle();}, 
+            cont.climber))
+        );
+
+        this.resetNudges.onTrue(new InstantCommand(cont.shooter::resetNudges));
     }
 }

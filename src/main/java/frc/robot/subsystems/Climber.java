@@ -63,6 +63,9 @@ public class Climber extends SubsystemBase {
     public final ClimberIO climberIO;
     public final ClimberIOInputs inputs = new ClimberIOInputs() {};
 
+    public boolean climberDownToggle = false;
+
+
     // changes the target heights based on the current height
     public void ascend() {
         if (height.getValueAsDouble() == ClimberHeight.HOMEPOS.height && DriverStation.isTeleopEnabled()) {
@@ -83,6 +86,22 @@ public class Climber extends SubsystemBase {
         }
     }
 
+    public void moveClimberToggle() {
+        if(climberDownToggle){
+            descend();
+            return;
+        }
+        ascend();
+    }
+
+    public void climberIdle(){
+        currentState = ClimberState.IDLE;
+    }
+
+    public  void changeClimberToggle(){
+        climberDownToggle = !climberDownToggle;
+    }
+
     public void initDefaultCommand() {
         setDefaultCommand(new ClimberDescend()); // sets the default command to go home
     }
@@ -93,6 +112,7 @@ public class Climber extends SubsystemBase {
     }
 
     //command that raises the arm of the climber for driving into climber zone.
+
     public Command raiseClimber(ClimberHeight target) {
         return new InstantCommand(() -> {
             Distance distance = Units.Inches.of(target.height);
@@ -157,6 +177,10 @@ public class Climber extends SubsystemBase {
                 case DESCENDING: {
                     climberIO.goDown(); // makes the climber go home
                     break;
+                }
+
+                case IDLE: {
+                    climberIO.halt();
                 }
 
                 case FAILED: {

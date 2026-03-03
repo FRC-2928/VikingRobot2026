@@ -24,6 +24,7 @@ import frc.robot.commands.drivetrain.CenterLimelight;
 import frc.robot.generated.TunerConstants;
 import frc.robot.oi.DriverOI;
 import frc.robot.oi.OperatorOI;
+import frc.robot.subsystems.Climber;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.HopperFloor;
 import frc.robot.subsystems.Indexer;
@@ -56,6 +57,7 @@ public class RobotContainer {
     private Telemetry logger;
     public HopperFloor hopperFloor;
     public Indexer indexer;
+    public Climber climber;
     // public LEDSubsystem ledSubsystem;
     private double teleopStart = 0;
 
@@ -79,6 +81,7 @@ public class RobotContainer {
         // registered subsystems -- this is an optimization that should help reduce CAN usage 
         this.mSuperstructure = Superstructure.create(this);
         this.drivetrain = TunerConstants.createDrivetrain();
+        this.climber = new Climber();
         this.shooter = new Shooter(this);
         this.intake = new Intake();
         this.indexer = new Indexer();
