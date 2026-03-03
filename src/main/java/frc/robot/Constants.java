@@ -114,10 +114,13 @@ public class Constants {
 
         public static final class Misc {
             public static final int pdh = 0;
-
-            public static final int feederLauncher = 0;
-            public static final int intakeRoller = 3;
         }
+
+        public static final class RIO {
+			public static final CANBus bus = new CANBus("rio");
+			/// CAN ID of the Kraken x44 controlling the Intake Roller
+			public static final int intakeRoller = 33;
+		}
 
         public static final class CTRE {
             public static final CANBus bus = new CANBus("canivore");
@@ -132,18 +135,16 @@ public class Constants {
 
             public static final int hopper = 23;
             public static final int indexer = 31;
-
-            public static final int intakeRoller = 99;
             public static final int intakeExpansion = 30;
 
             public static final int candle = 99;
         }
 
         public static final class INTAKE_CANDI {
-            /// Singleton instance of the CANdi for the Banana
+            /// Singleton instance of the CANdi for the Intake
             private static CANdi sInstance = null;
             /// CAN ID of the CANdi bridging the intake limit switch to the CAN bus
-            private static final int canId = 99;
+            private static final int canId = 32;
             /// Digital Inputs Configs for the CANdi
             private static final DigitalInputsConfigs dioConfigs = new DigitalInputsConfigs()
                     // S1In --> Expansion??
