@@ -27,7 +27,6 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.Constants;
-import frc.robot.Tuning;
 import frc.robot.Constants.Intake.IntakeStates;
 
 public class IntakeIOReal implements IntakeIO {
@@ -75,7 +74,7 @@ public class IntakeIOReal implements IntakeIO {
 
     public IntakeIOReal() {
         // The Intake Roller motor
-        this.intakeRollerMotor = new TalonFX(Constants.CAN.CTRE.intakeRoller, Constants.CAN.CTRE.bus);
+        this.intakeRollerMotor = new TalonFX(Constants.CAN.RIO.intakeRoller, Constants.CAN.RIO.bus);
 
         final TalonFXConfiguration intakeRollerConfig = new TalonFXConfiguration();
         CurrentLimitsConfigs intakeRollerCurrentLimitsConfigs = new CurrentLimitsConfigs()
