@@ -28,6 +28,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.RobotContainer;
 import frc.robot.Constants.Intake.IntakeStates;
 import frc.robot.commands.Intake.ExtendAndRunIntake;
+import frc.robot.commands.Intake.IntakeGround;
 import frc.robot.subsystems.Intake.WantedState;
 
 public class Superstructure extends SubsystemBase {
@@ -326,7 +327,6 @@ public class Superstructure extends SubsystemBase {
         return new ParallelCommandGroup(
                 mRobotContainer.drivetrain.targetLock(),
                 prepareShooter())
-                prepareShooter())
             .andThen(startShooting());
     }
 
@@ -361,9 +361,10 @@ public class Superstructure extends SubsystemBase {
     private void checkTransitionFromFreeDrive() {
         if (mTargetLockRequested) {
             currentState = RobotState.DRIVE_TARGET_LOCK;
-        } else if () {
-            currentState = RobotState.AUTO_INTAKE;
-        }
+        } 
+        // else if () {
+        //     currentState = RobotState.AUTO_INTAKE;
+        // }
     }
 
     private void checkTransitionFromTargetLock() {
