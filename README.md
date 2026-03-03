@@ -1,2 +1,2 @@
-# Pølserull
-This is *Pølserull*, it's pretty fast. *Pølserull* is our 2026 FRC robot. Pølserull mean "hot dog roller" in Norwegian, because of the hot dog roller we use to feed *fuel* into the shooter.
+# Slepnir
+*Slepnir* is Viking Robotics 2026. Slepnir is Odin's 8 legged horse, birthed by Loki.

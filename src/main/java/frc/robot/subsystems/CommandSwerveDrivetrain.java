@@ -80,7 +80,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         AUTONOMOUS,
         ROTATION_LOCK,
         DRIVE_TO_POINT,
-        IDLE
+        IDLE,
+        BRAKE
     }
 
     public enum SystemState {
@@ -89,7 +90,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         AUTONOMOUS,
         ROTATION_LOCK,
         DRIVE_TO_POINT,
-        IDLE
+        IDLE,
+        BRAKE
     }
 
     /// Current System State
@@ -466,6 +468,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             }
             case ROTATION_LOCK -> SystemState.ROTATION_LOCK;
             case DRIVE_TO_POINT -> SystemState.DRIVE_TO_POINT;
+            case BRAKE -> SystemState.BRAKE;
             default -> SystemState.IDLE;
         };
     }
@@ -506,6 +509,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             case DRIVE_TO_POINT:
                 // TODO: this is basically CenterLimelight...
                 centerLimelight(new Pose2d());
+                break;
+            case BRAKE:
+                this.setControl(brake);
                 break;
             case IDLE:
                 this.halt();
