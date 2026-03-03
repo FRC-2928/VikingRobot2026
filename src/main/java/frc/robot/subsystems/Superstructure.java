@@ -296,7 +296,7 @@ public class Superstructure extends SubsystemBase {
     private Command driveTargetLock() {
         return new ParallelCommandGroup(
                 mRobotContainer.drivetrain.targetLock(),
-                prepareShooter());
+                prepareShooter())
             .andThen(startShooting());
     }
 
