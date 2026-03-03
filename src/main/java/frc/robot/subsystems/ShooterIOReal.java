@@ -156,7 +156,7 @@ public class ShooterIOReal implements ShooterIO {
     @Override
     public void rotateHood(Angle hoodAngle) {
         this.hood.setControl(
-                new PositionVoltage(MathUtil.clamp(hoodAngle.in(Units.Degrees), 100.0, 140.0)).withSlot(0));
+                new PositionVoltage(MathUtil.clamp(hoodAngle.in(Units.Degrees) + angleNudgeDegrees, 100.0, 140.0)).withSlot(0));
     }
 
     // Runs the flywheel in the shooter. 2 motors. Based on voltage
@@ -168,7 +168,7 @@ public class ShooterIOReal implements ShooterIO {
     // Runs the flywheel in the shooter. 2 motors. Based on velocity
     @Override
     public void runFlywheelsVelocity(AngularVelocity speed) {
-        this.flywheelA.setControl(new VelocityVoltage(speed).withSlot(0));
+        this.flywheelA.setControl(new VelocityVoltage(speed.plus(Units.DegreesPerSecond.of(speedNudgeRPS))).withSlot(0));
     }
 
     // Runs the kicker. Shoots ball into flywheels.
@@ -254,12 +254,12 @@ public class ShooterIOReal implements ShooterIO {
 
     @Override
     public void nudgeAngleUp() {
-        this.angleNudgeDegrees += 2.0;
+        this.angleNudgeDegrees += 2.0; // Degrees
     }
 
     @Override
     public void nudgeAngleDown() {
-        this.angleNudgeDegrees -= 2.0;
+        this.angleNudgeDegrees -= 2.0; // Degrees
     }
 
     @Override

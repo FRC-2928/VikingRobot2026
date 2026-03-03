@@ -46,7 +46,7 @@ public class Shooter extends SubsystemBase {
     }
 
     public void aim() {
-        AimValues val = Constants.Shooter.lookUpTable.get(cont.drivetrain.getDistanceFromHub().in(Units.Meters));
+        AimValues val = Constants.Shooter.lookUpTable.get(RobotContainer.getInstance().drivetrain.getDistanceFromHub().in(Units.Meters));
         if (val != null) {
             this.io.runFlywheelsVelocity(val.shooterVelocity);
             this.io.rotateHood(val.hoodAngle);
@@ -75,9 +75,9 @@ public class Shooter extends SubsystemBase {
     }
 
     public boolean isAimed() {
-        boolean correctHoodAngle = cont.shooter.getHoodAngle().lte(Constants.Shooter.hoodAngleTolerance);
+        boolean correctHoodAngle = this.getHoodAngle().lte(Constants.Shooter.hoodAngleTolerance);
         boolean correctFlywheelVelocity =
-            cont.shooter.getFlywheelVelocity().lte(Constants.Shooter.shooterVelocityTolerance);
+            this.getFlywheelVelocity().lte(Constants.Shooter.shooterVelocityTolerance);
         return correctHoodAngle && correctFlywheelVelocity;
     }
 
