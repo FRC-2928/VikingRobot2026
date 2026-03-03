@@ -92,7 +92,7 @@ public class ShooterIOReal implements ShooterIO {
 
         flywheelA.getConfigurator().apply(flywheelsConfig);
         flywheelB.getConfigurator().apply(flywheelsConfig);
-        flywheelB.setControl(new Follower(flywheelA.getDeviceID(), MotorAlignmentValue.Opposed));
+        flywheelB.setControl(new Follower(flywheelA.getDeviceID(), MotorAlignmentValue.Aligned));
 
         //
         // Hood

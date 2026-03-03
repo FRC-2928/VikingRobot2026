@@ -93,11 +93,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     /// Current System State
-    private SystemState mCurrentState = SystemState.TELEOP_DRIVE;
+    private SystemState mCurrentState = SystemState.IDLE;
     /// Targeted System State
-    private WantedState mDesiredState = WantedState.TELEOP_DRIVE;
+    private WantedState mDesiredState = WantedState.IDLE;
     /// Swerve Drive State
-    private SwerveDriveState mCurrentSwerveState;
+    private SwerveDriveState mCurrentSwerveState = new SwerveDriveState();
 
     private static final double kSimLoopPeriod = 0.004; // 4 ms
     private Notifier m_simNotifier = null;
@@ -482,7 +482,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 //         .withSpeeds(calculateSpeedsBasedOnJoystickInputs())
                 //         .withDriveRequestType(SwerveModule.DriveRequestType.OpenLoopVoltage)
                 //         .withDesaturateWheelSpeeds(true));
-                joystickDrive(RobotContainer.getInstance().driverOI);
+                // joystickDrive(RobotContainer.getInstance().driverOI);
                 break;
             }
             case AUTONOMOUS: {
