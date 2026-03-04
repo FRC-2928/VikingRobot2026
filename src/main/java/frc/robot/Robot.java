@@ -4,6 +4,12 @@
 
 package frc.robot;
 
+import org.littletonrobotics.junction.LoggedPowerDistribution;
+import org.littletonrobotics.junction.LoggedRobot;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.NT4Publisher;
+import org.littletonrobotics.junction.wpilog.WPILOGWriter;
+
 import com.ctre.phoenix6.HootAutoReplay;
 
 import edu.wpi.first.wpilibj.DriverStation;
@@ -18,16 +24,11 @@ import frc.robot.utils.ShooterDataCollectorIOReal;
 import frc.robot.utils.ShooterLookupTableBuilder;
 import frc.robot.vision.Limelight;
 
-import org.littletonrobotics.junction.LoggedPowerDistribution;
-import org.littletonrobotics.junction.LoggedRobot;
-import org.littletonrobotics.junction.Logger;
-import org.littletonrobotics.junction.networktables.NT4Publisher;
-import org.littletonrobotics.junction.wpilog.WPILOGWriter;
-
 public class Robot extends LoggedRobot {
     private Command mAutonomousCommand;
 
     private final RobotContainer mRobotContainer;
+    private LoggedPowerDistribution pdh;
 
     /* log and replay timestamp and joystick data */
     private final HootAutoReplay m_timeAndJoystickReplay =
@@ -42,6 +43,7 @@ public class Robot extends LoggedRobot {
         Logger.start();
 
         mRobotContainer = RobotContainer.getInstance();
+        pdh = LoggedPowerDistribution.getInstance(Constants.CAN.Misc.pdh, ModuleType.kRev);
 
         DriverStation.silenceJoystickConnectionWarning(true);
     }
@@ -58,12 +60,18 @@ public class Robot extends LoggedRobot {
         shooterDataCollector = new ShooterDataCollector(shooterDataBuilder, io);
     }
 
+    private boolean m_lastEnabledState = false;
+
     @Override
     public void robotPeriodic() {
         m_timeAndJoystickReplay.update();
         CommandScheduler.getInstance().run();
-        LoggedPowerDistribution.getInstance(Constants.CAN.Misc.pdh, ModuleType.kRev);
-        mRobotContainer.drivetrain.limelightLeft.setThrottleRate(isEnabled() ? 0 : 100);
+
+        boolean enabled = isEnabled();
+        if (enabled != m_lastEnabledState) {
+            mRobotContainer.drivetrain.limelightLeft.setThrottleRate(enabled ? 0 : 100);
+            m_lastEnabledState = enabled;
+        }
 
         // Update shooter data collector (checks for dashboard input)
         shooterDataCollector.periodic();

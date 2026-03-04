@@ -47,8 +47,8 @@ import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.robot.RobotContainer;
 import frc.robot.LimelightHelpers.PoseEstimate;
+import frc.robot.RobotContainer;
 import frc.robot.generated.TunerConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.lib.BLine.FollowPath;
@@ -394,39 +394,21 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             });
         }
 
-        // if (mt2 != null) {
-        //     Logger.recordOutput("Drivetrain/poseMegatag", mt2.pose);
-        //     boolean rejectUpdate = false;
-
-        //     if (mt2.tagCount == 0) {
-        //         rejectUpdate = true;
-        //     }
-
-        //     Logger.recordOutput("Drivetrain/RejectUpdate", rejectUpdate);
-        //     if (!rejectUpdate) {
-        //         this.setVisionMeasurementStdDevs(VecBuilder.fill(.7, .7, 9999999));
-        //         this.addVisionMeasurement(mt2.pose, mt2.timestampSeconds);
-        //     }
-
-        // }
         for(Limelight limelight : limelights){
 			PoseEstimate mt2 = limelight.getPoseMegatag2();
 			if (mt2 != null) {
-				Logger.recordOutput("Drivetrain/poseMegatag"+limelight.getLimelightName(), mt2.pose);
+				Logger.recordOutput("Drivetrain/poseMegatag_" + limelight.getLimelightName(), mt2.pose);
 
-				// if our angular velocity is greater than 720 degrees per second, ignore vision updates or if it doesnt see any tags		
-				Logger.recordOutput("Drivetrain/doRejectUpdate" +limelight.getLimelightName(), isUpdateable(mt2));
-				if(isUpdateable(mt2)) {
-                    //VecBuilder.fill(0.7,0.7,9999999) default trust
+				// if our angular velocity is greater than 720 degrees per second, ignore vision updates or if it doesnt see any tags
+				var acceptUpdate = isUpdateable(mt2);
+                Logger.recordOutput("Drivetrain/acceptUpdate_" + limelight.getLimelightName(), acceptUpdate);
+				if (acceptUpdate) {
 					this.setVisionMeasurementStdDevs(limelight.getLimelightTrust());
-					this.addVisionMeasurement(
-						mt2.pose,
-						mt2.timestampSeconds);
+					this.addVisionMeasurement(mt2.pose, mt2.timestampSeconds);
 				}
 			}
 		}
 
-        Logger.recordOutput("Drivetrain/Pose", mCurrentSwerveState.Pose);
         Logger.recordOutput("Drivetrain/Imumode", limelightLeft.getImuMode());
         PoseEstimate mt1 = this.limelightLeft.getPoseMegatag1();
         if (mt1 != null) {
@@ -483,13 +465,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             case SYS_ID:
                 break;
             case TELEOP_DRIVE: {
-                this.setControl((driveApplyFieldSpeeds.withSpeeds(calculateSpeedsBasedOnJoystickInputs(RobotContainer.getInstance().driverOI))));
-                // FIXME: this needs to be our internal call...
-                // applyRequest(new SwerveRequest.ApplyFieldSpeeds()
-                //         .withSpeeds(calculateSpeedsBasedOnJoystickInputs())
-                //         .withDriveRequestType(SwerveModule.DriveRequestType.OpenLoopVoltage)
-                //         .withDesaturateWheelSpeeds(true));
-                // joystickDrive(RobotContainer.getInstance().driverOI);
+                ChassisSpeeds freeDriveSpeeds = calculateSpeedsBasedOnJoystickInputs(RobotContainer.getInstance().driverOI);
+                this.setControl((driveApplyFieldSpeeds.withSpeeds(freeDriveSpeeds)));
                 break;
             }
             case AUTONOMOUS: {
@@ -498,21 +475,16 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 break;
             }
             case ROTATION_LOCK: {
+                ChassisSpeeds rotLockSpeeds = calculateSpeedsBasedOnJoystickInputs(RobotContainer.getInstance().driverOI);
                 this.setControl((driveAndPoint
-                            .withVelocityX(calculateSpeedsBasedOnJoystickInputs(RobotContainer.getInstance().driverOI).vxMetersPerSecond)
-                            .withVelocityY(calculateSpeedsBasedOnJoystickInputs(RobotContainer.getInstance().driverOI).vyMetersPerSecond)
+                            .withVelocityX(rotLockSpeeds.vxMetersPerSecond)
+                            .withVelocityY(rotLockSpeeds.vyMetersPerSecond)
                             .withTargetDirection(snapToHeading)));
-                // FIXME: this needs to be our internal call...
-                aimAtHubAndMove(RobotContainer.getInstance().driverOI, 0);
-                // io.setSwerveState(driveAtAngle
-                //         .withVelocityX(calculateSpeedsBasedOnJoystickInputs().vxMetersPerSecond)
-                //         .withVelocityY(calculateSpeedsBasedOnJoystickInputs().vyMetersPerSecond)
-                //         .withTargetDirection(desiredRotationForRotationLockState));
                 break;
             }
             case DRIVE_TO_POINT:
                 // TODO: this is basically CenterLimelight...
-                centerLimelight(new Pose2d());
+                // centerLimelight(new Pose2d());
                 break;
             case INTAKE_GROUND:
                 intakeGround(1);
@@ -571,7 +543,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         Logger.recordOutput("Drivetrain/Auto/Center Is Finished", false);
         Logger.recordOutput("Drivetrain/Auto/XSpeedPid", xSpeedPid);
         Logger.recordOutput("Drivetrain/Auto/YSpeedPid", ySpeedPid);
-        Logger.recordOutput("Drivetrain/Auto/limelightHasValidTargets", limelight.hasValidTargets());
         Logger.recordOutput(
                 "Drivetrain/Auto/Theta",
                 limelight.getBotPose3d_TargetSpace().getRotation().getAngle());
@@ -628,28 +599,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                     .withDriveRequestType(DriveRequestType.OpenLoopVoltage)
                     .withDesaturateWheelSpeeds(true);
         });
-        // return applyRequest(() -> {
-        //     double x = -controllerOI.controller.getLeftY() * maxSpeed;
-        //     double y = -controllerOI.controller.getLeftX() * maxSpeed;
-
-        //     double rx = MathUtil.applyDeadband(-controllerOI.controller.getRightX(), 0.3);
-        //     double rotationRate = rx * maxAngularRate;
-
-        //     snapToHeading = snapToHeading.plus(new Rotation2d(rotationRate
-        //             * (Timer.getFPGATimestamp()
-        //                     - lastUpdate))); // TODO: change 0.02 constant timestep to calculate actual timestamp
-        //     lastUpdate = Timer.getFPGATimestamp();
-        //     Logger.recordOutput("Drivetrain/inRotateMode", rotationRate != 0);
-        //     var skewCompensation = currentChassisSpeeds.omegaRadiansPerSecond * -0.03;
-        //     snapToHeading = new Rotation2d(currentPose2D.getRotation().getMeasure());
-        //     return drive.withVelocityX(MathUtil.applyDeadband(x, 0.1))
-        //             .withVelocityY(MathUtil.applyDeadband(y, 0.1))
-        //             .withRotationalRate(rotationRate + skewCompensation);
-        //     // return driveAndPoint
-        //     //         .withVelocityX(MathUtil.applyDeadband(x, 0.1))
-        //     //         .withVelocityY(MathUtil.applyDeadband(y, 0.1))
-        //     //         .withTargetDirection(snapToHeading);
-        // });
     }
     // spotless: on
 
