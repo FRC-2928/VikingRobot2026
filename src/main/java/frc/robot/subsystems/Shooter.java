@@ -67,7 +67,7 @@ public class Shooter extends SubsystemBase {
     }
 
     public void home() {
-        this.io.runFlywheelsVelocity(Units.DegreesPerSecond.zero());
+        this.io.stopFlyWheels();
         this.io.rotateHood(Units.Degrees.zero());
         this.io.runKicker(Units.Volts.zero());
     }

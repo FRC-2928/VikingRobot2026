@@ -19,6 +19,8 @@ public interface ShooterIO {
 
     public default void runFlywheels() {}
 
+    public default void stopFlyWheels() {}
+
     public default void runFlywheelsVelocity(AngularVelocity speed) {}
 
     public default void runKicker(Voltage kickerVoltage) {}

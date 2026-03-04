@@ -196,6 +196,10 @@ public class ShooterIOReal implements ShooterIO {
         this.flywheelA.setControl(new VoltageOut(9));
     }
 
+    public void stopFlyWheels() {
+        this.flywheelA.setControl(new VelocityVoltage(0));
+    }
+
     // Runs the flywheel in the shooter. 2 motors. Based on velocity
     @Override
     public void runFlywheelsVelocity(AngularVelocity speed) {
