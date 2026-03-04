@@ -146,6 +146,8 @@ public class ShooterIOReal implements ShooterIO {
         // PID Values
         hoodConfig.Slot0 = hoodSlot0Config;
 
+        hood.getConfigurator().apply(hoodConfig);
+
         //
         // Kicker
         //
@@ -168,6 +170,8 @@ public class ShooterIOReal implements ShooterIO {
 
         // PID Values
         kickerConfig.Slot0 = kickerSlot0Config;
+
+        kicker.getConfigurator().apply(kickerConfig);
 
         this.velocityA = this.flywheelA.getRotorVelocity();
         this.velocityB = this.flywheelB.getRotorVelocity();
