@@ -9,8 +9,6 @@ public interface ClimberIO {
     public static class ClimberIOInputs {
         public double height; // may not need to maintain the postion
         public boolean home; // boolean for the home postion of the motor
-        public boolean forwardLimitSwitch;
-        public boolean reverseLimitSwitch;
     }
 
     public default void updateInputs(ClimberIOInputs climberIOInputs) {}
@@ -22,8 +20,6 @@ public interface ClimberIO {
     public default void goUp() {}
 
     public default void goDown() {}
-
-    public default void halt() {}
 
     public default void goToPosition(Distance distance) {}
 
