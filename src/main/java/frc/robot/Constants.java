@@ -304,6 +304,8 @@ public class Constants {
         }
 
         public static final Angle shooterAngleOffsetFromFront = Units.Degrees.of(90);
+        //hoodAngle, velocity, distance
+        public static final double[][] temporaryLookupTable = {{75, 240, 60}, {70, 245, 72}, {68, 245, 84}, {61, 258, 108}, {57, 270, 132}, {54, 282, 156}, {54, 302, 180}, {53, 317, 204}, {53, 328, 228}, {52, 243, 252}};
 
         // Gear Ratios
         public static final double flywheelGearRatio = 1.0;
@@ -323,6 +325,10 @@ public class Constants {
         static {
             // Add temperory values to the tree
             Shooter.lookUpTable.put(5.0, new AimValues(Units.Degrees.of(20), Units.RotationsPerSecond.of(50)));
+
+            for(double[] point: temporaryLookupTable ){
+                Shooter.lookUpTable.put(Units.Inches.of(point[2]).in(Units.Meters), new AimValues(Units.Degrees.of(point[0]), Units.RotationsPerSecond.of(point[1])));
+            }
         }
 
         public static class AimValues {

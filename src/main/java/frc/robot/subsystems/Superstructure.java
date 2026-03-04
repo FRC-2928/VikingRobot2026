@@ -255,6 +255,9 @@ public class Superstructure extends SubsystemBase {
      */
     @Override
     public void periodic() {
+        Logger.recordOutput("Superstructure/SimultaneousOverrideRequests", mSimultaneousOverrideRequests);
+        Logger.recordOutput("Superstructure/NoActiveOverridesCount", mNoActiveOverridesCount);
+
         RobotState lastState;
         do {
             lastState = currentState;  // track the most recent state of the robot in case it changes
@@ -279,6 +282,7 @@ public class Superstructure extends SubsystemBase {
     }
 
     private Command freeDrive() {
+        mRobotContainer.intake.setWantedState(Intake.WantedState.STOP);
         return mRobotContainer.drivetrain.freeDrive();
     }
 
@@ -387,6 +391,13 @@ public class Superstructure extends SubsystemBase {
 
     public Command extendAndIntake() {
         return new ExtendAndRunIntake(mRobotContainer.intake);
+    }
+
+    public Command autoIntake() {
+        return new RunCommand(() -> {
+            mRobotContainer.drivetrain.setState(CommandSwerveDrivetrain.WantedState.INTAKE_GROUND);
+            mRobotContainer.intake.setWantedState(Intake.WantedState.INTAKE);
+        }, mRobotContainer.drivetrain);
     }
 
     public Command pathWhileIntaking(String pathFileName) {

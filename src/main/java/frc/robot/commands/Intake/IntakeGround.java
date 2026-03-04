@@ -62,15 +62,14 @@ public class IntakeGround extends Command {
     }
 
     public double calculateSpeedX() {
-        double output = adjustX.calculate(
-                -1 * drivetrain.limelightLeft.getTargetHorizontalOffset().in(Units.Degrees), 0);
+        double output = 0.5;
         Logger.recordOutput("Drivetrain/auto/SpeedXIntakeGroun", output);
         return output;
     }
 
     public double calculateSpeedY() {
         double output = adjustY.calculate(
-                Math.abs(1 / drivetrain.limelightLeft.getTargetHorizontalOffset().in(Units.Degrees)), 0);
+                drivetrain.limelightLeft.getTargetHorizontalOffset().in(Units.Degrees), 0);
         Logger.recordOutput("Drivetrain/auto/SpeedYIntakeGround", output);
         return output;
     }

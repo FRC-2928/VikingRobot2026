@@ -80,6 +80,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         AUTONOMOUS,
         ROTATION_LOCK,
         DRIVE_TO_POINT,
+        INTAKE_GROUND,
         IDLE,
         BRAKE
     }
@@ -90,6 +91,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         AUTONOMOUS,
         ROTATION_LOCK,
         DRIVE_TO_POINT,
+        INTAKE_GROUND,
         IDLE,
         BRAKE
     }
@@ -155,6 +157,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private AutoFactory autoFactory;
     private final PIDController xController = new PIDController(5, 0.0, 0);
     private final PIDController headingController = new PIDController(5, 0.0, 0.2);
+    private final PIDController adjustY = new PIDController(0.5, 0, 0);
 
     private final SwerveRequest.ApplyRobotSpeeds applyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds()
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
@@ -469,6 +472,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             case ROTATION_LOCK -> SystemState.ROTATION_LOCK;
             case DRIVE_TO_POINT -> SystemState.DRIVE_TO_POINT;
             case BRAKE -> SystemState.BRAKE;
+            case INTAKE_GROUND -> SystemState.INTAKE_GROUND;
             default -> SystemState.IDLE;
         };
     }
@@ -509,6 +513,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             case DRIVE_TO_POINT:
                 // TODO: this is basically CenterLimelight...
                 centerLimelight(new Pose2d());
+                break;
+            case INTAKE_GROUND:
+                intakeGround(1);
                 break;
             case BRAKE:
                 this.setControl(brake);
@@ -852,6 +859,31 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return Units.Meters.of(Math.hypot(
                 (getHubX() - mCurrentSwerveState.Pose.getMeasureX().in(Units.Meters)),
                 (hubY - mCurrentSwerveState.Pose.getMeasureY().in(Units.Meters))));
+    }
+
+     public void intakeGround(double speedMultiplier) {
+        // TODO: get reasonable speed
+        // intake.setIntakeSpeed(Tuning.intakeVelocity.get());
+        var cont = RobotContainer.getInstance();
+            this.setControl(this
+                    .driveAndPoint
+                    .withVelocityX((cont.joystick1.getLeftX() * speedMultiplier + this.calculateSpeedX())
+                            * cont.MaxSpeed)
+                    .withVelocityY((cont.joystick1.getLeftY() * speedMultiplier + this.calculateSpeedY())
+                            * cont.MaxSpeed));
+    }
+
+    public double calculateSpeedX() {
+        double output = 0.5;
+        Logger.recordOutput("Drivetrain/auto/SpeedXIntakeGroun", output);
+        return output;
+    }
+
+    public double calculateSpeedY() {
+        double output = adjustY.calculate(
+                this.limelightLeft.getTargetHorizontalOffset().in(Units.Degrees), 0);
+        Logger.recordOutput("Drivetrain/auto/SpeedYIntakeGround", output);
+        return output;
     }
     // spotless: on
 
