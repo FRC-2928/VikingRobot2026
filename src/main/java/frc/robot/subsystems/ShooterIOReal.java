@@ -4,16 +4,23 @@ import org.littletonrobotics.junction.Logger;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.CANcoderConfiguration;
+import com.ctre.phoenix6.configs.FeedbackConfigs;
+import com.ctre.phoenix6.configs.MagnetSensorConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
+import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.SensorDirectionValue;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
 import edu.wpi.first.math.MathUtil;
@@ -34,6 +41,7 @@ public class ShooterIOReal implements ShooterIO {
     private final TalonFX flywheelB; // Kraken x60
     private final TalonFX kicker; // Kraken x44
     private final TalonFX hood; // Kraken x44
+    private final CANcoder hoodEncoder;  // Remote Encoder for the hood
 
     // --------------------- Simulation Interfaces ---------------------
     private DCMotorSim flywheelADCMotorSim = new DCMotorSim(
@@ -83,8 +91,7 @@ public class ShooterIOReal implements ShooterIO {
         // Supply Current Limits
         flywheelsConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         flywheelsConfig.CurrentLimits.SupplyCurrentLimit = 60; // max current draw allowed
-        flywheelsConfig.CurrentLimits.SupplyCurrentLowerLimit =
-                35; // current allowed *after* the supply current limit is reached
+        flywheelsConfig.CurrentLimits.SupplyCurrentLowerLimit = 35; // current allowed *after* the supply current limit is reached
         flywheelsConfig.CurrentLimits.SupplyCurrentLowerTime = 0.1; // max time allowed to draw SupplyCurrentLimit
 
         // PID Values
@@ -93,6 +100,17 @@ public class ShooterIOReal implements ShooterIO {
         flywheelA.getConfigurator().apply(flywheelsConfig);
         flywheelB.getConfigurator().apply(flywheelsConfig);
         flywheelB.setControl(new Follower(flywheelA.getDeviceID(), MotorAlignmentValue.Aligned));
+
+        //
+        // Hood Encoder
+        //
+        hoodEncoder = new CANcoder(0, Constants.CAN.CTRE.bus);
+        CANcoderConfiguration hoodEncoderConfig = new CANcoderConfiguration();
+        hoodEncoderConfig.MagnetSensor = new MagnetSensorConfigs()
+            .withSensorDirection(SensorDirectionValue.Clockwise_Positive)
+            .withAbsoluteSensorDiscontinuityPoint(0.5)
+            .withMagnetOffset(Units.Rotations.of(0.375));
+        hoodEncoder.getConfigurator().apply(hoodEncoderConfig);
 
         //
         // Hood
@@ -111,10 +129,20 @@ public class ShooterIOReal implements ShooterIO {
         // Supply Current Limits
         hoodConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         hoodConfig.CurrentLimits.SupplyCurrentLimit = 60; // max current draw allowed
-        hoodConfig.CurrentLimits.SupplyCurrentLowerLimit =
-                35; // current allowed *after* the supply current limit is reached
+        hoodConfig.CurrentLimits.SupplyCurrentLowerLimit = 35; // current allowed *after* the supply current limit is reached
         hoodConfig.CurrentLimits.SupplyCurrentLowerTime = 0.1; // max time allowed to draw SupplyCurrentLimit
 
+        hoodConfig.Feedback = new FeedbackConfigs()
+            .withFeedbackRemoteSensorID(0)
+            .withFeedbackSensorSource(FeedbackSensorSourceValue.RemoteCANcoder)
+            .withSensorToMechanismRatio(1);
+
+        SoftwareLimitSwitchConfigs softLimits = new SoftwareLimitSwitchConfigs()
+            .withForwardSoftLimitEnable(true)
+            .withForwardSoftLimitThreshold(Units.Degrees.of(50))
+            .withReverseSoftLimitEnable(true)
+            .withReverseSoftLimitThreshold(Units.Degrees.of(0));
+        hoodConfig.withSoftwareLimitSwitch(softLimits);
         // PID Values
         hoodConfig.Slot0 = hoodSlot0Config;
 
@@ -123,7 +151,7 @@ public class ShooterIOReal implements ShooterIO {
         //
         final TalonFXConfiguration kickerConfig = new TalonFXConfiguration(); // TODO: Check everything about this
 
-        kickerConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        kickerConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         kickerConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
         // Peak Output Amps
@@ -135,8 +163,7 @@ public class ShooterIOReal implements ShooterIO {
         // Supply Current Limits
         kickerConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         kickerConfig.CurrentLimits.SupplyCurrentLimit = 60; // max current draw allowed
-        kickerConfig.CurrentLimits.SupplyCurrentLowerLimit =
-                35; // current allowed *after* the supply current limit is reached
+        kickerConfig.CurrentLimits.SupplyCurrentLowerLimit = 35; // current allowed *after* the supply current limit is reached
         kickerConfig.CurrentLimits.SupplyCurrentLowerTime = 0.1; // max time allowed to draw SupplyCurrentLimit
 
         // PID Values
