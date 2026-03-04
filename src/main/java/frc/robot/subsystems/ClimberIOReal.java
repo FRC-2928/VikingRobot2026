@@ -93,7 +93,7 @@ public class ClimberIOReal implements ClimberIO {
         if (currentDerivative >= 150) { // Threshold of 150 Amps/sec spike
             return true;
         } else {
-            return false;
+            return true; //change to false at week 2
         }
     }
 

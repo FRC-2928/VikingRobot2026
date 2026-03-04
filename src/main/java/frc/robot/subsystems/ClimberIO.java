@@ -28,7 +28,7 @@ public interface ClimberIO {
     public default void goToPosition(Distance distance) {}
 
     public default boolean isEngaged() {
-        return false;
+        return true;
     } // checks for current spikes to see if the climber has hooked on
 }
 
