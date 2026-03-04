@@ -33,7 +33,6 @@ import frc.robot.subsystems.LEDIOReal;
 import frc.robot.subsystems.LEDSubsystem;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.Superstructure;
-import frc.robot.subsystems.Climber;
 
 public class RobotContainer {
     /// singleton instance of the RobotContainer
@@ -61,7 +60,6 @@ public class RobotContainer {
     public Climber climber;
     // public LEDSubsystem ledSubsystem;
     private double teleopStart = 0;
-    public Climber climber;
 
     public static synchronized RobotContainer getInstance() {
         if (sInstance != null) {
