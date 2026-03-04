@@ -5,7 +5,9 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DutyCycleOut;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.math.MathUtil;
@@ -17,7 +19,6 @@ public class IndexerIOReal implements IndexerIO {
     public StatusSignal<AngularVelocity> indexerVelocity;
 
     public IndexerIOReal() {
-        // TODO: change CAN ID
         this.indexer = new TalonFX(Constants.CAN.CTRE.indexer, Constants.CAN.CTRE.bus);
         this.indexerVelocity = this.indexer.getRotorVelocity();
 
@@ -30,6 +31,7 @@ public class IndexerIOReal implements IndexerIO {
         indexer.getConfigurator().apply(config); // apply the config settings; this selects the quadrature encode
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
         config.CurrentLimits.StatorCurrentLimitEnable = true;
 
@@ -48,6 +50,7 @@ public class IndexerIOReal implements IndexerIO {
     @Override
     public void runIndexer() {
         // indexer.setControl(new DutyCycleOut(MathUtil.clamp(Tuning.intakeVelocity.get(), -1, 1)));
+        indexer.setControl(new VoltageOut(8));
     }
 
     @Override

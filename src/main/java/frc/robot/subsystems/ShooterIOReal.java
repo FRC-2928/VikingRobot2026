@@ -68,11 +68,14 @@ public class ShooterIOReal implements ShooterIO {
         this.hood = new TalonFX(Constants.CAN.CTRE.hood, Constants.CAN.CTRE.bus);
 
         final Slot0Configs flywheelsSlot0Config =
-                new Slot0Configs().withKP(10).withKI(.1).withKD(1);
+                new Slot0Configs()
+                    .withKP(2);
         final Slot0Configs hoodSlot0Config =
-                new Slot0Configs().withKP(10).withKI(.1).withKD(1);
+                new Slot0Configs()
+                    .withKP(20)
+                    .withKI(3.5);
         final Slot0Configs kickerSlot0Config =
-                new Slot0Configs().withKP(10).withKI(.1).withKD(1);
+                new Slot0Configs().withKP(0.1);
 
         //
         // Flywheels
@@ -117,7 +120,7 @@ public class ShooterIOReal implements ShooterIO {
         //
         final TalonFXConfiguration hoodConfig = new TalonFXConfiguration(); // TODO: Check everything about this
 
-        hoodConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        hoodConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         hoodConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
         // Peak Output Amps
@@ -132,17 +135,18 @@ public class ShooterIOReal implements ShooterIO {
         hoodConfig.CurrentLimits.SupplyCurrentLowerLimit = 35; // current allowed *after* the supply current limit is reached
         hoodConfig.CurrentLimits.SupplyCurrentLowerTime = 0.1; // max time allowed to draw SupplyCurrentLimit
 
-        hoodConfig.Feedback = new FeedbackConfigs()
+        hoodConfig.withFeedback(new FeedbackConfigs()
             .withFeedbackRemoteSensorID(0)
             .withFeedbackSensorSource(FeedbackSensorSourceValue.RemoteCANcoder)
-            .withSensorToMechanismRatio(1);
+            .withRotorToSensorRatio(Constants.Shooter.hoodGearRatio/3.6)
+            .withSensorToMechanismRatio(3.6));  // TODO: move these to constants please
 
-        SoftwareLimitSwitchConfigs softLimits = new SoftwareLimitSwitchConfigs()
-            .withForwardSoftLimitEnable(true)
-            .withForwardSoftLimitThreshold(Units.Degrees.of(50))
-            .withReverseSoftLimitEnable(true)
-            .withReverseSoftLimitThreshold(Units.Degrees.of(0));
-        hoodConfig.withSoftwareLimitSwitch(softLimits);
+        // SoftwareLimitSwitchConfigs softLimits = new SoftwareLimitSwitchConfigs()
+        //     .withForwardSoftLimitEnable(true)
+        //     .withForwardSoftLimitThreshold(Units.Degrees.of(50))  /* TODO: 0.4 encoder shaft rotations */
+        //     .withReverseSoftLimitEnable(true)
+        //     .withReverseSoftLimitThreshold(Units.Degrees.of(0));
+        // hoodConfig.withSoftwareLimitSwitch(softLimits);
         // PID Values
         hoodConfig.Slot0 = hoodSlot0Config;
 
@@ -171,6 +175,8 @@ public class ShooterIOReal implements ShooterIO {
         // PID Values
         kickerConfig.Slot0 = kickerSlot0Config;
 
+        // Apply all the configs
+        hood.getConfigurator().apply(hoodConfig);
         kicker.getConfigurator().apply(kickerConfig);
 
         this.velocityA = this.flywheelA.getRotorVelocity();
@@ -186,8 +192,8 @@ public class ShooterIOReal implements ShooterIO {
     // Rotates the hood to change angle of fuel shooting
     @Override
     public void rotateHood(Angle hoodAngle) {
-        this.hood.setControl(
-                new PositionVoltage(MathUtil.clamp(hoodAngle.in(Units.Degrees) + angleNudgeDegrees, 100.0, 140.0)).withSlot(0));
+        // TODO: clamp
+        hood.setControl(new PositionVoltage(hoodAngle));
     }
 
     // Runs the flywheel in the shooter. 2 motors. Based on voltage
@@ -203,7 +209,7 @@ public class ShooterIOReal implements ShooterIO {
     // Runs the flywheel in the shooter. 2 motors. Based on velocity
     @Override
     public void runFlywheelsVelocity(AngularVelocity speed) {
-        this.flywheelA.setControl(new VelocityVoltage(speed.plus(Units.DegreesPerSecond.of(speedNudgeRPS))).withSlot(0));
+        this.flywheelA.setControl(new VelocityVoltage(speed.plus(Units.DegreesPerSecond.of(speedNudgeRPS))));
     }
 
     // Runs the kicker. Shoots ball into flywheels.

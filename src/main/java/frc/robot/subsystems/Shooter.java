@@ -63,7 +63,7 @@ public class Shooter extends SubsystemBase {
 
     public void shoot() {
         //aim();
-        this.io.runKicker(Units.Volts.of(Tuning.kickerSpeed.get()));
+        this.io.runKicker(Units.Volts.of(7));
     }
 
     public void home() {
