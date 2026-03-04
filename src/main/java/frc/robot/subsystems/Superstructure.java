@@ -10,6 +10,7 @@ import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
 import com.ctre.phoenix6.BaseStatusSignal;
+import com.google.flatbuffers.Constants;
 
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -23,6 +24,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.RobotContainer;
 import frc.robot.commands.Intake.ExtendAndRunIntake;
 import frc.robot.subsystems.Climber.ClimberHeight;
+import frc.robot.Constants.Climber;
 
 public class Superstructure extends SubsystemBase {
 
@@ -416,30 +418,47 @@ public class Superstructure extends SubsystemBase {
         });
     }
 
-    public Command runClimber(boolean direction) {
+    public Command runClimber() {
         return new RunCommand(() -> {
-            //mRobotContainer.climber.changeState //command that changes the robot between ascending and descending
+            mRobotContainer.climber.runClimber(); //command that changes the robot between ascending and descending
+        });
+    }
+    
+    public Command moveToClimbPrepPos() {
+        return new RunCommand(() -> {
+            mRobotContainer.drivetrain.centerLimeLight(Constants.Climber.prepClimbPosition);
         });
     }
 
+    public Command moveToClimbPos() {
+        return new RunCommand(() -> {
+            mRobotContainer.drivetrain.centerLimeLight(Constants.Climber.engageClimbPosition.Pose2d);
+        });
+    }
+
+
     public Command pathToHookandClimb() {
         return new SequentialCommandGroup(
-            //call center limelight and raise climber in together
-            //move to contact bar center limelight to ladder april tag
-            //climber ascend
-            //wait for driver to trigger descend
+            return new ParallelCommandGroup(prepareClimber(), moveToClimbPrepPos()), //command to go to pose)
+
+            moveToClimbPos(), runClimber(), runClimber()
             
         );
-        //TODO: implement command
 
 
     }
+
+    /*public Command disengageClimb() {
+        return new InstantCommand(() -> {
+            runClimber();
+        });
+    }*/
 
     
 
 
     public void resetSubsystems() {
-        // TODO: Implement Climber
+        mRobotContainer.climber.reset();
         mRobotContainer.drivetrain.setState(CommandSwerveDrivetrain.WantedState.IDLE);
         mRobotContainer.hopperFloor.halt();
         mRobotContainer.indexer.halt();

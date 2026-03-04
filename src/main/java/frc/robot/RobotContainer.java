@@ -61,7 +61,7 @@ public class RobotContainer {
     public Climber climber;
     // public LEDSubsystem ledSubsystem;
     private double teleopStart = 0;
-    public Climber climber;
+
 
     public static synchronized RobotContainer getInstance() {
         if (sInstance != null) {

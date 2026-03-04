@@ -126,12 +126,9 @@ public class Climber extends SubsystemBase {
     }
 
     //command to handle setting the state and target for climbing down
-    public Command climbDown() {
+    public Command reset() {
         return new InstantCommand(() -> {
-            if (height.getValueAsDouble() == ClimberHeight.L1.height) {
-                this.targetHeight = ClimberHeight.HOMEPOS;
-                this.currentState = ClimberState.DESCENDING;
-            }
+            this.currentState = ClimberState.FAILED;
         });
     }
 

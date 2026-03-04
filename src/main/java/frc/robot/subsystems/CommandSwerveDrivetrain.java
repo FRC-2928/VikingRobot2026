@@ -30,6 +30,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.units.Unit;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
@@ -619,6 +620,13 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 ChassisSpeeds.fromFieldRelativeSpeeds(
                         new ChassisSpeeds(xVelocity, yVelocity, angularVelocity), currentRotation),
                 currentRotation.plus(skewCompensationFactor));
+    }
+
+    public Command centerLimeLight(Pose2d targetPose2d) {
+        return new RunCommand(() -> {
+            //centerLimelight(Units.Meters.of(0), Units.Meters.of(0), Units.Radians.of(0), targetPose2d);
+            //TODO: integrate limelight center for climber
+        }, this);
     }
 
     public Command joystickDrive(BaseOI controllerOI) {

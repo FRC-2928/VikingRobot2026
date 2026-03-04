@@ -20,6 +20,7 @@ import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -29,6 +30,7 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
+import frc.robot.subsystems.CommandSwerveDrivetrain;
 
 public class Constants {
     private static Mode currentMode() {
@@ -403,5 +405,8 @@ public class Constants {
         public static final double max = 129;
         public static final double disengageDistance = 0.5;
         public static final double initializeRaiseDistance = 2;
+
+        public static final Pose2d prepClimbPosition = new Pose2d(); //for the position a few feet from the climber hook
+        public static final Pose2d engageClimbPosition = new Pose2d(); //for the position at the climber hook
     }
 }
