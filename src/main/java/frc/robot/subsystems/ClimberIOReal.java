@@ -7,7 +7,6 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
-import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DigitalInput;
@@ -43,6 +42,8 @@ public class ClimberIOReal implements ClimberIO {
     // climber moter, kraken x60
     private final TalonFX climber; // intializes the climber motor variable
 
+    //configs a 
+    final PositionVoltage request = new PositionVoltage(0);
     // positon values
     private double MAXheight = 30; // inches of height increase
     private double MINheight = 0;
@@ -51,55 +52,35 @@ public class ClimberIOReal implements ClimberIO {
 
     // call in climber.java periodic
     @Override
-    public void goUp() {
-        climber.setControl(new VoltageOut(Units.Volts.of(5))
-            .withLimitForwardMotion(forwardLimit.get())
-            .withLimitReverseMotion(reverseLimit.get())
-        );
-    }
-
-    @Override
     public void goToPosition(Distance position) {
         climber.setControl(new PositionVoltage(position.in(Units.Inches))
             .withLimitForwardMotion(forwardLimit.get())
             .withLimitReverseMotion(reverseLimit.get())
         );
     }
+
+    @Override
+    public void goHome() {
+        climber.setControl(new VoltageOut(Units.Volts.of(-5))
+            .withLimitReverseMotion(reverseLimit.get())
+        );
+    }
+
+    @Override
+    public void extend() {
+        climber.setControl(new VoltageOut(Units.Volts.of(5))
+            .withLimitForwardMotion(forwardLimit.get())
+        );
+    }
+    @Override
+    public void climb(double distance) {
+        climber.setControl(request.withPosition(distance));
+    }
+
     
     @Override
-    public void goDown() {
-        climber.setControl(new VoltageOut(Units.Volts.of(-5))
-            .withLimitForwardMotion(forwardLimit.get())
-            .withLimitReverseMotion(reverseLimit.get())
-        );
-    }
-
-
-    @Override
-    public void halt() {
-        climber.setControl(new VoltageOut(Units.Volts.of(0))
-            .withLimitForwardMotion(forwardLimit.get())
-            .withLimitReverseMotion(reverseLimit.get())
-        );
-    }
-
-    LinearFilter spikeFilter = LinearFilter.backwardFiniteDifference(1, 1, 0.2);
-
-    public boolean isEngaged() {
-        double current = climber.getStatorCurrent().getValueAsDouble();
-
-        double currentDerivative = spikeFilter.calculate(current);
-
-        if (currentDerivative >= 150) { // Threshold of 150 Amps/sec spike
-            return true;
-        } else {
-            return true; //change to false at week 2
-        }
-    }
-
-    @Override
     public void override() {
-        goDown();
+        goHome();
     }
 
     @Override

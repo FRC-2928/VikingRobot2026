@@ -32,6 +32,8 @@ public class DriverOI extends BaseOI {
 
     public final Trigger autoIntake;
 
+    public final Trigger climbTrigger;
+
     public DriverOI(final CommandXboxController controller, Superstructure superstructure) {
         super(controller);
 
@@ -56,6 +58,7 @@ public class DriverOI extends BaseOI {
         this.resetAngle = this.controller.a();
         this.lockWheels = this.controller.x();
         this.unjam = this.controller.povLeft();
+        this.climbTrigger = this.controller.povUp();
     }
 
     public void configureControls() {
@@ -75,6 +78,9 @@ public class DriverOI extends BaseOI {
         this.autoIntake
             .onTrue(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_AUTO, true))
             .onFalse(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_AUTO, false));
+        this.climbTrigger
+            .onTrue(mSuperstructure.setIntent(StateIntent.ACTION_CLIMB, true))
+            .onFalse(mSuperstructure.setIntent(StateIntent.ACTION_CLIMB, false));
         // this.spinKicker.onTrue(cont.shooter.startKicker());
         // this.shotConditionsMet
         //         .and(() -> cont.drivetrain

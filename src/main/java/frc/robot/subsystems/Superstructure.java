@@ -33,6 +33,7 @@ public class Superstructure extends SubsystemBase {
         ACTION_SHOOT_OVERRIDE,
         ACTION_INTAKE_MANUAL,
         ACTION_INTAKE_AUTO,
+        ACTION_CLIMB,
         ACTION_NONE;
 
         private StateIntent() {
@@ -150,6 +151,7 @@ public class Superstructure extends SubsystemBase {
         initState(RobotState.MANUAL_INTAKE, extendAndIntake());
         initState(RobotState.AUTO_INTAKE, autoIntake());
         initState(RobotState.SHOOTING, startShooting());
+        initState(RobotState.GET_READY_CLIMB, pathToHookandClimb());
 
         transitionFunctions = new HashMap<>();
 
@@ -164,6 +166,7 @@ public class Superstructure extends SubsystemBase {
         transitionFunctions.put(RobotState.SHOOTING, this::checkTransitionFromShooting);
         transitionFunctions.put(RobotState.MANUAL_INTAKE, this::checkManualIntakeTransition);
         transitionFunctions.put(RobotState.AUTO_INTAKE, this::checkTransitionFromAutoIntake);
+        transitionFunctions.put(RobotState.GET_READY_CLIMB, this::checkTransitionFromClimber);
     }
 
     
@@ -388,6 +391,9 @@ public class Superstructure extends SubsystemBase {
 
     private void checkTransitionFromClimber() {
         //driver intent for climb can be set to false
+        if (!StateIntent.ACTION_CLIMB.getIsInteded()) {
+            currentState = RobotState.GET_READY_CLIMB;
+        }
     }
 
     // Runs flywheels and kicker. Command will not end on its own

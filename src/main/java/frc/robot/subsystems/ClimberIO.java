@@ -19,11 +19,11 @@ public interface ClimberIO {
 
     public default void periodic() {} // runs periodically
 
-    public default void goUp() {}
+    public default void goHome() {}
 
-    public default void goDown() {}
+    public default void extend() {}
 
-    public default void halt() {}
+    public default void climb(double distance) {}
 
     public default void goToPosition(Distance distance) {}
 
