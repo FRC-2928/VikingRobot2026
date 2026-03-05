@@ -364,6 +364,9 @@ public class Superstructure extends SubsystemBase {
         } else if (StateIntent.ACTION_INTAKE_AUTO.getIsInteded()) {
             currentState = RobotState.AUTO_INTAKE;
         }
+        else if (StateIntent.ACTION_INTAKE_MANUAL.getIsInteded()) {
+            currentState = RobotState.MANUAL_INTAKE;
+        }
     }
 
     private void checkTransitionFromTargetLock() {
