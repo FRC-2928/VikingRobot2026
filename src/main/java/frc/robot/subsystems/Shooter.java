@@ -8,7 +8,9 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.Shooter.AimValues;
@@ -52,6 +54,7 @@ public class Shooter extends SubsystemBase {
     public void aim() {
         AimValues val = Constants.Shooter.lookUpTable.get(RobotContainer.getInstance().drivetrain.getDistanceFromHub().in(Units.Meters));
         if (val != null) {
+            Logger.recordOutput("Shooter/AimValue", val.hoodAngle);
             this.io.runFlywheelsVelocity(val.shooterVelocity);
             // Hood angle is between 0 (home) and 40 (up) degrees
             // Aimvalues expects shoot angle between 80 (home) and 40 (up) degrees

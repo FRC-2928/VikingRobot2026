@@ -90,7 +90,7 @@ public class RobotContainer {
         this.driverOI = new DriverOI(joystick1, mSuperstructure);
         this.operatorOI = new OperatorOI(joystick2);
         autoChooser.select("SimpleFromRight");
-        // TODO: implement drive mode chooser (point, turn modes). Joystick drive needs to consume the chosen mode
+        // TODO: implement drive mode chooser (point, turn modes). Joystic drive needs to consume the chosen mode
         // this.driveModeChooser = new LoggedDashboardChooser<>("Drive Mode", JoystickDrive.createDriveModeChooser());
         RobotModeTriggers.autonomous()
                 .whileTrue(
@@ -112,21 +112,21 @@ public class RobotContainer {
         RobotModeTriggers.disabled()
                 .whileTrue(drivetrain.applyRequest(() -> idle).ignoringDisable(true));
 
-        joystick1.a().whileTrue(drivetrain.brake());
+        // joystick1.a().whileTrue(drivetrain.brake());
         // For testing purposes. TODO install new version of WPILIB and use 2026 field apriltag map
-        joystick1
-                .rightBumper()
-                .whileTrue(CenterLimelight.toLadderLeft(drivetrain));
+        // joystick1
+        //         .rightBumper()
+        //         .whileTrue(CenterLimelight.toLadderLeft(drivetrain));
 
         // Run SysId routines when holding back/start and X/Y.
         // Note that each routine should be run exactly once in a single log.
-        joystick1.x().whileTrue(drivetrain.aimAtHubAndMove(driverOI, 1.0));
-        joystick1.back().and(joystick1.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
-        joystick1.back().and(joystick1.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
-        joystick1.start().and(joystick1.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
-        joystick1.start().and(joystick1.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
+        // joystick1.x().whileTrue(drivetrain.aimAtHubAndMove(driverOI, 1.0));
+        // joystick1.back().and(joystick1.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
+        // joystick1.back().and(joystick1.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
+        // joystick1.start().and(joystick1.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
+        // joystick1.start().and(joystick1.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
         // Reset the field-centric heading on left bumper press.
-        joystick1.rightBumper().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
+        // joystick1.rightBumper().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
 
         drivetrain.registerTelemetry(logger::telemeterize);
     }

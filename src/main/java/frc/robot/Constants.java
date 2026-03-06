@@ -22,6 +22,8 @@ import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
+import edu.wpi.first.math.interpolation.Interpolator;
+import edu.wpi.first.math.interpolation.InverseInterpolator;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.Units;
@@ -320,7 +322,11 @@ public class Constants {
         public static final double pivotCurrentLimit = 40;
         public static final AngularVelocity pivotMaxVelocityShoot = Units.DegreesPerSecond.of(2);
         public static final InterpolatingTreeMap<Double, AimValues> lookUpTable =
-                new InterpolatingTreeMap<Double, AimValues>(null, null);
+                new InterpolatingTreeMap<Double, AimValues>(InverseInterpolator.forDouble(),
+                (start, end, t) -> new AimValues(
+                    Units.Rotations.of(start.hoodAngle.plus(end.hoodAngle.minus(start.hoodAngle)).in(Units.Rotations) * t),
+                    Units.RotationsPerSecond.of(start.shooterVelocity.plus(end.shooterVelocity.minus(start.shooterVelocity)).in(Units.RotationsPerSecond) * t))
+                );
 
         static {
             // Add temperory values to the tree
