@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.ParallelDeadlineGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -31,7 +32,8 @@ public class Superstructure extends SubsystemBase {
         ACTION_SHOOT_OVERRIDE,
         ACTION_INTAKE_MANUAL,
         ACTION_INTAKE_AUTO,
-        ACTION_NONE;
+        ACTION_NONE,
+        ACTION_SHOOT_HOME;
 
         private StateIntent() {
             isIntended = false;
@@ -62,7 +64,8 @@ public class Superstructure extends SubsystemBase {
         AUTO_INTAKE,
         MID_FIELD,
         GET_READY_CLIMB,
-        UNJAM
+        UNJAM,
+        SHOOT_HOME
     }
 
     // --------------------- Class Members ---------------------
@@ -151,6 +154,7 @@ public class Superstructure extends SubsystemBase {
         initState(RobotState.MANUAL_INTAKE, extendAndIntake());
         initState(RobotState.AUTO_INTAKE, autoIntake());
         initState(RobotState.SHOOTING, startShooting());
+        initState(RobotState.SHOOT_HOME, shootTowardsHome());
 
         transitionFunctions = new HashMap<>();
 
@@ -250,7 +254,11 @@ public class Superstructure extends SubsystemBase {
             case OVERRIDE_SHOOT_MODE: {
                 // Add OVERRIDE_SHOOTING to the set of active overrides
                 mActiveOverrides.add(StateOverrides.OVERRIDE_SHOOTING);  // Internally: 01 (bit 0 is now 1)
-                currentState = RobotState.SHOOTING;  // transition directly into shooting mode
+                if (mRobotContainer.drivetrain.isAtHome()) {
+                    currentState = RobotState.SHOOTING; // transition directly into shooting mode
+                } else {
+                    currentState = RobotState.SHOOT_HOME; // transition directly into shooting towards home
+                }
                 Logger.recordOutput("Superstructure/OverrideState", "SHOOTING");
                 break;
             }
@@ -318,6 +326,20 @@ public class Superstructure extends SubsystemBase {
         return new InstantCommand();
     }
 
+    private Command prepareShootHome() {
+        return mRobotContainer.shooter.aimAtHome();
+    }
+
+    private Command shootTowardsHome() {
+        return new RunCommand(() -> mRobotContainer.shooter.shoot())
+            .alongWith(mRobotContainer.hopperFloor.runHopperCommand())
+            .alongWith(mRobotContainer.indexer.runIndexerCommand());
+    }
+
+    private Command shootHomeAutomated() {
+        return new SequentialCommandGroup(prepareShootHome(), shootTowardsHome());
+    }
+    
     private Command driveTargetLock() {
         return new ParallelCommandGroup(
                 mRobotContainer.drivetrain.targetLock(),
@@ -443,12 +465,10 @@ public class Superstructure extends SubsystemBase {
     }
 
     public Command pathWhileIntaking(String pathFileName) {
-        return new InstantCommand();
-        // return new ParallelDeadlineGroup(mRobotContainer.drivetrain.runPath(pathFileName), this.extendAndIntake())
-        //         .finallyDo(() -> {
-        //             mRobotContainer.intake.;
-        //             mRobotContainer.intake.retract();
-        //         });
+        return new ParallelDeadlineGroup(mRobotContainer.drivetrain.runPath(pathFileName), this.extendAndIntake())
+                .finallyDo(() -> {
+                    mRobotContainer.intake.retract();
+                });
     }
 
     public void resetSubsystems() {
@@ -520,4 +540,10 @@ public class Superstructure extends SubsystemBase {
             return true;
         }
     }
+
+    /*
+     * |  | ||
+     * --------
+     * || | |-
+     */
 }

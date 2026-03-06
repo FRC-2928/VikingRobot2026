@@ -64,6 +64,13 @@ public class Shooter extends SubsystemBase {
         }
     }
 
+    public void aimHome() { // TODO: Find actual values for these
+        AimValues val = new AimValues(Units.Degrees.of(40), Units.RotationsPerSecond.of(40));
+        Logger.recordOutput("Shooter/AimValue", val.hoodAngle);
+        this.io.runFlywheelsVelocity(val.shooterVelocity);
+        this.io.rotateHood(val.hoodAngle);
+    }
+
     public void shoot() {
         //aim();
         this.io.runKicker(Units.Volts.of(7));
@@ -78,6 +85,20 @@ public class Shooter extends SubsystemBase {
     public Command aimAtHub() {
         return new FunctionalCommand(
             this::aim,
+            () -> {},
+            (interrupted) -> {
+                if (interrupted) {
+                    home();
+                }
+            },
+            this::isAimed,
+            this
+        );
+    }
+
+    public Command aimAtHome() {
+        return new FunctionalCommand(
+            this::aimAtHome,
             () -> {},
             (interrupted) -> {
                 if (interrupted) {
