@@ -88,6 +88,8 @@ public class Superstructure extends SubsystemBase {
     /// boolean tracking the target lock state
     private boolean mTargetLockRequested = false;
 
+    /// boolean tracking if the climb has been executed
+    private boolean isClimbed = false;
     // Overrides
     /**
      * Enumeration of different overrides -- represented as bitflags
@@ -456,9 +458,9 @@ public class Superstructure extends SubsystemBase {
         });
     }
 
-    public Command runClimber() {
+    public Command runClimber(Boolean climbed) {
         return new RunCommand(() -> {
-            mRobotContainer.climber.runClimber(); //command that changes the robot between ascending and descending
+            mRobotContainer.climber.runClimber(climbed); //command that changes the robot between ascending and descending
         });
     }
     
@@ -476,21 +478,20 @@ public class Superstructure extends SubsystemBase {
 
 
     public Command pathToHookandClimb() {
-        return new SequentialCommandGroup(
+        if (this.isClimbed) {
+            this.isClimbed = false;
+            return runClimber(true);
+        } else {
+            return new SequentialCommandGroup(
             new ParallelCommandGroup(prepareClimber(), moveToClimbPrepPos()), //command to go to pose
 
-            moveToClimbPos(), runClimber(), runClimber()
+            moveToClimbPos(), runClimber(false)
             
         );
+        }
 
 
     }
-
-    /*public Command disengageClimb() {
-        return new InstantCommand(() -> {
-            runClimber();
-        });
-    }*/
 
     
 

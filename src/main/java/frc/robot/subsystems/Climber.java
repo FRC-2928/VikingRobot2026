@@ -80,26 +80,16 @@ public class Climber extends SubsystemBase {
 
     public void descend() {
         //checks the driver station mode the robot is in
-        if (height.getValueAsDouble() == ClimberHeight.L1.height) {
-            this.targetHeight = ClimberHeight.HOMEPOS;
-            this.currentState = ClimberState.DESCENDING;
-        }
+        this.targetHeight = ClimberHeight.HOMEPOS;
+        this.currentState = ClimberState.DESCENDING;
     }
 
-    public void moveClimberToggle() {
-        if(climberDownToggle){
+    public void ClimberToggleState(Boolean hasClimbed) {
+        if (hasClimbed) {
             descend();
             return;
         }
         ascend();
-    }
-
-    public void climberIdle(){
-        currentState = ClimberState.IDLE;
-    }
-
-    public  void changeClimberToggle(){
-        climberDownToggle = !climberDownToggle;
     }
 
     public void initDefaultCommand() {
@@ -117,9 +107,9 @@ public class Climber extends SubsystemBase {
         });
     }
 
-    public Command runClimber()  {
+    public Command runClimber(Boolean hasClimbed)  {
         return new RunCommand(()  -> {
-            moveClimberToggle();
+            ClimberToggleState(hasClimbed);
         }).until(() -> currentState == ClimberState.IDLE);
     }
 
@@ -130,7 +120,26 @@ public class Climber extends SubsystemBase {
         });
     }
 
+    // ---- TOGGLES FOR THE OPERATOR OI ---- \\
+    public void moveClimberToggle() {
+        Distance distance;
+        if (climberDownToggle) {
+            distance = Units.Inches.of(Math.abs(this.height.getValueAsDouble() - 0.5));
+            this.io.climb(distance);
+        }
+        distance = Units.Inches.of(Math.abs(this.height.getValueAsDouble() + 0.5));
+        this.io.climb(distance);
+    }
 
+    public  void changeClimberToggle(){
+        climberDownToggle = !climberDownToggle;
+    }
+
+    public void climberIdle(){
+        currentState = ClimberState.IDLE;
+    }
+    
+    
     @Override
     public void periodic() {
         this.io.updateInputs(this.inputs);
