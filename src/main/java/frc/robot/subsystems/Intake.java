@@ -8,7 +8,6 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.Intake.IntakeStates;
-import frc.robot.commands.Intake.RetractAndStop;
 
 public class Intake extends SubsystemBase {
     private IntakeIO intakeIO;
@@ -35,7 +34,7 @@ public class Intake extends SubsystemBase {
 
     public Intake() {
         this.intakeIO = new IntakeIOReal();
-        initDefaultCommand();
+        //initDefaultCommand();
     }
 
     public void retract() {
@@ -71,9 +70,11 @@ public class Intake extends SubsystemBase {
         mDesiredState = state;
     }
 
+    /* 
     public void initDefaultCommand() {
         setDefaultCommand(new RetractAndStop(this));
     }
+    */
 
         private SystemState handleStateTransition() {
         return switch (mDesiredState) {

@@ -20,11 +20,8 @@ import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
-import edu.wpi.first.math.interpolation.Interpolator;
 import edu.wpi.first.math.interpolation.InverseInterpolator;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
@@ -120,8 +117,7 @@ public class Constants {
 
         public static final class RIO {
 			public static final CANBus bus = new CANBus("rio");
-			/// CAN ID of the Kraken x44 controlling the Intake Roller
-			public static final int intakeRoller = 33;
+            public static final int intakeRoller = 33;
 		}
 
         public static final class CTRE {
@@ -137,7 +133,9 @@ public class Constants {
 
             public static final int hopper = 23;
             public static final int indexer = 31;
+
             public static final int intakeExpansion = 30;
+            
 
             public static final int candle = 99;
         }

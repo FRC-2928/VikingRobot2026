@@ -1,6 +1,5 @@
 package frc.robot.subsystems;
 
-import java.sql.Driver;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -309,6 +308,7 @@ public class Superstructure extends SubsystemBase {
     }
 
     private Command freeDrive() {
+        // TODO: Set the intake to retract when driving
         mRobotContainer.intake.setWantedState(Intake.WantedState.STOP);
         return mRobotContainer.drivetrain.freeDrive();
     }
@@ -399,6 +399,7 @@ public class Superstructure extends SubsystemBase {
 
     // Runs flywheels and kicker. Command will not end on its own
     public Command startShooting() {
+        // TODO: also retract when shooting
         return new RunCommand(
                 () -> {
                     mRobotContainer.shooter.shoot();
