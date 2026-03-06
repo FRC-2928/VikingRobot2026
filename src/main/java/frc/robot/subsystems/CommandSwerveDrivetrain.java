@@ -175,7 +175,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     //intake
     public final Limelight limelightForward = new Limelight("limelight-forward");
 
-    public final Limelight[] limelights = {limelightRight, limelightBack, limelightForward, limelightForward};
+    public final Limelight[] limelights = {limelightRight, limelightBack, limelightForward, limelightLeft};
 
     private double xSpeed;
     private double xSpeedPid;
@@ -402,24 +402,29 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
         for(Limelight limelight : limelights){
 			PoseEstimate mt2 = limelight.getPoseMegatag2();
-			if (mt2 != null) {
-				Logger.recordOutput("Drivetrain/poseMegatag_" + limelight.getLimelightName(), mt2.pose);
+            PoseEstimate mt1 = limelight.getPoseMegatag1();
+            // TODO: re-add this once we fix LL seeding
+			// if (mt2 != null) {
+			// 	Logger.recordOutput("Drivetrain/poseMegatag2_" + limelight.getLimelightName(), mt2.pose);
 
-				// if our angular velocity is greater than 720 degrees per second, ignore vision updates or if it doesnt see any tags
-				var acceptUpdate = isUpdateable(mt2);
+			// 	// if our angular velocity is greater than 720 degrees per second, ignore vision updates or if it doesnt see any tags
+			// 	var acceptUpdate = isUpdateable(mt2);
+            //     Logger.recordOutput("Drivetrain/acceptUpdate_" + limelight.getLimelightName(), acceptUpdate);
+			// 	if (acceptUpdate) {
+			// 		this.setVisionMeasurementStdDevs(limelight.getLimelightTrust());
+			// 		this.addVisionMeasurement(mt2.pose, mt2.timestampSeconds);
+			// 	}
+			// }
+            if (mt1 != null) {
+                Logger.recordOutput("Drivetrain/poseMegatag1_" + limelight.getLimelightName(), mt1.pose);
+                var acceptUpdate = isUpdateable(mt1);
                 Logger.recordOutput("Drivetrain/acceptUpdate_" + limelight.getLimelightName(), acceptUpdate);
 				if (acceptUpdate) {
 					this.setVisionMeasurementStdDevs(limelight.getLimelightTrust());
-					this.addVisionMeasurement(mt2.pose, mt2.timestampSeconds);
+					this.addVisionMeasurement(mt1.pose, mt1.timestampSeconds);
 				}
-			}
+            }
 		}
-
-        Logger.recordOutput("Drivetrain/Imumode", limelightLeft.getImuMode());
-        PoseEstimate mt1 = this.limelightLeft.getPoseMegatag1();
-        if (mt1 != null) {
-            Logger.recordOutput("Drivetrain/Mt1", mt1.pose);
-        }
     }
 
     public boolean isUpdateable(PoseEstimate posEst) {
@@ -665,12 +670,14 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     @Override
     public void resetPose(final Pose2d newPose) {
         super.resetPose(newPose);
-        this.limelightLeft.setIMUMode(1);
-        this.limelightLeft.setRobotOrientation(newPose.getRotation().getMeasure());
+        for (var limelight : limelights) {
+            this.limelightLeft.setIMUMode(1);
+            this.limelightLeft.setRobotOrientation(newPose.getRotation().getMeasure());
+        }
     }
 
     public void setAngle(final Angle angle) {
-        super.resetPose(new Pose2d(mCurrentSwerveState.Pose.getTranslation(), new Rotation2d(angle)));
+        this.resetPose(new Pose2d(mCurrentSwerveState.Pose.getTranslation(), new Rotation2d(angle)));
     }
 
     /**
@@ -724,6 +731,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     public void disabledPeriodic() {
+        // TODO: this needs to seed the LLs...
         PoseEstimate mt1 = this.limelightLeft.getPoseMegatag1();
         if (this.limelightLeft.hasValidTargets() && mt1 != null) {
             this.resetRotation(mt1.pose.getRotation());
@@ -743,9 +751,18 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return applyRequest(() -> brake);
     }
 
+    public Angle applyAllianceRotation(Angle inputAngle) {
+        var alliance = DriverStation.getAlliance();
+        if (!alliance.isEmpty() && alliance.get() == Alliance.Red) {
+            return inputAngle;
+        } else {
+            return inputAngle.plus(Units.Radians.of(Math.PI));
+        }
+    }
+
     public double getHubX() {
-        if (!DriverStation.getAlliance().isEmpty()
-                && DriverStation.getAlliance().get() == Alliance.Red) {
+        var alliance = DriverStation.getAlliance();
+        if (!alliance.isEmpty() && alliance.get() == Alliance.Red) {
             return hubXOffset + hubX;
         } else {
             return hubX;
@@ -755,62 +772,66 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     // spotless: off
     // Command to aim at hub while moving with max translation speed scaler not deadband (Overrides Rotational aspect)
 
-    public Command aimAtHubAndMove(BaseOI controllerOI, double speedMultipliter) {
-        return new ParallelCommandGroup(
-                this.applyRequest(() -> driveAndPoint
-                        .withVelocityX(-controllerOI.controller.getLeftY()
-                                * maxSpeed
-                                * speedMultipliter) // Drive forward with negative Y (forward)
-                        .withVelocityY(
-                                -controllerOI.controller.getLeftX() * maxSpeed * speedMultipliter) // Drive left with negative X (left)
-                        .withTargetDirection(new Rotation2d(Math.atan2(
-                                                (hubY
-                                                        - mCurrentSwerveState
-                                                                .Pose
-                                                                .getMeasureY()
-                                                                .in(Units.Meters)),
-                                                (getHubX()
-                                                        - mCurrentSwerveState
-                                                                .Pose
-                                                                .getMeasureX()
-                                                                .in(Units.Meters)))
-                                        + (!DriverStation.getAlliance().isEmpty()
-                                                        && DriverStation.getAlliance()
-                                                                        .get()
-                                                                != Alliance.Red
-                                                ? 0
-                                                : 0))
-                                .plus(new Rotation2d(Math.PI / 2)))),
-                new RunCommand(() -> snapToHeading =
-                        new Rotation2d(mCurrentSwerveState.Pose.getRotation().getRadians())));
-    }
+    // public Command aimAtHubAndMove(BaseOI controllerOI, double speedMultipliter) {
+    //     return new ParallelCommandGroup(
+    //             this.applyRequest(() -> driveAndPoint
+    //                     .withVelocityX(-controllerOI.controller.getLeftY()
+    //                             * maxSpeed
+    //                             * speedMultipliter) // Drive forward with negative Y (forward)
+    //                     .withVelocityY(
+    //                             -controllerOI.controller.getLeftX() * maxSpeed * speedMultipliter) // Drive left with negative X (left)
+    //                     .withTargetDirection(new Rotation2d(Math.atan2(
+    //                                             (hubY
+    //                                                     - mCurrentSwerveState
+    //                                                             .Pose
+    //                                                             .getMeasureY()
+    //                                                             .in(Units.Meters)),
+    //                                             (getHubX()
+    //                                                     - mCurrentSwerveState
+    //                                                             .Pose
+    //                                                             .getMeasureX()
+    //                                                             .in(Units.Meters)))
+    //                                     + (!DriverStation.getAlliance().isEmpty()
+    //                                                     && DriverStation.getAlliance()
+    //                                                                     .get()
+    //                                                             != Alliance.Red
+    //                                             ? 0
+    //                                             : 0))
+    //                             .plus(new Rotation2d(Math.PI / 2)))),
+    //             new RunCommand(() -> snapToHeading =
+    //                     new Rotation2d(mCurrentSwerveState.Pose.getRotation().getRadians())));
+    // }
 
-    public Command aimAtHomeAndMove(BaseOI controllerOI, double speedMultipliter) {
-        return new ParallelCommandGroup(
-                this.applyRequest(() -> driveAndPoint
-                        .withVelocityX(-controllerOI.controller.getLeftY()
-                                * maxSpeed
-                                * speedMultipliter) // Drive forward with negative Y (forward)
-                        .withVelocityY(
-                                -controllerOI.controller.getLeftX() * maxSpeed * speedMultipliter) // Drive left with negative X (left)
-                        .withTargetDirection(new Rotation2d((DriverStation.getAlliance().get() == Alliance.Red)? Math.PI : 0))),
-                new RunCommand(() -> snapToHeading =
-                        new Rotation2d(mCurrentSwerveState.Pose.getRotation().getRadians())));
-    }
+    // public Command aimAtHomeAndMove(BaseOI controllerOI, double speedMultipliter) {
+    //     return new ParallelCommandGroup(
+    //             this.applyRequest(() -> driveAndPoint
+    //                     .withVelocityX(-controllerOI.controller.getLeftY()
+    //                             * maxSpeed
+    //                             * speedMultipliter) // Drive forward with negative Y (forward)
+    //                     .withVelocityY(
+    //                             -controllerOI.controller.getLeftX() * maxSpeed * speedMultipliter) // Drive left with negative X (left)
+    //                     .withTargetDirection(new Rotation2d((DriverStation.getAlliance().get() == Alliance.Red)? Math.PI : 0))),
+    //             new RunCommand(() -> snapToHeading =
+    //                     new Rotation2d(mCurrentSwerveState.Pose.getRotation().getRadians())));
+    // }
 
     public Rotation2d getRotationToHub() {
-        return new Rotation2d(getAngleToHub(Degrees.of(0)));
+        return new Rotation2d(getAngleToHub(Units.Radians.of(Math.PI/2)));
     }
 
     public Angle getAngleToHub(Angle offset) {
-        return Units.Radians.of(Math.atan2(
+        Logger.recordOutput("Drivetrain/AngleToHub/Pose", mCurrentSwerveState.Pose);
+        var angleToHub = Units.Radians.of(Math.atan2(
                         (hubY - mCurrentSwerveState.Pose.getMeasureY().in(Units.Meters)),
                         (getHubX() - mCurrentSwerveState.Pose.getMeasureX().in(Units.Meters))))
                 .plus(offset);
+        Logger.recordOutput("Drivetrain/AngleToHub/AngleToHub", angleToHub);
+        angleToHub = applyAllianceRotation(angleToHub);
+        Logger.recordOutput("Drivetrain/AngleToHub/AngleToHubAlliancApplied", angleToHub);
+        return angleToHub;
     }
 
     public Distance getDistanceFromHub() {
-
         return Units.Meters.of(Math.hypot(
                 (getHubX() - mCurrentSwerveState.Pose.getMeasureX().in(Units.Meters)),
                 (hubY - mCurrentSwerveState.Pose.getMeasureY().in(Units.Meters))));
@@ -830,7 +851,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     public double calculateSpeedX() {
         double output = 0.5;
-        Logger.recordOutput("Drivetrain/auto/SpeedXIntakeGroun", output);
+        Logger.recordOutput("Drivetrain/auto/SpeedXIntakeGround", output);
         return output;
     }
 
@@ -931,6 +952,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      */
     private void initTargetLock() {
         snapToHeading = getRotationToHub();
+        Logger.recordOutput("Drivetrain/snapToHeading", snapToHeading);
         setState(WantedState.ROTATION_LOCK);
     }
 

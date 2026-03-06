@@ -1,6 +1,11 @@
 package frc.robot.oi;
 
+import org.littletonrobotics.junction.Logger;
+
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.RobotContainer;
@@ -16,6 +21,8 @@ public class OperatorOI extends BaseOI {
         this.nudgeShooterSpeedDown = this.controller.povLeft();
 
         this.resetNudges = this.controller.leftStick();
+
+        this.runOverrides = this.controller.rightBumper();
     }
 
     public final Trigger nudgeShooterAngleUp;
@@ -25,6 +32,8 @@ public class OperatorOI extends BaseOI {
     public final Trigger nudgeShooterSpeedDown;
 
     public final Trigger resetNudges;
+
+    public final Trigger runOverrides;
 
     /* 
     public final Trigger climberOverrideLower;
@@ -50,5 +59,7 @@ public class OperatorOI extends BaseOI {
         this.nudgeShooterSpeedUp.onTrue(new InstantCommand(RobotContainer.getInstance().shooter::nudgeSpeedUp));
 
         this.resetNudges.onTrue(new InstantCommand(RobotContainer.getInstance().shooter::resetNudges));
+
+        // this.runOverrides.whileTrue(new ParallelCommandGroup(RobotContainer.getInstance().shooter.shootOverride(), new RunCommand(() -> Logger.recordOutput("Superstructure/triggerIsRunning", Timer.getFPGATimestamp()), null)));
     }
 }

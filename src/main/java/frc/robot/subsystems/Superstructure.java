@@ -280,6 +280,7 @@ public class Superstructure extends SubsystemBase {
     public void periodic() {
         Logger.recordOutput("Superstructure/SimultaneousOverrideRequests", mSimultaneousOverrideRequests);
         Logger.recordOutput("Superstructure/NoActiveOverridesCount", mNoActiveOverridesCount);
+        // Logger.recordOutput("Superstructure/isHubActive", isHubActive());
 
         RobotState lastState;
         do {

@@ -6,6 +6,7 @@ import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj2.command.Command;
 
 public interface ShooterIO {
     @AutoLog
@@ -34,6 +35,10 @@ public interface ShooterIO {
     public default void nudgeAngleDown() {}
 
     public default void nudgeSpeedUp() {}
+
+    public default void rotateHoodNudge() {}
+
+    public default void runVelocity() {}
 
     public default void nudgeSpeedDown() {}
 

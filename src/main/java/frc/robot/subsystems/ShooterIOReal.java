@@ -31,7 +31,10 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import frc.robot.Constants;
 
 public class ShooterIOReal implements ShooterIO {
@@ -69,7 +72,9 @@ public class ShooterIOReal implements ShooterIO {
 
         final Slot0Configs flywheelsSlot0Config =
                 new Slot0Configs()
-                    .withKP(2);
+                    .withKP(0.5)
+                    .withKS(0.25)
+                    .withKV(0.122);
         final Slot0Configs hoodSlot0Config =
                 new Slot0Configs()
                     .withKP(20)
@@ -192,7 +197,6 @@ public class ShooterIOReal implements ShooterIO {
     // Rotates the hood to change angle of fuel shooting
     @Override
     public void rotateHood(Angle hoodAngle) {
-        // TODO: clamp
         hood.setControl(new PositionVoltage(hoodAngle));
     }
 
@@ -202,8 +206,9 @@ public class ShooterIOReal implements ShooterIO {
         this.flywheelA.setControl(new VoltageOut(9));
     }
 
+    @Override
     public void stopFlyWheels() {
-        this.flywheelA.setControl(new VelocityVoltage(0));
+        this.flywheelA.setControl(new VoltageOut(0));
     }
 
     // Runs the flywheel in the shooter. 2 motors. Based on velocity

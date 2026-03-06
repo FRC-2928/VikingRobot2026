@@ -31,48 +31,6 @@ import frc.robot.lib.BLine.Path;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
 public final class Autonomous {
-    public static SendableChooser<Command> createAutonomousChooser(RobotContainer cont) {
-        final SendableChooser<Command> chooser = new SendableChooser<>();
-        AutoFactory autoFactory = cont.drivetrain.getChoreoAutoFactory();
-
-        // Set global constraints before creating any paths
-        Path.setDefaultGlobalConstraints(new Path.DefaultGlobalConstraints(
-                Constants.Drivetrain.maxVelocity.in(Units.MetersPerSecond), // maxVelocityMetersPerSec
-                // TODO: Find actual values
-                12.0, // maxAccelerationMetersPerSec2
-                Constants.Drivetrain.maxAngularVelocity.in(Units.DegreesPerSecond), // maxVelocityDegPerSec
-                860, // maxAccelerationDegPerSec2
-                0.03, // endTranslationToleranceMeters
-                2.0, // endRotationToleranceDeg
-                0.2 // intermediateHandoffRadiusMeters
-                ));
-
-        chooser.addOption(
-                "[Bline] Forward Back",
-                Commands.sequence(cont.drivetrain.getPathBuilder().build(new Path("forwardBack"))));
-        chooser.addOption(
-                "[Test] Forward Back",
-                new SequentialCommandGroup(
-                        Autonomous.setInitialPose("forwardBack", cont.drivetrain), Autonomous.path("forwardBack")));
-        chooser.addOption(
-                "[Test] Forward Back Choreo",
-                new SequentialCommandGroup(
-                        Autonomous.setInitialPose("forwardBack", cont.drivetrain),
-                        autoFactory.trajectoryCmd("forwardBack")));
-
-        // Backs out 1 meter and shoots the balls
-        chooser.addOption(
-                "Auto0_goBackwardAndShoot",
-                new SequentialCommandGroup(
-                        // Go Backward for 10 sec
-                        cont.drivetrain.driveForDuration(new ChassisSpeeds(-2, 0, 0), Units.Seconds.of(1)),
-                        // Call shoot from superstructure
-                        cont.mSuperstructure.shootAutomated()));
-
-        chooser.addOption("[testing] voltage ramp", new VoltageRampCommand(cont.drivetrain));
-        return chooser;
-    }
-
     public static Command bLineForwardBack(CommandSwerveDrivetrain drivetrain) {
         return Commands.sequence(drivetrain.getPathBuilder().build(new Path("forwardBack")));
     }

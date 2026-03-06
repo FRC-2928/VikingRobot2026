@@ -102,7 +102,7 @@ public class Robot extends LoggedRobot {
 
     @Override
     public void disabledPeriodic() {
-        // mRobotContainer.drivetrain.disabledPeriodic();
+        mRobotContainer.drivetrain.disabledPeriodic();
     }
 
     @Override
