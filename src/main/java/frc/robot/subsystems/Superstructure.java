@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import java.sql.Driver;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -11,11 +12,7 @@ import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
 import com.ctre.phoenix6.BaseStatusSignal;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.units.Units;
-import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -26,10 +23,7 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.RobotContainer;
-import frc.robot.Constants.Intake.IntakeStates;
 import frc.robot.commands.Intake.ExtendAndRunIntake;
-import frc.robot.commands.Intake.IntakeGround;
-import frc.robot.subsystems.Intake.WantedState;
 
 public class Superstructure extends SubsystemBase {
 
@@ -304,7 +298,7 @@ public class Superstructure extends SubsystemBase {
 
     private Command handleDisabled() {
         // TODO: implement this... no-op state, put everything into a ground/idle state...
-        return new InstantCommand();
+        return new InstantCommand(() -> resetSubsystems());
     }
 
     private Command handleAutonomous() {

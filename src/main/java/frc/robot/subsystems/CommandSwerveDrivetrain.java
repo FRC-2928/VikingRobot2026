@@ -36,6 +36,8 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
@@ -113,6 +115,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private static final Rotation2d kRedAlliancePerspectiveRotation = Rotation2d.k180deg;
     /* Keep track if we've ever applied the operator perspective before or not */
     private boolean m_hasAppliedOperatorPerspective = false;
+
+    public Field2d fieldLog = new Field2d();
 
     // TODO: move this to constants
     private final double hubX = 4.625594;
@@ -371,11 +375,13 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public void periodic() {
         // handle state transitions as applicable
         mCurrentState = handleStateTransition();
+        fieldLog.setRobotPose(mCurrentSwerveState.Pose);
         // apply the latest state
         applyStates();
         mCurrentSwerveState = this.getStateCopy();
         Logger.recordOutput("Drivetrain/currentPose", mCurrentSwerveState.Pose);
         Logger.recordOutput("Drivetrain/currentState", mCurrentState);
+        SmartDashboard.putData("Field_Pose", fieldLog);
 
         /*
          * Periodically try to apply the operator perspective.
