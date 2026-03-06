@@ -23,9 +23,7 @@ public interface ClimberIO {
 
     public default void extend() {}
 
-    public default void climb(double distance) {}
-
-    public default void goToPosition(Distance distance) {}
+    public default void climb(Distance distance) {}
 
     public default boolean isEngaged() {
         return true;
