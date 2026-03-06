@@ -32,6 +32,7 @@ public class DriverOI extends BaseOI {
 
     public final Trigger autoIntake;
     public final Trigger manualIntake;
+    public final Trigger retractIntake;
 
 
     public DriverOI(final CommandXboxController controller, Superstructure superstructure) {
@@ -54,6 +55,7 @@ public class DriverOI extends BaseOI {
         // });
         this.autoIntake = this.controller.leftTrigger();
         this.manualIntake = this.controller.rightBumper();
+        this.retractIntake = this.controller.povRight();
 
         this.resetFOD = this.controller.y();
         this.resetAngle = this.controller.a();
@@ -81,6 +83,9 @@ public class DriverOI extends BaseOI {
         this.manualIntake
             .onTrue(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_MANUAL, true))
             .onFalse(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_MANUAL, false));
+        this.retractIntake
+            .onTrue(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_RETRACT, true))
+            .onFalse(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_RETRACT, false));
         // this.spinKicker.onTrue(cont.shooter.startKicker());
         // this.shotConditionsMet
         //         .and(() -> cont.drivetrain

@@ -32,8 +32,9 @@ public class Superstructure extends SubsystemBase {
         ACTION_SHOOT_OVERRIDE,
         ACTION_INTAKE_MANUAL,
         ACTION_INTAKE_AUTO,
-        ACTION_NONE,
-        ACTION_SHOOT_HOME;
+        ACTION_SHOOT_HOME,
+        ACTION_INTAKE_RETRACT,
+        ACTION_NONE;
 
         private StateIntent() {
             isIntended = false;
@@ -62,6 +63,7 @@ public class Superstructure extends SubsystemBase {
         SHOOTING,
         MANUAL_INTAKE,
         AUTO_INTAKE,
+        RETRACT_INTAKE,
         MID_FIELD,
         GET_READY_CLIMB,
         UNJAM,
@@ -153,6 +155,7 @@ public class Superstructure extends SubsystemBase {
         initState(RobotState.DRIVE_TARGET_LOCK, driveTargetLock());
         initState(RobotState.MANUAL_INTAKE, extendAndIntake());
         initState(RobotState.AUTO_INTAKE, autoIntake());
+        initState(RobotState.RETRACT_INTAKE, retractIntake());
         initState(RobotState.SHOOTING, startShooting());
         initState(RobotState.SHOOT_HOME, shootTowardsHome());
 
@@ -169,6 +172,7 @@ public class Superstructure extends SubsystemBase {
         transitionFunctions.put(RobotState.SHOOTING, this::checkTransitionFromShooting);
         transitionFunctions.put(RobotState.MANUAL_INTAKE, this::checkManualIntakeTransition);
         transitionFunctions.put(RobotState.AUTO_INTAKE, this::checkTransitionFromAutoIntake);
+        transitionFunctions.put(RobotState.RETRACT_INTAKE, this::checkTransitionFromRetractIntake);
     }
 
     /**
@@ -419,6 +423,12 @@ public class Superstructure extends SubsystemBase {
         }
     }
 
+    private void checkTransitionFromRetractIntake() {
+        if (!StateIntent.ACTION_INTAKE_RETRACT.getIsInteded()) {
+            currentState = RobotState.FREE_DRIVE;
+        }
+    }
+
     // Runs flywheels and kicker. Command will not end on its own
     public Command startShooting() {
         // TODO: also retract when shooting
@@ -455,6 +465,10 @@ public class Superstructure extends SubsystemBase {
 
     public Command extendAndIntake() {
         return new ExtendAndRunIntake(mRobotContainer.intake);
+    }
+
+    public Command retractIntake() {
+        return new ParallelCommandGroup(new InstantCommand(() -> mRobotContainer.intake.setWantedState(Intake.WantedState.RETRACT)), mRobotContainer.drivetrain.freeDrive());
     }
 
     public Command autoIntake() {
