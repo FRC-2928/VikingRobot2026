@@ -386,6 +386,9 @@ public class Superstructure extends SubsystemBase {
         // if (driverOI.intake.getAsBoolean()) {
         //     currentState = RobotState.MANUAL_INTAKE;
         // }
+        if (!StateIntent.ACTION_INTAKE_MANUAL.getIsInteded()) {
+            currentState = RobotState.FREE_DRIVE;
+        }
     }
 
     private void checkTransitionFromAutoIntake() {
@@ -413,7 +416,6 @@ public class Superstructure extends SubsystemBase {
                     mRobotContainer.shooter.aim();
                 },
                 mRobotContainer.shooter);
-            // .alongWith(mRobotContainer.drivetrain.aimAtHubAndMove(mRobotContainer.driverOI.controller, 0));
     }
 
     public Command shootAutomated() {

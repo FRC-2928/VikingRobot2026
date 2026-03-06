@@ -19,14 +19,10 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import edu.wpi.first.wpilibj2.command.WaitCommand;
-import frc.robot.commands.drivetrain.CenterLimelight;
-import frc.robot.commands.drivetrain.VoltageRampCommand;
 import frc.robot.lib.BLine.Path;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
@@ -50,6 +46,8 @@ public final class Autonomous {
                     cont.drivetrain.applyRequest(() -> idle));
         });
 
+        // Comented out because these dont use the intake and we dont want to accidently run them durring a match
+        /* 
         choreoChooser.addCmd("path1_shootPickShoot", () -> {
             final var idle = new SwerveRequest.Idle();
 
@@ -82,6 +80,7 @@ public final class Autonomous {
                     pathBuilder.build(path3_middlePickShoot),
                     cont.mSuperstructure.shootAutomated());
         });
+        */
 
         choreoChooser.addCmd(
                 "Auto0_goBackwardAndShoot",
