@@ -255,30 +255,6 @@ public class Constants {
         public static final Distance halfRobotWidth = Units.Inches.of(27.0 / 2);
         public static final Distance halfRobotWidthBumpersOn = Units.Inches.of(27.0 / 2 + 3);
 
-        // public static final Angle swerveFrontLeftOffset = Units.Rotations.of(0.227783);
-        // public static final Angle swerveFrontLeftOffset = Units.Rotations.of(0.349609375);
-        public static final Angle swerveFrontLeftOffset = Units.Rotations.of(-0.385009765625);
-        public static final Translation2d swerveFrontLeftTranslation =
-                new Translation2d(Constants.Drivetrain.wheelBase, Constants.Drivetrain.trackWidth);
-        // public static final Angle swerveFrontRightOffset = Units.Rotations.of(-0.150146484375);
-        public static final Angle swerveFrontRightOffset = Units.Rotations.of(-0.38671875);
-        public static final Translation2d swerveFrontRightTranslation =
-                new Translation2d(Constants.Drivetrain.wheelBase, Constants.Drivetrain.trackWidth.unaryMinus());
-        // public static final Angle swerveBackLeftOffset = Units.Rotations.of(-0.136474609375);
-        public static final Angle swerveBackLeftOffset = Units.Rotations.of(-0.19384765625);
-        public static final Translation2d swerveBackLeftTranslation =
-                new Translation2d(Constants.Drivetrain.wheelBase.unaryMinus(), Constants.Drivetrain.trackWidth);
-        // public static final Angle swerveBackRightOffset = Units.Rotations.of(-0.4404296875);
-        public static final Angle swerveBackRightOffset = Units.Rotations.of(-0.404296875);
-        public static final Translation2d swerveBackRightTranslation = new Translation2d(
-                Constants.Drivetrain.wheelBase.unaryMinus(), Constants.Drivetrain.trackWidth.unaryMinus());
-
-        public static final SwerveDriveKinematics kinematics = new SwerveDriveKinematics(
-                Constants.Drivetrain.swerveFrontLeftTranslation,
-                Constants.Drivetrain.swerveFrontRightTranslation,
-                Constants.Drivetrain.swerveBackLeftTranslation,
-                Constants.Drivetrain.swerveBackRightTranslation);
-
         // Gear ratios for SDS MK4i L2, adjust as necessary
         // public static final double driveGearRatio = (50.0 / 14.0) * (17.0 / 27.0) * (45.0 / 15.0); // ~= 6.746
         public static final double driveGearRatio = (50.0 / 14) * (16.0 / 28) * (45.0 / 15); // ~= 6.746
