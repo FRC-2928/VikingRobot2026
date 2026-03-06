@@ -115,9 +115,9 @@ public class ShooterIOReal implements ShooterIO {
         hoodEncoder = new CANcoder(0, Constants.CAN.CTRE.bus);
         CANcoderConfiguration hoodEncoderConfig = new CANcoderConfiguration();
         hoodEncoderConfig.MagnetSensor = new MagnetSensorConfigs()
-            .withSensorDirection(SensorDirectionValue.Clockwise_Positive)
+            .withSensorDirection(SensorDirectionValue.CounterClockwise_Positive)
             .withAbsoluteSensorDiscontinuityPoint(0.5)
-            .withMagnetOffset(Units.Rotations.of(0.375));
+            .withMagnetOffset(Units.Rotations.of(0.03));
         hoodEncoder.getConfigurator().apply(hoodEncoderConfig);
 
         //
