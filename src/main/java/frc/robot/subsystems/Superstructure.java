@@ -351,9 +351,12 @@ public class Superstructure extends SubsystemBase {
             .andThen(startShooting());
     }
 
+    // TODO: this doesn't need to be in superstructure since it's independent of other states
     private Command extendIntakeCommand()
     {
-        return mRobotContainer.intake.extend();
+        return new InstantCommand(() ->
+            mRobotContainer.intake.setWantedState(Intake.WantedState.EXTEND));
+        // return mRobotContainer.intake.extend();
     }
 
     private void checkTransitionFromDisabled() {

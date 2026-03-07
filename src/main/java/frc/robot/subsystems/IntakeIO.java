@@ -4,6 +4,7 @@ import org.littletonrobotics.junction.AutoLog;
 
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import frc.robot.Constants;
@@ -11,16 +12,24 @@ import frc.robot.Constants;
 public interface IntakeIO {
     @AutoLog
     public static class IntakeInputs {
-        public AngularVelocity angularVelocity = Units.RadiansPerSecond.zero();
-        public Distance expansionMotorAngle = Units.Inches.zero();
-        public LinearVelocity expansionAngularVelocity = Units.InchesPerSecond.zero();
+        // Intake rack
+        public Distance intakePosition = Units.Inches.zero();
+        public AngularVelocity intakeAngularVelocity = Units.RotationsPerSecond.zero();
+        public LinearVelocity intakeRackSpeed = Units.InchesPerSecond.zero();
+        public boolean isIntakeHomed = false;
+        public boolean isIntakeMaxed = false;
+        public Current intakeStatorCurrent = Units.Amps.zero();
+        public Current intakeSupplyCurrent = Units.Amps.zero();
+        
+        // Intake Roller
+        public AngularVelocity intakeRollerAngularVelocity = Units.RotationsPerSecond.zero();
+        public Current intakeRollerStatorCurrent = Units.Amps.zero();
+        public Current intakeRollerSupplyCurrent = Units.Amps.zero();
     }
 
     public default void setState(Constants.Intake.IntakeStates state) {}
 
-    public default void extend() {}
-
-    public default void retract() {}
+    public default void moveToPosition(final Distance position) {}
 
     public default void updateInputs(IntakeInputs intakeInputs) {}
 
