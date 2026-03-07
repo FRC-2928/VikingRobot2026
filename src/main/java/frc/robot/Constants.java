@@ -347,13 +347,13 @@ public class Constants {
             throw new IllegalCallerException("Dont Call this (Constants.Intake)");
         }
 
-        public static final Angle INTAKE_FORWARD_SOFT_LIMIT = Units.Rotations.of(11.25);
-        public static final Angle INTAKE_FORWARD_HARD_LIMIT = Units.Rotations.of(11.75);
-        public static final Distance INTAKE_FORWARD_DISTANCE_LIMIT = Units.Inches.of(11.75);
-        public static final Distance INTAKE_RETRACTION_LIMIT = Units.Inches.of(5);  // TODO: figure out this value
+        public static final Angle INTAKE_FORWARD_SOFT_LIMIT = Units.Rotations.of(2.35);
+        public static final Angle INTAKE_FORWARD_HARD_LIMIT = Units.Rotations.of(2.35);
+        public static final Distance INTAKE_FORWARD_DISTANCE_LIMIT = Units.Inches.of(2.35);
+        public static final Distance INTAKE_RETRACTION_LIMIT = Units.Inches.of(0.818);  // TODO: figure out this value
         private static final Distance GEAR_DIAMETER = Units.Inches.of(1.5);
         private static final double INTAKE_RACK_GEARING = 2.5;
-        public static final double DISTANCE_CONVERSION_RATIO = INTAKE_RACK_GEARING / (Math.PI * GEAR_DIAMETER.in(Units.Inches));
+        public static final double DISTANCE_CONVERSION_RATIO = (Math.PI * GEAR_DIAMETER.in(Units.Inches)) / INTAKE_RACK_GEARING;
         public static final double INTAKE_ROLLER_GEARING = 1.0;
         public enum IntakeStates {
             FORWARD(1.0),

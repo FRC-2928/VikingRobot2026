@@ -96,7 +96,7 @@ public class IntakeIOReal implements IntakeIO {
         final Slot0Configs retractSlot0Configs = new Slot0Configs();
         retractSlot0Configs.kS = 0.2; // Add 0.2 V output to overcome static friction
         retractSlot0Configs.kV = 0.12; // A velocity target of 1 rps results in 0.12 V output
-        retractSlot0Configs.kP = 4.8; // A position error of 2.5 rotations results in 12 V output
+        retractSlot0Configs.kP = 6; // A position error of 2.5 rotations results in 12 V output
         retractSlot0Configs.kI = 0; // no output for accumulated error
         retractSlot0Configs.kD = 0.1; // A velocity error of 1 rps results in 0.1 V output
 
@@ -143,7 +143,7 @@ public class IntakeIOReal implements IntakeIO {
         motionMagicConfigs.MotionMagicJerk = 1600; // Target jerk of 1600 rps/s/s (0.1 seconds)
 
         MotorOutputConfigs intakeExpansionOutputConfigs = new MotorOutputConfigs()
-             .withInverted(InvertedValue.CounterClockwise_Positive);
+             .withInverted(InvertedValue.Clockwise_Positive);
 
         intakeExpansionConfig
                 .withMotorOutput(intakeExpansionOutputConfigs)
@@ -181,7 +181,7 @@ public class IntakeIOReal implements IntakeIO {
         this.retractPositionControl = new PositionVoltage(Units.Rotations.zero()).withSlot(0);
 
         // Create a Motion Magic request, voltage output
-        this.motionMagicVoltage = new MotionMagicVoltage(0);
+        this.motionMagicVoltage = new MotionMagicVoltage(0).withFeedForward(4);
 
         // Expansion Position voltage control
         this.expansionPositionVoltage = new PositionVoltage(openAngle).withSlot(1);
@@ -217,6 +217,11 @@ public class IntakeIOReal implements IntakeIO {
     @Override
     public void moveToPosition(final Distance position) {
         intakeExpansionMotor.setControl(this.motionMagicVoltage.withPosition(position.in(Units.Inches)));
+    }
+
+    @Override
+    public void extendForward(){
+        intakeExpansionMotor.setControl(new DutyCycleOut(1));
     }
 
     // @Override

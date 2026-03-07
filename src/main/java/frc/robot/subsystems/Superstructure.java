@@ -33,6 +33,7 @@ public class Superstructure extends SubsystemBase {
         ACTION_INTAKE_MANUAL,
         ACTION_INTAKE_AUTO,
         ACTION_SHOOT_HOME,
+        ACTION_SHOOT_HUB,
         ACTION_INTAKE_RETRACT,
         ACTION_NONE;
 
@@ -291,6 +292,7 @@ public class Superstructure extends SubsystemBase {
     public void periodic() {
         Logger.recordOutput("Superstructure/SimultaneousOverrideRequests", mSimultaneousOverrideRequests);
         Logger.recordOutput("Superstructure/NoActiveOverridesCount", mNoActiveOverridesCount);
+
         // Logger.recordOutput("Superstructure/isHubActive", isHubActive());
 
         RobotState lastState;
@@ -391,6 +393,12 @@ public class Superstructure extends SubsystemBase {
         else if (StateIntent.ACTION_INTAKE_MANUAL.getIsInteded()) {
             currentState = RobotState.MANUAL_INTAKE;
         }
+        else if(StateIntent.ACTION_INTAKE_RETRACT.getIsInteded()){
+            currentState= RobotState.RETRACT_INTAKE;
+        }
+        else if(StateIntent.ACTION_SHOOT_HUB.getIsInteded()){
+            currentState = RobotState.SHOOTING;
+        }
     }
 
     private void checkTransitionFromTargetLock() {
@@ -417,6 +425,7 @@ public class Superstructure extends SubsystemBase {
         // }
         if (!StateIntent.ACTION_INTAKE_MANUAL.getIsInteded()) {
             currentState = RobotState.FREE_DRIVE;
+            mRobotContainer.intake.setWantedState(Intake.WantedState.STOP);
         }
     }
 
@@ -445,6 +454,8 @@ public class Superstructure extends SubsystemBase {
             .alongWith(mRobotContainer.indexer.runIndexerCommand());
     }
 
+
+
     // Spins up flywheels to speed and turns hood to correct angle. Command will not end on its own
     public Command prepareShooter() {
         return new RunCommand(
@@ -467,7 +478,7 @@ public class Superstructure extends SubsystemBase {
     }
 
     public Command extendAndIntake() {
-        return new ExtendAndRunIntake(mRobotContainer.intake);
+        return new RunCommand(() -> mRobotContainer.intake.setWantedState(Intake.WantedState.EXTEND_AND_RUN), mRobotContainer.intake);
     }
 
     public Command retractIntake() {

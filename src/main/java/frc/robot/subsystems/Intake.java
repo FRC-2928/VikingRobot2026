@@ -41,7 +41,8 @@ public class Intake extends SubsystemBase {
     }
 
     public void extend() {
-        intakeIO.moveToPosition(Constants.Intake.INTAKE_FORWARD_DISTANCE_LIMIT);
+        // intakeIO.moveToPosition(Constants.Intake.INTAKE_FORWARD_DISTANCE_LIMIT);
+        intakeIO.extendForward();
         // return new InstantCommand(() -> intakeIO.moveToPosition(Constants.Intake.INTAKE_FORWARD_DISTANCE_LIMIT), this);
     }
 
@@ -133,7 +134,10 @@ public class Intake extends SubsystemBase {
     @Override
     public void periodic() {
         // this.checkExtended(); // Testing only
-
+        Logger.recordOutput("Intake/State", mCurrentState);
+        Logger.recordOutput("Intake/Intakevelocity", this.intakeInputs.intakeAngularVelocity);
+        Logger.recordOutput("Intake/position", this.intakeInputs.intakePosition);
+        Logger.recordOutput("Intake/RackVelocity", this.intakeInputs.intakeRackSpeed);
         this.intakeIO.updateInputs(this.intakeInputs);
         Logger.processInputs("Intake", this.intakeInputs);
 

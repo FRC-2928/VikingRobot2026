@@ -197,8 +197,10 @@ public class ShooterIOReal implements ShooterIO {
     // Rotates the hood to change angle of fuel shooting
     @Override
     public void rotateHood(Angle hoodAngle) {
-        hood.setControl(new PositionVoltage(hoodAngle));
+        hood.setControl(new PositionVoltage(hoodAngle.plus(Units.Degrees.of(angleNudgeDegrees))));
     }
+
+    
 
     // Runs the flywheel in the shooter. 2 motors. Based on voltage
     @Override

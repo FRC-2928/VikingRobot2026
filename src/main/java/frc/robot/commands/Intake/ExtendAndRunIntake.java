@@ -30,6 +30,7 @@ public class ExtendAndRunIntake extends Command {
     public void execute() {
         // AngularVelocity speed = Units.RotationsPerSecond.of(10);
         intake.extend();
+        intake.run();
         double speed = Tuning.intakeSpeed.get();
         Logger.recordOutput("Intake/Speed", speed);
         // intake.setIntakeSpeed(speed);

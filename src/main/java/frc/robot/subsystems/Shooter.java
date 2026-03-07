@@ -54,9 +54,10 @@ public class Shooter extends SubsystemBase {
     public void aim() {
         AimValues val = Constants.Shooter.lookUpTable.get(RobotContainer.getInstance().drivetrain.getDistanceFromHub().in(Units.Meters));
         if (val != null) {
-            Logger.recordOutput("Shooter/AimValue", val.hoodAngle);
+            Logger.recordOutput("Shooter/AimValueHoodAngle", val.hoodAngle);
+            Logger.recordOutput("Shooter/AimValueFlywheelSpeeds", val.shooterVelocity);
             this.io.runFlywheelsVelocity(val.shooterVelocity);
-            // Hood angle is between 0 (home) and 40 (up) degrees
+            // Hood angle is between 0 (home) and 40 (up) degreesaq
             // Aimvalues expects shoot angle between 80 (home) and 40 (up) degrees
             // This line converts the requested angle to hood setpoint, and clamps between 0 and 40
             Angle requestedAngle = Units.Degrees.of(MathUtil.clamp(80 - val.hoodAngle.in(Units.Degrees), 0, 40));
@@ -67,13 +68,21 @@ public class Shooter extends SubsystemBase {
     public void aimHome() { // TODO: Find actual values for these
         AimValues val = new AimValues(Units.Degrees.of(40), Units.RotationsPerSecond.of(40));
         Logger.recordOutput("Shooter/AimValue", val.hoodAngle);
+        Logger.recordOutput("Shooter/flywheelSpeeds", val.shooterVelocity);
         this.io.runFlywheelsVelocity(val.shooterVelocity);
         this.io.rotateHood(val.hoodAngle);
     }
 
     public void shoot() {
         //aim();
-        this.io.runKicker(Units.Volts.of(7));
+        // this.io.runKicker(Units.Volts.of(7));
+        this.aimAtHub();
+        // this.runShooter();
+    }
+
+    public void runShooter(){
+        this.io.runFlywheelsVelocity(Units.RotationsPerSecond.of(2));
+        this.io.rotateHood(Units.Degrees.of(10));   
     }
 
     public void home() {

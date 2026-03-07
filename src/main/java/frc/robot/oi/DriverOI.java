@@ -18,6 +18,8 @@ public class DriverOI extends BaseOI {
     /// Trigger to handle shoot override
     private final Trigger shootOverride;
 
+    public final Trigger shoot;
+
     // public final Trigger intake;
 
     // public final Trigger spinKicker;
@@ -40,6 +42,7 @@ public class DriverOI extends BaseOI {
 
         this.mSuperstructure = superstructure;
         this.shootOverride = this.controller.rightTrigger();
+        this.shoot = this.controller.b();
         // left bumper toggles into/out of rotation locked mode
         this.toggleRotationLockedMode = this.controller.leftBumper();
 
@@ -79,6 +82,9 @@ public class DriverOI extends BaseOI {
         this.shootOverride
             .onTrue(mSuperstructure.requestShootOverride())
             .onFalse(mSuperstructure.clearOverrideCommand());
+        this.shoot
+            .onTrue(mSuperstructure.setIntent(StateIntent.ACTION_SHOOT_HUB, true))
+            .onFalse(mSuperstructure.setIntent(StateIntent.ACTION_SHOOT_HUB, false));
         this.autoIntake
             .onTrue(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_AUTO, true))
             .onFalse(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_AUTO, false));

@@ -31,6 +31,8 @@ public interface IntakeIO {
 
     public default void moveToPosition(final Distance position) {}
 
+    public default void extendForward() {}
+
     public default void updateInputs(IntakeInputs intakeInputs) {}
 
     public default void simulationInit() {}
