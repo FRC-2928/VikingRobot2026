@@ -11,6 +11,7 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.ForwardLimitTypeValue;
 import com.ctre.phoenix6.signals.ForwardLimitValue;
@@ -107,7 +108,7 @@ public class IntakeIOReal implements IntakeIO {
 
         final TalonFXConfiguration intakeExpansionConfig = new TalonFXConfiguration();
         CurrentLimitsConfigs intakeExpansionCurrentLimitsConfigs = new CurrentLimitsConfigs()
-                .withStatorCurrentLimit(Units.Amps.of(80))
+                .withStatorCurrentLimit(Units.Amps.of(100))
                 .withSupplyCurrentLimit(Units.Amps.of(60))
                 .withStatorCurrentLimitEnable(true)
                 .withSupplyCurrentLimitEnable(true);
@@ -116,13 +117,13 @@ public class IntakeIOReal implements IntakeIO {
         HardwareLimitSwitchConfigs hardwareLimitSwitchConfigs = new HardwareLimitSwitchConfigs()
             // Forward Limits
             .withForwardLimitRemoteCANdiS1(Constants.CAN.INTAKE_CANDI.getInstance())
-            .withForwardLimitEnable(true)
+            .withForwardLimitEnable(false)
             .withForwardLimitAutosetPositionEnable(true)
             .withForwardLimitAutosetPositionValue(Constants.Intake.INTAKE_FORWARD_HARD_LIMIT)
             .withForwardLimitType(ForwardLimitTypeValue.NormallyOpen)
             // Reverse Limits
             .withReverseLimitRemoteCANdiS1(Constants.CAN.INTAKE_CANDI.getInstance())
-            .withReverseLimitEnable(true)
+            .withReverseLimitEnable(false)
             .withReverseLimitAutosetPositionEnable(true)
             .withReverseLimitAutosetPositionValue(Units.Rotations.of(0))
             .withReverseLimitType(ReverseLimitTypeValue.NormallyOpen);
@@ -221,7 +222,12 @@ public class IntakeIOReal implements IntakeIO {
 
     @Override
     public void extendForward(){
-        intakeExpansionMotor.setControl(new DutyCycleOut(1));
+        intakeExpansionMotor.setControl(new VoltageOut(Units.Volts.of(12)));
+    }
+
+    @Override
+    public void stopMotion() {
+        intakeExpansionMotor.setControl(new VoltageOut(Units.Volts.zero()));
     }
 
     // @Override

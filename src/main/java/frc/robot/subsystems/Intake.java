@@ -115,6 +115,7 @@ public class Intake extends SubsystemBase {
                 break;
             case STOP:
                 intakeIO.setState(IntakeStates.OFF);
+                intakeIO.stopMotion();
                 break;
             case INTAKE:
                 intakeIO.setState(IntakeStates.FORWARD);
