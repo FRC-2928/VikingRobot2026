@@ -356,8 +356,8 @@ public class Constants {
         public static final double DISTANCE_CONVERSION_RATIO = (Math.PI * GEAR_DIAMETER.in(Units.Inches)) / INTAKE_RACK_GEARING;
         public static final double INTAKE_ROLLER_GEARING = 1.0;
         public enum IntakeStates {
-            FORWARD(1.0),
-            REVERSE(-1.0),
+            FORWARD(0.4),
+            REVERSE(-0.4),
             OFF(0);
 
             private double mSpeed;

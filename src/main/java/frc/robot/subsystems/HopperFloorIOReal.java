@@ -5,6 +5,7 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DutyCycleOut;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.sim.TalonFXSimState;
@@ -64,8 +65,14 @@ public class HopperFloorIOReal implements HopperFloorIO {
 
     @Override
     public void runHopper() {
-        hopper.setControl(new DutyCycleOut(MathUtil.clamp(Tuning.hopperVelocity.get(), -1, 1)));
+        // hopper.setControl(new DutyCycleOut(MathUtil.clamp(Tuning.hopperVelocity.get(), -1, 1)));
+        hopper.setControl(new VoltageOut(Units.Volts.of(5)));
         Logger.recordOutput("HopperFloorIOReal/runHopper", Tuning.hopperVelocity.get());
+    }
+
+    @Override
+    public void runHopperReverse() {
+        hopper.setControl(new VoltageOut(Units.Volts.of(-5)));
     }
 
     @Override

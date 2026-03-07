@@ -21,4 +21,6 @@ public interface HopperFloorIO {
     public default void simulationInit() {}
 
     public default void runHopper() {}
+
+    public default void runHopperReverse() {}
 }

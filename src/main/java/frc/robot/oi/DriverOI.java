@@ -85,10 +85,18 @@ public class DriverOI extends BaseOI {
             .onFalse(mSuperstructure.clearOverrideCommand());
         this.manualIntake
             .onTrue(
-                new InstantCommand(() -> cont.intake.setWantedState(Intake.WantedState.EXTEND_AND_RUN), cont.intake))
+                new InstantCommand(() -> {
+                    cont.intake.setWantedState(Intake.WantedState.EXTEND_AND_RUN);
+                    /*cont.hopperFloor.runReverseHopperCommand();*/
+                }, cont.intake, cont.hopperFloor)
+            )
             .onFalse(
-                new InstantCommand(() -> cont.intake.setWantedState(Intake.WantedState.STOP))
+                new InstantCommand(() -> {
+                    cont.intake.setWantedState(Intake.WantedState.STOP);
+                    /*cont.hopperFloor.halt();*/
+                }, cont.intake, cont.hopperFloor)
             );
+
         this.retractIntake
             .onTrue(
                 new InstantCommand(() -> cont.intake.setWantedState(Intake.WantedState.RETRACT), cont.intake))

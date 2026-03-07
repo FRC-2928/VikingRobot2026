@@ -89,7 +89,7 @@ public class Shooter extends SubsystemBase {
     public void runShooter(){
         this.io.runKicker(Units.Volts.of(7));
         this.io.runFlywheelsVelocity(Units.RotationsPerSecond.of(40));
-        this.io.rotateHood(Units.Degrees.of(10));   
+        this.io.rotateHood(Units.Degrees.of(13));   
     }
 
     public void home() {
@@ -101,9 +101,12 @@ public class Shooter extends SubsystemBase {
     public Command shootOverrideCommand() {
         return new FunctionalCommand(
             this::shootOverride,
-            () -> {},
+            () -> {
+                Logger.recordOutput("Shooter/OverrideRunning", true);
+            },
             (interrupted) -> {
                 // not returing to home to allow overriden command to control transitions
+                Logger.recordOutput("Shooter/OverrideRunning", false);
             },
             () -> { return false; },
             this);
