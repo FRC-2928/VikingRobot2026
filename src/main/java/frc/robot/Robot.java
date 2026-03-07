@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.utils.MatchRecorder;
 import frc.robot.utils.ShooterDataCollector;
 import frc.robot.utils.ShooterDataCollectorIO;
 import frc.robot.utils.ShooterDataCollectorIOReal;
@@ -35,6 +36,8 @@ public class Robot extends LoggedRobot {
     // Shooter data collection
     private ShooterLookupTableBuilder shooterDataBuilder;
     private ShooterDataCollector shooterDataCollector;
+
+    public MatchRecorder matchRecorder;
 
     public Robot() {
         Logger.addDataReceiver(new WPILOGWriter());
@@ -57,6 +60,10 @@ public class Robot extends LoggedRobot {
         // Use real IO for robot hardware, could use sim IO for simulation
         ShooterDataCollectorIO io = new ShooterDataCollectorIOReal();
         shooterDataCollector = new ShooterDataCollector(shooterDataBuilder, io);
+
+        // Initialize match recorder (starts background lookup-table load)
+        matchRecorder = new MatchRecorder();
+        mRobotContainer.matchRecorder = matchRecorder;
     }
 
     private boolean m_lastEnabledState = false;
@@ -112,13 +119,16 @@ public class Robot extends LoggedRobot {
         }
 
         mRobotContainer.setTeleopStartTime();
+        matchRecorder.teleopInit();
     }
 
     @Override
     public void teleopPeriodic() {}
 
     @Override
-    public void teleopExit() {}
+    public void teleopExit() {
+        matchRecorder.teleopExit();
+    }
 
     @Override
     public void testInit() {

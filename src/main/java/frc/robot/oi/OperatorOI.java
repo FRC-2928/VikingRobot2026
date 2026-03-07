@@ -1,11 +1,6 @@
 package frc.robot.oi;
 
-import org.littletonrobotics.junction.Logger;
-
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
-import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.RobotContainer;
@@ -26,6 +21,7 @@ public class OperatorOI extends BaseOI {
         this.runOverrides = this.controller.rightBumper();
 
         this.extendIntake = this.controller.leftBumper();
+        this.recordShot = this.controller.back();
     }
 
     public final Trigger nudgeShooterAngleUp;
@@ -39,6 +35,7 @@ public class OperatorOI extends BaseOI {
     public final Trigger runOverrides;
 
     public final Trigger extendIntake;
+    public final Trigger recordShot;
 
     /* 
     public final Trigger climberOverrideLower;
@@ -66,6 +63,7 @@ public class OperatorOI extends BaseOI {
         this.resetNudges.onTrue(new InstantCommand(RobotContainer.getInstance().shooter::resetNudges));
 
         this.extendIntake.onTrue(new InstantCommand(() -> RobotContainer.getInstance().intake.setWantedState(Intake.WantedState.EXTEND)));
+        this.recordShot.onTrue(new InstantCommand(() -> RobotContainer.getInstance().matchRecorder.recordShot(RobotContainer.getInstance().drivetrain, RobotContainer.getInstance().shooter)));
 
         // this.runOverrides.whileTrue(new ParallelCommandGroup(RobotContainer.getInstance().shooter.shootOverride(), new RunCommand(() -> Logger.recordOutput("Superstructure/triggerIsRunning", Timer.getFPGATimestamp()), null)));
     }

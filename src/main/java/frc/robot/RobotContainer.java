@@ -8,19 +8,14 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 
-import java.util.List;
-
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import choreo.auto.AutoChooser;
-import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
-import frc.robot.commands.drivetrain.CenterLimelight;
 import frc.robot.generated.TunerConstants;
 import frc.robot.oi.DriverOI;
 import frc.robot.oi.OperatorOI;
@@ -28,10 +23,9 @@ import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.HopperFloor;
 import frc.robot.subsystems.Indexer;
 import frc.robot.subsystems.Intake;
-import frc.robot.subsystems.LEDIOReal;
-import frc.robot.subsystems.LEDSubsystem;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.Superstructure;
+import frc.robot.utils.MatchRecorder;
 
 public class RobotContainer {
     /// singleton instance of the RobotContainer
@@ -57,6 +51,7 @@ public class RobotContainer {
     public HopperFloor hopperFloor;
     public Indexer indexer;
     // public LEDSubsystem ledSubsystem;
+    public MatchRecorder matchRecorder;
     private double teleopStart = 0;
 
     public static synchronized RobotContainer getInstance() {
@@ -104,7 +99,7 @@ public class RobotContainer {
 
     private void configureBindings() {
         this.driverOI.configureControls();
-        // this.operatorOI.configureControls();
+        this.operatorOI.configureControls();
 
         // Idle while the robot is disabled. This ensures the configured
         // neutral mode is applied to the drive motors while disabled.
