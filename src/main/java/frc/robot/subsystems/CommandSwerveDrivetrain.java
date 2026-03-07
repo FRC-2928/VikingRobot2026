@@ -175,7 +175,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     //intake
     public final Limelight limelightForward = new Limelight("limelight-forward");
 
-    public final Limelight[] limelights = {limelightRight, limelightBack, limelightForward, limelightLeft};
+    public final Limelight[] limelights = {limelightRight, limelightBack, limelightLeft};
 
     /// The desired IMU mode for all limelights, set via setLimelightIMUModesIntent()
     private Limelight.IMUMode mDesiredLimelightIMUMode = Limelight.IMUMode.MODE_1_EXTERNAL_SEED;

@@ -1,7 +1,5 @@
 package frc.robot.utils;
 
-import edu.wpi.first.wpilibj.Filesystem;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -10,6 +8,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import edu.wpi.first.wpilibj.Filesystem;
 
 /**
  * Manages collection and storage of shooter tuning data
@@ -54,12 +54,7 @@ public class ShooterLookupTableBuilder {
             }
 
             initialized = true;
-            System.out.println("ShooterLookupTableBuilder initialized");
-            System.out.println("Session file: " + sessionFilePath);
-            System.out.println("Master file: " + masterFilePath);
         } catch (IOException e) {
-            System.err.println("Failed to initialize ShooterLookupTableBuilder: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
@@ -69,7 +64,6 @@ public class ShooterLookupTableBuilder {
     public boolean recordDataPoint(
             double distanceMeters, double velocityRPS, double hoodAngleDegrees, boolean successful, String notes) {
         if (!initialized) {
-            System.err.println("ShooterLookupTableBuilder not initialized!");
             return false;
         }
 
@@ -81,11 +75,8 @@ public class ShooterLookupTableBuilder {
             appendDataPoint(sessionFilePath, dataPoint);
             appendDataPoint(masterFilePath, dataPoint);
 
-            System.out.println("Recorded: " + dataPoint.toCSV());
             return true;
         } catch (IOException e) {
-            System.err.println("Failed to record data point: " + e.getMessage());
-            e.printStackTrace();
             return false;
         }
     }
@@ -101,15 +92,11 @@ public class ShooterLookupTableBuilder {
                 String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
                 String archivePath = sessionFilePath.replace(".csv", "_" + timestamp + ".csv");
                 Files.move(Paths.get(sessionFilePath), Paths.get(archivePath));
-                System.out.println("Archived session to: " + archivePath);
             }
 
             // Create new session file
             writeHeader(sessionFilePath);
-            System.out.println("Started new session");
         } catch (IOException e) {
-            System.err.println("Failed to start new session: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
