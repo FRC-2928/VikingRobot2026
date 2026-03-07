@@ -24,7 +24,7 @@ public class Shooter extends SubsystemBase {
             default -> new ShooterIOReal(this);
         };
         this.cont = cont;
-        this.setDefaultCommand(homeCommand());
+        this.setDefaultCommand(homeCommand());   
     }
 
     private final ShooterIO io;
@@ -75,13 +75,20 @@ public class Shooter extends SubsystemBase {
 
     public void shoot() {
         //aim();
-        // this.io.runKicker(Units.Volts.of(7));
-        this.aimAtHub();
+
+        // only run the kicker -- flywheels + hood are already commanded to hold setpoints by aim() methods
+        this.io.runKicker(Units.Volts.of(7));
+        // this.aimAtHub();
         // this.runShooter();
     }
 
+    private void shootOverride() {
+        runShooter();
+    }
+
     public void runShooter(){
-        this.io.runFlywheelsVelocity(Units.RotationsPerSecond.of(2));
+        this.io.runKicker(Units.Volts.of(7));
+        this.io.runFlywheelsVelocity(Units.RotationsPerSecond.of(40));
         this.io.rotateHood(Units.Degrees.of(10));   
     }
 
@@ -91,13 +98,24 @@ public class Shooter extends SubsystemBase {
         this.io.runKicker(Units.Volts.zero());
     }
 
+    public Command shootOverrideCommand() {
+        return new FunctionalCommand(
+            this::shootOverride,
+            () -> {},
+            (interrupted) -> {
+                // not returing to home to allow overriden command to control transitions
+            },
+            () -> { return false; },
+            this);
+    }
+
     public Command aimAtHub() {
         return new FunctionalCommand(
             this::aim,
             () -> {},
             (interrupted) -> {
                 if (interrupted) {
-                    home();
+                    home();  // TODO: probably don't want to do this, because interrupt could come from override
                 }
             },
             this::isAimed,
@@ -111,7 +129,7 @@ public class Shooter extends SubsystemBase {
             () -> {},
             (interrupted) -> {
                 if (interrupted) {
-                    home();
+                    home();  // TODO: probably don't want to do this, because interrupt could come from override
                 }
             },
             this::isAimed,
@@ -120,10 +138,7 @@ public class Shooter extends SubsystemBase {
     }
 
     public boolean isAimed() {
-        boolean correctHoodAngle = this.getHoodAngle().lte(Constants.Shooter.hoodAngleTolerance);
-        boolean correctFlywheelVelocity =
-            this.getFlywheelVelocity().lte(Constants.Shooter.shooterVelocityTolerance);
-        return correctHoodAngle && correctFlywheelVelocity;
+        return inputs.hoodAngleInTolerance && inputs.flywheelsInTolerance;
     }
 
     public void nudgeAngleUp() {

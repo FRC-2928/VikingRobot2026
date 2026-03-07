@@ -64,6 +64,9 @@ public class ShooterIOReal implements ShooterIO {
     private StatusSignal<AngularVelocity> velocityA;
     private StatusSignal<AngularVelocity> velocityB;
 
+    private Angle targetHoodAngle = Units.Degrees.zero();
+    private AngularVelocity targetFlywheeVelocity = Units.RotationsPerSecond.zero();
+
     public ShooterIOReal(final Shooter shooter) {
         this.flywheelA = new TalonFX(Constants.CAN.CTRE.shooterFlywheelA, Constants.CAN.CTRE.bus);
         this.flywheelB = new TalonFX(Constants.CAN.CTRE.shooterFlywheelB, Constants.CAN.CTRE.bus);
@@ -197,10 +200,9 @@ public class ShooterIOReal implements ShooterIO {
     // Rotates the hood to change angle of fuel shooting
     @Override
     public void rotateHood(Angle hoodAngle) {
-        hood.setControl(new PositionVoltage(hoodAngle.plus(Units.Degrees.of(angleNudgeDegrees))));
+        targetHoodAngle = hoodAngle.plus(Units.Degrees.of(angleNudgeDegrees));
+        hood.setControl(new PositionVoltage(targetHoodAngle));
     }
-
-    
 
     // Runs the flywheel in the shooter. 2 motors. Based on voltage
     @Override
@@ -216,7 +218,8 @@ public class ShooterIOReal implements ShooterIO {
     // Runs the flywheel in the shooter. 2 motors. Based on velocity
     @Override
     public void runFlywheelsVelocity(AngularVelocity speed) {
-        this.flywheelA.setControl(new VelocityVoltage(speed.plus(Units.DegreesPerSecond.of(speedNudgeRPS))));
+        this.targetFlywheeVelocity = speed.plus(Units.RotationsPerSecond.of(speedNudgeRPS));
+        this.flywheelA.setControl(new VelocityVoltage(targetFlywheeVelocity));
     }
 
     // Runs the kicker. Shoots ball into flywheels.
@@ -332,5 +335,11 @@ public class ShooterIOReal implements ShooterIO {
         inputs.flywheelSpeedA = Units.RotationsPerSecond.of(this.velocityA.getValueAsDouble());
         inputs.flywheelSpeedB = Units.RotationsPerSecond.of(this.velocityB.getValueAsDouble());
         inputs.hoodAngle = Units.Rotation.of(this.hoodAngle.getValueAsDouble());
+        var isHoodAngleInTolerance = inputs.hoodAngle.isNear(this.targetHoodAngle, Constants.Shooter.hoodAngleTolerance);
+        inputs.hoodAngleInTolerance = isHoodAngleInTolerance;
+        inputs.targetFlywheelVelocity = targetFlywheeVelocity;
+        inputs.targetHoodAngle = targetHoodAngle;
+        var isFlywheelSpeedInTolerance = inputs.flywheelSpeedA.isNear(this.targetFlywheeVelocity, Constants.Shooter.shooterVelocityTolerance);
+        inputs.flywheelsInTolerance = isFlywheelSpeedInTolerance;
     }
 }

@@ -117,7 +117,7 @@ public class Constants {
 
         public static final class RIO {
 			public static final CANBus bus = new CANBus("rio");
-            public static final int intakeRoller = 33;
+            public static final int intakeRoller = 0;
 		}
 
         public static final class CTRE {
@@ -291,7 +291,7 @@ public class Constants {
         public static final Angle hoodAngle = Units.Degrees.of(0);
         public static final LinearVelocity releaseVelocity = Units.FeetPerSecond.of(0);
         public static final Angle toleranceFromHub = Units.Degrees.of(10);
-        public static final AngularVelocity shooterVelocityTolerance = Units.RotationsPerSecond.of(10);
+        public static final AngularVelocity shooterVelocityTolerance = Units.RotationsPerSecond.of(5);
         public static final Angle hoodAngleTolerance = Units.Degrees.of(3);
         public static final double pivotCurrentLimit = 40;
         public static final AngularVelocity pivotMaxVelocityShoot = Units.DegreesPerSecond.of(2);

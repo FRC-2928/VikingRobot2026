@@ -14,6 +14,10 @@ public interface ShooterIO {
         public AngularVelocity flywheelSpeedA;
         public AngularVelocity flywheelSpeedB;
         public Angle hoodAngle = Units.Radians.zero();
+        public AngularVelocity targetFlywheelVelocity = Units.RotationsPerSecond.zero();
+        public Angle targetHoodAngle = Units.Degrees.zero();
+        public boolean hoodAngleInTolerance = false;
+        public boolean flywheelsInTolerance = false;
     }
 
     public default void rotateHood(Angle hoodAngle) {}

@@ -157,7 +157,7 @@ public class Superstructure extends SubsystemBase {
         initState(RobotState.MANUAL_INTAKE, extendAndIntake());
         initState(RobotState.AUTO_INTAKE, autoIntake());
         initState(RobotState.RETRACT_INTAKE, retractIntake());
-        initState(RobotState.SHOOTING, startShooting());
+        initState(RobotState.SHOOTING, startShootingOverride());
         initState(RobotState.SHOOT_HOME, shootTowardsHome());
 
         transitionFunctions = new HashMap<>();
@@ -454,15 +454,17 @@ public class Superstructure extends SubsystemBase {
             .alongWith(mRobotContainer.indexer.runIndexerCommand());
     }
 
-
+    public Command startShootingOverride() {
+        // TODO: also retract when shooting
+        return mRobotContainer.shooter.shootOverrideCommand()
+            .alongWith(mRobotContainer.drivetrain.brake())
+            .alongWith(mRobotContainer.hopperFloor.runHopperCommand())
+            .alongWith(mRobotContainer.indexer.runIndexerCommand());
+    }
 
     // Spins up flywheels to speed and turns hood to correct angle. Command will not end on its own
     public Command prepareShooter() {
-        return new RunCommand(
-                () -> {
-                    mRobotContainer.shooter.aim();
-                },
-                mRobotContainer.shooter);
+        return mRobotContainer.shooter.aimAtHub();
     }
 
     public Command shootAutomated() {

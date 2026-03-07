@@ -4,6 +4,7 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.RobotContainer;
+import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Superstructure;
 import frc.robot.subsystems.Superstructure.StateIntent;
 import frc.robot.vision.Limelight;
@@ -82,18 +83,30 @@ public class DriverOI extends BaseOI {
         this.shootOverride
             .onTrue(mSuperstructure.requestShootOverride())
             .onFalse(mSuperstructure.clearOverrideCommand());
-        this.shoot
-            .onTrue(mSuperstructure.setIntent(StateIntent.ACTION_SHOOT_HUB, true))
-            .onFalse(mSuperstructure.setIntent(StateIntent.ACTION_SHOOT_HUB, false));
-        this.autoIntake
-            .onTrue(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_AUTO, true))
-            .onFalse(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_AUTO, false));
         this.manualIntake
-            .onTrue(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_MANUAL, true))
-            .onFalse(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_MANUAL, false));
+            .onTrue(
+                new InstantCommand(() -> cont.intake.setWantedState(Intake.WantedState.EXTEND_AND_RUN), cont.intake))
+            .onFalse(
+                new InstantCommand(() -> cont.intake.setWantedState(Intake.WantedState.STOP))
+            );
         this.retractIntake
-            .onTrue(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_RETRACT, true))
-            .onFalse(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_RETRACT, false));
+            .onTrue(
+                new InstantCommand(() -> cont.intake.setWantedState(Intake.WantedState.RETRACT), cont.intake))
+            .onFalse(
+                new InstantCommand(() -> cont.intake.setWantedState(Intake.WantedState.STOP))
+            );
+        // this.shoot
+        //     .onTrue(mSuperstructure.setIntent(StateIntent.ACTION_SHOOT_HUB, true))
+        //     .onFalse(mSuperstructure.setIntent(StateIntent.ACTION_SHOOT_HUB, false));
+        // this.autoIntake
+        //     .onTrue(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_AUTO, true))
+        //     .onFalse(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_AUTO, false));
+        // this.manualIntake
+        //     .onTrue(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_MANUAL, true))
+        //     .onFalse(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_MANUAL, false));
+        // this.retractIntake
+        //     .onTrue(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_RETRACT, true))
+        //     .onFalse(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_RETRACT, false));
         // this.spinKicker.onTrue(cont.shooter.startKicker());
         // this.shotConditionsMet
         //         .and(() -> cont.drivetrain
