@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.RobotContainer;
+import frc.robot.subsystems.Intake;
 
 public class OperatorOI extends BaseOI {
     public OperatorOI(final CommandXboxController controller) {
@@ -23,6 +24,8 @@ public class OperatorOI extends BaseOI {
         this.resetNudges = this.controller.leftStick();
 
         this.runOverrides = this.controller.rightBumper();
+
+        this.extendIntake = this.controller.leftBumper();
     }
 
     public final Trigger nudgeShooterAngleUp;
@@ -34,6 +37,8 @@ public class OperatorOI extends BaseOI {
     public final Trigger resetNudges;
 
     public final Trigger runOverrides;
+
+    public final Trigger extendIntake;
 
     /* 
     public final Trigger climberOverrideLower;
@@ -59,6 +64,8 @@ public class OperatorOI extends BaseOI {
         this.nudgeShooterSpeedUp.onTrue(new InstantCommand(RobotContainer.getInstance().shooter::nudgeSpeedUp));
 
         this.resetNudges.onTrue(new InstantCommand(RobotContainer.getInstance().shooter::resetNudges));
+
+        this.extendIntake.onTrue(new InstantCommand(() -> RobotContainer.getInstance().intake.setWantedState(Intake.WantedState.EXTEND)));
 
         // this.runOverrides.whileTrue(new ParallelCommandGroup(RobotContainer.getInstance().shooter.shootOverride(), new RunCommand(() -> Logger.recordOutput("Superstructure/triggerIsRunning", Timer.getFPGATimestamp()), null)));
     }

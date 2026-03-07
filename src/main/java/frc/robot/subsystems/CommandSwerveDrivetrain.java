@@ -185,10 +185,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private double ySpeed;
     private double ySpeedPid;
     private double thetaSpeed;
+    private double omega;
+    private double omegaPID;
     private double thetaPid;
     private PIDController centerPIDx;
     private PIDController centerPIDy;
-    private PIDController centerRotaionPid;
+    private PIDController centerRotationPid;
     private Pose2d robotPoseTagspace;
     private Pose2d tagPoseRobotspace;
     private int tag;
@@ -518,52 +520,35 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         }
     }
 
-    public ChassisSpeeds centerLimelight(Distance offsetX, Distance offsetY, Angle offsetTheta, Pose2d targetPose) {
+    public ChassisSpeeds centerLimelight(Pose2d targetPose) {
         Pose2d robotPose = this.getCurrentPose2D();
-        robotPoseTagspace = robotPose.relativeTo(targetPose);
-        tagPoseRobotspace = targetPose.relativeTo(robotPose);
-        // xSpeed = tagPoseRobotspace.getX();
-        // ySpeed = tagPoseRobotspace.getY();
-        // thetaSpeed = tagPoseRobotspace.getRotation().getRadians();
-        xSpeed = robotPoseTagspace.getX();
-        ySpeed = robotPoseTagspace.getY();
-        thetaSpeed = robotPoseTagspace.getRotation().getRadians();
-        // xSpeedPid = -centerPIDx.calculate(xSpeed,offsetX.in(Units.Meters));
-        // ySpeedPid = -centerPIDy.calculate(ySpeed,offsetY.in(Units.Meters));
-        // thetaPid = -centerRotaionPid.calculate(thetaSpeed,offsetTheta.in(Units.Radians));
-        xSpeedPid = centerPIDx.calculate(xSpeed, offsetX.in(Units.Meters));
-        ySpeedPid = centerPIDy.calculate(ySpeed, offsetY.in(Units.Meters));
-        double xSpeedRotated = xSpeedPid * Math.cos(offsetTheta.in(Units.Radians))
-                - ySpeedPid * Math.sin(offsetTheta.in(Units.Radians));
-        double ySpeedRotated = xSpeedPid * Math.sin(offsetTheta.in(Units.Radians))
-                + ySpeedPid * Math.cos(offsetTheta.in(Units.Radians));
-        thetaPid = centerRotaionPid.calculate(thetaSpeed, offsetTheta.in(Units.Radians));
-        // this.controlRobotDrivetrainAutonomus(new ChassisSpeeds(xSpeedRotated, ySpeedRotated, thetaPid * 1.5));
-
-        var limelight = limelightLeft;
-        Logger.recordOutput("Drivetrain/Auto/XSpeed", xSpeed);
-        Logger.recordOutput("Drivetrain/Auto/YSpeed", ySpeed);
+        Distance xError = Units.Meters.of(targetPose.getX() - robotPose.getX());
+        Distance yError = Units.Meters.of(targetPose.getY() - robotPose.getY());
+        Angle thetaError = targetPose.getRotation().minus(robotPose.getRotation()).getMeasure();
+        // Get PID outputs based on error between current pose and target pose (both blue origin)
+        this.xSpeed = centerPIDx.calculate(robotPose.getX(), targetPose.getX());
+        this.ySpeed = centerPIDy.calculate(robotPose.getY(), targetPose.getY());
+        this.omega = centerRotationPid.calculate(robotPose.getRotation().getRadians(), targetPose.getRotation().getRadians());
+       
+        var limelight = this.limelightLeft;
         Logger.recordOutput("Drivetrain/Auto/Center Is Finished", false);
-        Logger.recordOutput("Drivetrain/Auto/XSpeedPid", xSpeedPid);
-        Logger.recordOutput("Drivetrain/Auto/YSpeedPid", ySpeedPid);
+        Logger.recordOutput("Drivetrain/Auto/XError", xError);
+        Logger.recordOutput("Drivetrain/Auto/YError", yError);
+        Logger.recordOutput("Drivetrain/Auto/ThetaError", thetaError);
+        Logger.recordOutput("Drivetrain/Auto/XSpeed", this.xSpeed);
+        Logger.recordOutput("Drivetrain/Auto/YSpeed", this.ySpeed);
+        Logger.recordOutput("Drivetrain/Auto/Omega", this.omega);
+        Logger.recordOutput("Drivetrain/Auto/limelightHasValidTargets", limelight.hasValidTargets());
         Logger.recordOutput(
                 "Drivetrain/Auto/Theta",
                 limelight.getBotPose3d_TargetSpace().getRotation().getAngle());
-        Logger.recordOutput("Drivetrain/Auto/robotPoseTagSpace", robotPoseTagspace);
-        Logger.recordOutput("Drivetrain/Auto/tagPoseRobotSpace", tagPoseRobotspace);
-        Logger.recordOutput("Drivetrain/Auto/thetaSpeed", thetaSpeed);
-        Logger.recordOutput("Drivetrain/Auto/thetaPid", thetaPid);
         Logger.recordOutput(
                 "Drivetrain/Auto/estRotation", this.getCurrentPose2D().getRotation());
-        Logger.recordOutput("Drivetrain/Auto/offsetX", offsetX);
-        Logger.recordOutput("Drivetrain/Auto/offsetTheta", offsetTheta.in(Units.Radians));
 
-        return new ChassisSpeeds(xSpeedRotated, ySpeedRotated, thetaPid * 1.5);
+         // Convert blue origin chassis speed to robot relative chassis speed and apply control
+        return ChassisSpeeds.fromFieldRelativeSpeeds(this.xSpeed, this.ySpeed, this.omega, robotPose.getRotation());
     }
 
-    public ChassisSpeeds centerLimelight(Pose2d targetPose) {
-        return centerLimelight(Units.Inches.of(0), Units.Inches.of(0), Units.Radians.of(0), targetPose);
-    }
 
     // spotless: off
     private ChassisSpeeds calculateSpeedsBasedOnJoystickInputs(BaseOI controllerOI) {
