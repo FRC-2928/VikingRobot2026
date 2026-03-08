@@ -80,6 +80,9 @@ public class DriverOI extends BaseOI {
         // this.resetAngle.whileTrue(new RunCommand(cont.drivetrain::seedLimelightImu));
         // this.resetAngle.whileFalse(new RunCommand(cont.drivetrain::setImuMode2));
         this.toggleRotationLockedMode.onTrue(mSuperstructure.toggleStateIntent(Superstructure.StateIntent.ACTION_TOGGLE_TARGET_LOCK_MODE));
+        // this.toggleRotationLockedMode
+        //     .onTrue(mSuperstructure.setIntent(Superstructure.StateIntent.ACTION_TOGGLE_TARGET_LOCK_MODE, true))
+        //     .onFalse(mSuperstructure.setIntent(Superstructure.StateIntent.ACTION_TOGGLE_TARGET_LOCK_MODE, false));
         this.shootOverride
             .onTrue(mSuperstructure.requestShootOverride())
             .onFalse(mSuperstructure.clearOverrideCommand());

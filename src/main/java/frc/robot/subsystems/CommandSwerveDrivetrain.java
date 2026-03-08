@@ -36,16 +36,15 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -73,7 +72,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private static final double ROTATION_DEADBAND = 0.15;
 
     /// Scalar to help offset drive skew
-    private static final double SKEW_COMPENSATION_SCALAR = -0.03;
+    private static final double SKEW_COMPENSATION_SCALAR = -0.05;
 
     /// Drivetrain States
     public enum WantedState {
@@ -384,9 +383,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         Logger.recordOutput("Drivetrain/currentPose", mCurrentSwerveState.Pose);
         Logger.recordOutput("Drivetrain/currentState", mCurrentState);
         SmartDashboard.putData("Field_Pose", fieldLog);
+        Logger.recordOutput("Drivetrain/LimelightRightHasTags", limelightRight.hasValidTargets());
+        Logger.recordOutput("Drivetrain/LimelightLeftHasTags",  limelightLeft.hasValidTargets());
 
         /*
-         * Periodically try to apply the operator perspective.
+         * Periodically try to apply the operator perspective.S
          * If we haven't applied the operator perspective before, then we should apply it regardless of DS state.
          * This allows us to correct the perspective in case the robot code restarts mid-match.
          * Otherwise, only check and apply the operator perspective if the DS is disabled.
@@ -402,7 +403,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             });
         }
 
-        for(Limelight limelight : limelights){
+        for (Limelight limelight : limelights) {
 			PoseEstimate mt2 = limelight.getPoseMegatag2();
             PoseEstimate mt1 = limelight.getPoseMegatag1();
             // TODO: re-add this once we fix LL seeding
@@ -422,6 +423,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 var acceptUpdate = isUpdateable(mt1);
                 Logger.recordOutput("Drivetrain/acceptUpdate_" + limelight.getLimelightName(), acceptUpdate);
 				if (acceptUpdate) {
+                    // temp!!
+                    if (limelight != limelightLeft) continue;
 					this.setVisionMeasurementStdDevs(limelight.getLimelightTrust());
 					this.addVisionMeasurement(mt1.pose, mt1.timestampSeconds);
 				}
@@ -727,6 +730,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         PoseEstimate mt1 = this.limelightLeft.getPoseMegatag1();
         if (this.limelightLeft.hasValidTargets() && mt1 != null) {
             this.resetRotation(mt1.pose.getRotation());
+            // this.limelightLeft.setRobotOrientation(mt1.pose.getRotation().getMeasure());
         }
     }
 
@@ -749,6 +753,16 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             return inputAngle;
         } else {
             return inputAngle.plus(Units.Radians.of(Math.PI));
+        }
+    }
+
+    // used only for rotate to hub error checking... update with math & justification/explanation
+    public Angle invertAllianceRotation(Angle inputAngle) {
+        var alliance = DriverStation.getAlliance();
+        if (!alliance.isEmpty() && alliance.get() == Alliance.Red) {
+            return inputAngle.plus(Units.Radians.of(Math.PI));
+        } else {
+            return inputAngle;
         }
     }
 
@@ -953,8 +967,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      * @return Whether the current heading is within the tolerance of the target heading
      */
     private boolean isAtTargetHeading() {
-        Rotation2d rotationalError = mCurrentSwerveState.Pose.getRotation().minus(snapToHeading);
+        Rotation2d backToBlueOrigin = new Rotation2d(invertAllianceRotation(snapToHeading.getMeasure()));
+        // Rotation2d rotationalError = mCurrentSwerveState.Pose.getRotation().minus(snapToHeading);
+        Rotation2d rotationalError = mCurrentSwerveState.Pose.getRotation().minus(backToBlueOrigin);
         // TODO: determine appropriate thresholds
+        Logger.recordOutput("Drivetrain/AutoAim/RotationalErrorDegrees", rotationalError.getDegrees());
         var inRange = Degrees.of(rotationalError.getDegrees()).isNear(Degrees.zero(), Degrees.of(5));
         return inRange;
     }
