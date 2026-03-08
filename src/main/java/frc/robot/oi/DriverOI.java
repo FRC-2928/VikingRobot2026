@@ -5,6 +5,7 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.RobotContainer;
+import frc.robot.Constants.Intake.IntakeStates;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Superstructure;
 import frc.robot.subsystems.Superstructure.StateIntent;
@@ -33,9 +34,10 @@ public class DriverOI extends BaseOI {
     public final Trigger resetFOD;
     public final Trigger resetAngle;
 
-    public final Trigger autoIntake;
+    // public final Trigger autoIntake;
     public final Trigger manualIntake;
     public final Trigger retractIntake;
+    public final Trigger reverseIntakeRoller;
 
 
     public DriverOI(final CommandXboxController controller, Superstructure superstructure) {
@@ -57,7 +59,8 @@ public class DriverOI extends BaseOI {
         //             robotContainer.shooter.getFlywheelVelocity().lte(Constants.Shooter.shooterVelocityTolerance);
         //     return /*facingHub &&*/ correctHoodAngle && correctFlywheelVelocity;
         // });
-        this.autoIntake = this.controller.leftTrigger();
+        // this.autoIntake = this.controller.leftTrigger();
+        this.reverseIntakeRoller = this.controller.leftTrigger();
         this.manualIntake = this.controller.rightBumper();
         this.retractIntake = this.controller.povRight();
 
@@ -103,6 +106,14 @@ public class DriverOI extends BaseOI {
         this.retractIntake
             .onTrue(
                 new InstantCommand(() -> cont.intake.setWantedState(Intake.WantedState.RETRACT), cont.intake))
+            .onFalse(
+                new InstantCommand(() -> cont.intake.setWantedState(Intake.WantedState.STOP))
+            );
+
+        this.reverseIntakeRoller
+            .onTrue(
+                new InstantCommand(() -> cont.intake.setWantedState(Intake.WantedState.REVERSE_ROLLER))
+            )
             .onFalse(
                 new InstantCommand(() -> cont.intake.setWantedState(Intake.WantedState.STOP))
             );

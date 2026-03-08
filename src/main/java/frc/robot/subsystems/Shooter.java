@@ -90,13 +90,22 @@ public class Shooter extends SubsystemBase {
     }
 
     public Command runShooterAuto(){
-        return new RunCommand(
-            () -> {
-                this.io.runKicker(Units.Volts.of(7));
-                this.io.runFlywheelsVelocity(Units.RotationsPerSecond.of(32));
-                this.io.rotateHood(Units.Degrees.of(1.5));
-            }, this
-        );
+        var cmd = new FunctionalCommand(
+            this::runShooter,
+            () -> {},
+            (interrupted) -> { 
+                home();
+            },
+            () -> { return false; },
+            this);
+        return cmd;
+        // return new RunCommand(
+        //     () -> {
+        //         this.io.runKicker(Units.Volts.of(7));
+        //         this.io.runFlywheelsVelocity(Units.RotationsPerSecond.of(32));
+        //         this.io.rotateHood(Units.Degrees.of(1.5));
+        //     }, this
+        // );
     }
 
     public Command runFlywheelCommand(){
