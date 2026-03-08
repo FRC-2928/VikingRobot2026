@@ -75,7 +75,10 @@ public class ShooterIOReal implements ShooterIO {
     private final StatusSignal<Current>         flywheelBStatorCurrentSignal;
     private final StatusSignal<Current>         flywheelBSupplyCurrentSignal;
 
-    // TODO: add kicker signals...
+    // Kicker signals
+    private final StatusSignal<AngularVelocity> kickerVelocitySignal;
+    private final StatusSignal<Current> kickerStatorCurrentSignal;
+    private final StatusSignal<Current> kickerSupplyCurrentSignal;
 
     // Collection of all status signals
     private List<BaseStatusSignal> mStatusSignals;
@@ -214,6 +217,10 @@ public class ShooterIOReal implements ShooterIO {
         this.flywheelBVelocitySignal = this.flywheelB.getVelocity();
         this.flywheelBStatorCurrentSignal = this.flywheelB.getStatorCurrent();
         this.flywheelBSupplyCurrentSignal = this.flywheelB.getSupplyCurrent();
+        this.kickerVelocitySignal = this.kicker.getVelocity();
+        this.kickerStatorCurrentSignal = this.kicker.getStatorCurrent();
+        this.kickerSupplyCurrentSignal = this.kicker.getSupplyCurrent();
+
 
         this.mStatusSignals = List.of(
             hoodAngleSignal,
@@ -225,7 +232,10 @@ public class ShooterIOReal implements ShooterIO {
             flywheelASupplyCurrentSignal,
             flywheelBVelocitySignal,
             flywheelBStatorCurrentSignal,
-            flywheelBSupplyCurrentSignal
+            flywheelBSupplyCurrentSignal,
+            kickerVelocitySignal,
+            kickerStatorCurrentSignal,
+            kickerSupplyCurrentSignal
         );
     }
 
@@ -394,5 +404,10 @@ public class ShooterIOReal implements ShooterIO {
         inputs.shooterBVelocity = this.flywheelBVelocitySignal.getValue();
         inputs.shooterBStatorCurrent = this.flywheelBStatorCurrentSignal.getValue();
         inputs.shooterBSupplyCurrent = this.flywheelBSupplyCurrentSignal.getValue();
+
+        // Kicker Signals
+        inputs.kickerVelocity = this.kickerVelocitySignal.getValue();
+        inputs.kickerStatorCurrent = this.kickerStatorCurrentSignal.getValue();
+        inputs.kickerSupplyCurrent = this.kickerSupplyCurrentSignal.getValue();
     }
 }
