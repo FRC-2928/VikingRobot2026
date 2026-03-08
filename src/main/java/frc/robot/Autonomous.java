@@ -22,9 +22,12 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.lib.BLine.Path;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.Intake;
 
 public final class Autonomous {
     public static Command bLineForwardBack(CommandSwerveDrivetrain drivetrain) {
@@ -83,12 +86,22 @@ public final class Autonomous {
         */
 
         choreoChooser.addCmd(
-                "Auto0_goBackwardAndShoot",
+                "Auto0_shootMiddle",
                 () -> new SequentialCommandGroup(
                         // Go Backward for 10 sec
-                        cont.drivetrain.driveForDuration(new ChassisSpeeds(-2, 0, 0), Units.Seconds.of(1)),
+                        // cont.drivetrain.driveForDuration(new ChassisSpeeds(-2, 0, 0), Units.Seconds.of(1)),
                         // Call shoot from superclass
-                        cont.mSuperstructure.shootAutomated()));
+                        RobotContainer.getInstance().shooter.runFlywheelCommand().withTimeout(1),
+                        
+                        new ParallelCommandGroup(
+                        new RunCommand(() -> RobotContainer.getInstance().intake.setWantedState(Intake.WantedState.EXTEND_AND_RUN)),
+                        RobotContainer.getInstance().shooter.runShooterAuto(),
+                        RobotContainer.getInstance().indexer.runSlowerCommand(),
+                        RobotContainer.getInstance().hopperFloor.runHopperCommand())
+                        .withTimeout(10)).andThen(new RunCommand(() -> {
+                            RobotContainer.getInstance().intake.setWantedState(Intake.WantedState.STOP);
+                        }))
+                    );
 
         choreoChooser.addCmd("emptyPreLoad_rightPickShoot", () -> {
             final var idle = new SwerveRequest.Idle();

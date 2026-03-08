@@ -42,10 +42,11 @@ public class IndexerIOReal implements IndexerIO {
     }
 
     @Override
-    public void setSpeed(double angularVelocity) {
+    public void setSpeed(double dutyCycle) {
         // Do a feed forward later
-        indexer.setControl(new DutyCycleOut(MathUtil.clamp(angularVelocity, -1, 1)));
+        indexer.setControl(new DutyCycleOut(MathUtil.clamp(dutyCycle, -1, 1)));
     }
+    
 
     @Override
     public void runIndexer() {

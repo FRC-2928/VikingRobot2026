@@ -32,6 +32,12 @@ public class Indexer extends SubsystemBase {
         return new InstantCommand(() -> this.io.runIndexer());
     }
 
+    public Command runSlowerCommand() {
+        return new InstantCommand(() -> {
+            this.io.setSpeed(0.5);
+        }, this).andThen(stopCommand());
+    }
+
     public Command stopCommand() {
         return new InstantCommand(() -> this.io.setSpeed(0));
     }

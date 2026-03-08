@@ -88,8 +88,25 @@ public class Shooter extends SubsystemBase {
 
     public void runShooter(){
         this.io.runKicker(Units.Volts.of(7));
-        this.io.runFlywheelsVelocity(Units.RotationsPerSecond.of(40));
+        this.io.runFlywheelsVelocity(Units.RotationsPerSecond.of(38));
         this.io.rotateHood(Units.Degrees.of(13));   
+    }
+
+    public Command runShooterAuto(){
+        return new RunCommand(
+            () -> {
+                this.io.runKicker(Units.Volts.of(7));
+                this.io.runFlywheelsVelocity(Units.RotationsPerSecond.of(32));
+                this.io.rotateHood(Units.Degrees.of(1.5));
+            }, this
+        );
+    }
+
+    public Command runFlywheelCommand(){
+        return new RunCommand(() -> {
+                this.io.runFlywheelsVelocity(Units.RotationsPerSecond.of(32));
+            }, this
+        );
     }
 
     public void home() {

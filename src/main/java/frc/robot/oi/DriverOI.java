@@ -75,8 +75,10 @@ public class DriverOI extends BaseOI {
         // this.lockWheels.whileTrue(new LockWheels(cont.drivetrain, this));
         this.resetFOD.onTrue(new InstantCommand(cont.drivetrain::resetAngle));
         // this.intake.whileTrue(cont.superstructure.extendAndIntake());
-        this.resetAngle.whileTrue(new RunCommand(cont.drivetrain::seedLimelightImu));
-        this.resetAngle.whileFalse(new RunCommand(cont.drivetrain::setImuMode2));
+        this.resetAngle.onTrue(cont.drivetrain.runOnce(cont.drivetrain::zeroAngle));
+        // Temporarily disable limelight seeding since LLs are not updating pose
+        // this.resetAngle.whileTrue(new RunCommand(cont.drivetrain::seedLimelightImu));
+        // this.resetAngle.whileFalse(new RunCommand(cont.drivetrain::setImuMode2));
         this.toggleRotationLockedMode.onTrue(mSuperstructure.toggleStateIntent(Superstructure.StateIntent.ACTION_TOGGLE_TARGET_LOCK_MODE));
         this.shootOverride
             .onTrue(mSuperstructure.requestShootOverride())

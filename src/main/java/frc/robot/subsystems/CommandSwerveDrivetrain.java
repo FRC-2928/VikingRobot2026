@@ -449,6 +449,13 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 		return true;
 	}
 
+    public void zeroAngle(){
+        this.seedFieldCentric();
+        for(Limelight limelight : limelights){
+            limelight.setRobotOrientation(Units.Degree.zero());
+        }
+    }
+
     private SystemState handleStateTransition() {
         return switch (mDesiredState) {
             case SYS_ID -> SystemState.SYS_ID;
