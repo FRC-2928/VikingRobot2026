@@ -25,6 +25,7 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.lib.BLine.Path;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Intake;
@@ -138,6 +139,22 @@ public final class Autonomous {
                     pathBuilder.build(middlePickShoot_part3),
                     cont.mSuperstructure.prepareShooter());
         });
+
+        choreoChooser.addCmd("bl_comp", () -> {
+            final var idle = new SwerveRequest.Idle();
+
+            var pathBuilder = cont.drivetrain.getPathBuilder();
+            Path bl_comp_part2 = new Path("bl_comp_part2");
+            return Commands.sequence(
+                    cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(Rotation2d.kZero)),
+                    cont.mSuperstructure.pathWhileIntaking("bl_comp_part1"),
+                    pathBuilder.build(bl_comp_part2),
+                    cont.mSuperstructure.prepareShooter().withTimeout(2),
+                    new InstantCommand(() -> cont.mSuperstructure.requestShootOverride()),
+                    new WaitCommand(3),
+                    new InstantCommand(() -> cont.mSuperstructure.clearOverrideCommand()));
+        });
+
 
         choreoChooser.addCmd("rightPickShoot", () -> {
             final var idle = new SwerveRequest.Idle();
