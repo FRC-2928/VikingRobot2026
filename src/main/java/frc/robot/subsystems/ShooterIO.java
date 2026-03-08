@@ -5,19 +5,37 @@ import org.littletonrobotics.junction.AutoLog;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
-import edu.wpi.first.wpilibj2.command.Command;
 
 public interface ShooterIO {
     @AutoLog
     public static class ShooterIOInputs {
-        public AngularVelocity flywheelSpeedA;
-        public AngularVelocity flywheelSpeedB;
-        public Angle hoodAngle = Units.Radians.zero();
+        // Hood data values
+        public Angle           hoodAngle = Units.Degrees.zero();
+        public Angle           targetHoodAngle = Units.Degrees.zero();
+        public AngularVelocity hoodAngularVelocity = Units.RotationsPerSecond.zero();
+        public Current         hoodStatorCurrent = Units.Amps.zero();
+        public Current         hoodSupplyCurrent = Units.Amps.zero();
+        public boolean         hoodAngleInTolerance = false;
+
+        // Shooter A data values
+        public AngularVelocity shooterAVelocity;
+        // TODO: should really measure for B as well...
         public AngularVelocity targetFlywheelVelocity = Units.RotationsPerSecond.zero();
-        public Angle targetHoodAngle = Units.Degrees.zero();
-        public boolean hoodAngleInTolerance = false;
-        public boolean flywheelsInTolerance = false;
+        public Current         shooterAStatorCurrent = Units.Amps.zero();
+        public Current         shooterASupplyCurrent = Units.Amps.zero();
+        public boolean         flywheelsInTolerance = false;  // currently only measured for A... should fix this...
+
+        // Shooter B data values
+        public AngularVelocity shooterBVelocity = Units.RotationsPerSecond.zero();
+        public Current         shooterBStatorCurrent = Units.Amps.zero();
+        public Current         shooterBSupplyCurrent = Units.Amps.zero();
+
+        // Kicker data values
+        public AngularVelocity kickerVelocity = Units.RotationsPerSecond.zero();
+        public Current         kickerStatorCurrent = Units.Amps.zero();
+        public Current         kickerSupplyCurrent = Units.Amps.zero();
     }
 
     public default void rotateHood(Angle hoodAngle) {}

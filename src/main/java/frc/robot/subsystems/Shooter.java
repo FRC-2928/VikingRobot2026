@@ -8,14 +8,11 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
-import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.Shooter.AimValues;
 import frc.robot.RobotContainer;
-import frc.robot.Tuning;
 
 public class Shooter extends SubsystemBase {
     public Shooter(RobotContainer cont) {
@@ -36,7 +33,7 @@ public class Shooter extends SubsystemBase {
     }
 
     public AngularVelocity getFlywheelVelocity() {
-        return inputs.flywheelSpeedA;
+        return inputs.shooterAVelocity;
     }
 
     @Override
