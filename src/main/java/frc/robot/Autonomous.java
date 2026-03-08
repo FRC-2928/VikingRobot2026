@@ -90,6 +90,28 @@ public final class Autonomous {
                         // Call shoot from superclass
                         cont.mSuperstructure.shootAutomated()));
 
+        choreoChooser.addCmd("emptyPreLoad_rightPickShoot", () -> {
+            final var idle = new SwerveRequest.Idle();
+
+            var pathBuilder = cont.drivetrain.getPathBuilder();
+            Path rightPickShoot_part1 = new Path("rightPickShoot_part1");
+            Path rightPickShoot_part3 = new Path("rightPickShoot_part3");
+
+            Command shootPreLoad = new SequentialCommandGroup(
+                        // Go Backward for 10 sec
+                        cont.drivetrain.driveForDuration(new ChassisSpeeds(-2, 0, 0), Units.Seconds.of(1)),
+                        // Call shoot from superclass
+                        cont.mSuperstructure.shootAutomated()).withTimeout(5);
+
+            Command rightPickShoot =  Commands.sequence(
+                    pathBuilder.build(rightPickShoot_part1),
+                    cont.mSuperstructure.pathWhileIntaking("rightPickShoot_part2"),
+                    pathBuilder.build(rightPickShoot_part3),
+                    cont.mSuperstructure.shootAutomated());
+            
+            return new SequentialCommandGroup(shootPreLoad, rightPickShoot);
+        });
+
         choreoChooser.addCmd("middlePickShoot", () -> {
             final var idle = new SwerveRequest.Idle();
 
