@@ -53,6 +53,7 @@ public class Superstructure extends SubsystemBase {
     public enum OverrideIntent {
         OVERRIDE_SHOOT_MODE,
         OVERRIDE_INTAKE_MODE,
+        OVERRIDE_INTAKE_SHOOT_MODE,
         OVERRIDE_NONE
     }
 
@@ -97,7 +98,8 @@ public class Superstructure extends SubsystemBase {
      */
     private enum StateOverrides {
         OVERRIDE_SHOOTING,    // bit 0
-        OVERRIDE_INTAKING     // bit 1
+        OVERRIDE_INTAKING,    // bit 1
+        OVERRIDE_INTAKE_SHOOT // bit 2 
         // ... future overrides would be bit 2, 3, etc.
     }
 
@@ -269,6 +271,12 @@ public class Superstructure extends SubsystemBase {
             }
             case OVERRIDE_INTAKE_MODE:
                 break;
+            case OVERRIDE_INTAKE_SHOOT_MODE: {
+                mActiveOverrides.add(StateOverrides.OVERRIDE_INTAKE_SHOOT);
+                if () {
+                    
+                }
+            }
             // ... other overrides here
             case OVERRIDE_NONE:
             default:
