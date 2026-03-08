@@ -97,7 +97,7 @@ public final class Autonomous {
                         new ParallelCommandGroup(
                         new RunCommand(() -> RobotContainer.getInstance().intake.setWantedState(Intake.WantedState.EXTEND_AND_RUN)),
                         RobotContainer.getInstance().shooter.runShooterAuto(),
-                        RobotContainer.getInstance().indexer.runSlowerCommand(),
+                        RobotContainer.getInstance().indexer.runForwardCommand(),
                         RobotContainer.getInstance().hopperFloor.runHopperCommand())
                         .withTimeout(10)).andThen(new RunCommand(() -> {
                             RobotContainer.getInstance().intake.setWantedState(Intake.WantedState.STOP);
@@ -147,11 +147,11 @@ public final class Autonomous {
             Path bl_comp_part2 = new Path("bl_comp_part2");
             return Commands.sequence(
                     cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(Rotation2d.kZero)),
-                    cont.mSuperstructure.pathWhileIntaking("bl_comp_part1"),
+                    cont.mSuperstructure.pathWhileIntaking("bl_comp_par1"),
                     pathBuilder.build(bl_comp_part2),
                     cont.mSuperstructure.prepareShooter().withTimeout(2),
                     new InstantCommand(() -> cont.mSuperstructure.requestShootOverride()),
-                    new WaitCommand(3),
+                    new WaitCommand(10),
                     new InstantCommand(() -> cont.mSuperstructure.clearOverrideCommand()));
         });
 

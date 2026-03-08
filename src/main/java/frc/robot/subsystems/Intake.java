@@ -18,7 +18,8 @@ public class Intake extends SubsystemBase {
         STOP,
         EXTEND,
         EXTEND_AND_RUN,
-        RETRACT
+        RETRACT,
+        REVERSE_ROLLER
     }
 
     public enum SystemState {
@@ -26,7 +27,8 @@ public class Intake extends SubsystemBase {
         STOP,
         EXTEND,
         EXTEND_AND_RUN,
-        RETRACT
+        RETRACT,
+        REVERSE_ROLLER
     }
 
     public Intake() {
@@ -105,6 +107,9 @@ public class Intake extends SubsystemBase {
             case RETRACT -> {
                 yield SystemState.RETRACT;
             }
+            case REVERSE_ROLLER -> {
+                yield SystemState.REVERSE_ROLLER;
+            }
             default -> SystemState.STOP;
         };
     }
@@ -128,6 +133,9 @@ public class Intake extends SubsystemBase {
                 break;
             case EXTEND_AND_RUN:
                 extendAndRun();
+                break;
+            case REVERSE_ROLLER:
+                intakeIO.setState(IntakeStates.REVERSE);
                 break;
         }
     }

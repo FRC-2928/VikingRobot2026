@@ -172,7 +172,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public final Limelight limelightRight = new Limelight("limelight-right");
     public final Limelight limelightBack = new Limelight("limelight-back");
     //intake
-    public final Limelight limelightForward = new Limelight("limelight-forward");
+    // public final Limelight limelightForward = new Limelight("limelight-forward");
 
     public final Limelight[] limelights = {limelightRight, limelightBack, limelightLeft};
 

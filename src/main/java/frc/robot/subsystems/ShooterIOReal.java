@@ -220,6 +220,7 @@ public class ShooterIOReal implements ShooterIO {
     @Override
     public void runFlywheelsVelocity(AngularVelocity speed) {
         this.targetFlywheeVelocity = speed.plus(Units.RotationsPerSecond.of(speedNudgeRPS));
+        Logger.recordOutput("Shooter/flywheelVelocityNudge", Units.RotationsPerSecond.of(speedNudgeRPS));
         Logger.recordOutput("Shooter/targetFlywheelVelocity", targetFlywheeVelocity);
         this.flywheelA.setControl(new VelocityVoltage(targetFlywheeVelocity));
     }
