@@ -167,6 +167,34 @@ public class Shooter extends SubsystemBase {
         return inputs.hoodAngleInTolerance && inputs.flywheelsInTolerance;
     }
 
+    /** Aim using the SOTM-compensated effective range instead of static distance. */
+    public void aimSOTM() {
+        double range = RobotContainer.getInstance().drivetrain.getSOTMEffectiveRange();
+        // Fall back to static distance if SOTM hasn't produced a valid range yet
+        double distanceToUse = (range > 0.5)
+            ? range
+            : RobotContainer.getInstance().drivetrain.getDistanceFromHub().in(Units.Meters);
+        AimValues val = Constants.Shooter.lookUpTable.get(distanceToUse);
+        if (val != null) {
+            Logger.recordOutput("Shooter/SOTM/EffectiveRange", distanceToUse);
+            Logger.recordOutput("Shooter/SOTM/AimValueHoodAngle", val.hoodAngle);
+            Logger.recordOutput("Shooter/SOTM/AimValueFlywheelSpeeds", val.shooterVelocity);
+            this.io.runFlywheelsVelocity(val.shooterVelocity);
+            Angle requestedAngle = Units.Degrees.of(MathUtil.clamp(80 - val.hoodAngle.in(Units.Degrees), 0, 40));
+            this.io.rotateHood(requestedAngle);
+        }
+    }
+
+    public Command aimSOTMCommand() {
+        return new FunctionalCommand(
+            this::aimSOTM,
+            this::aimSOTM,
+            (interrupted) -> { if (interrupted) home(); },
+            this::isAimed,
+            this
+        );
+    }
+
     public void nudgeAngleUp() {
         this.io.nudgeAngleUp();
     }

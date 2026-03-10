@@ -283,6 +283,28 @@ public class Constants {
         //hoodAngle, velocity, distance
         public static final double[][] temporaryLookupTable = {{75, 240, 60}, {70, 245, 72}, {68, 245, 84}, {61, 258, 108}, {57, 270, 132}, {54, 282, 156}, {54, 302, 180}, {53, 317, 204}, {53, 328, 228}, {52, 243, 252}};
 
+        // Shooter position offset from robot center (robot frame: +fwd = forward, +left = left)
+        // Shooter is in the back-right corner, 3 inches from each edge of the ~26-inch frame
+        // (13 inches center-to-edge, minus 3 inches inset = 10 inches = 0.254 m from center)
+        public static final double shooterFwdOffset  = -0.254; // meters (behind center)
+        public static final double shooterLeftOffset = -0.254; // meters (right of center)
+
+        // Shoot-On-The-Move constants
+        public static final double kFireLatency          = 0.15;  // seconds from trigger to ball exit; tune on robot
+        public static final int    kSOTMMaxIterations    = 5;
+        public static final double kSOTMTofEpsilon       = 0.002; // seconds convergence threshold
+        public static final double kMaxSOTMAdjustmentDeg = 25.0;  // max lead angle vs static aim (safety clamp)
+
+        // TOF table: {range in meters, time-of-flight in seconds}
+        // These are initial estimates — measure on the field at each distance.
+        public static final double[][] tofTable = {
+            {2.0, 0.19},
+            {3.0, 0.26},
+            {4.0, 0.33},
+            {5.0, 0.40},
+            {6.0, 0.47},
+        };
+
         // Gear Ratios
         public static final double flywheelGearRatio = 1.0;
         public static final double hoodGearRatio = 4.0 * 157.0 / 14;

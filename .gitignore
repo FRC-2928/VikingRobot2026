@@ -182,3 +182,6 @@ org.eclipse.*
 # Simulation
 simgui-ds.json
 simgui.json
+
+# Claude Code memory
+.claude/

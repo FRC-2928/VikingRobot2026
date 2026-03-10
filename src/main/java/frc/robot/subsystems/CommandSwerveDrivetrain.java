@@ -167,6 +167,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     private ChassisSpeeds currentChassisSpeeds = new ChassisSpeeds();
 
+    // SOTM: effective (lead-compensated) range cached each loop for use by Shooter
+    private double m_sotmEffectiveRange = 0.0;
+    // Below this translation speed (m/s), fall back to static aim instead of applying lead
+    private static final double kSOTMMinSpeedThreshold = 0.15;
+
     public final Limelight limelightLeft = new Limelight("limelight-left");
     //shooter
     public final Limelight limelightRight = new Limelight("limelight-right");
@@ -823,6 +828,156 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     public Rotation2d getRotationToHub() {
         return new Rotation2d(getAngleToHub(Units.Radians.of(Math.PI/2)));
+    }
+
+    /** Interpolate time-of-flight (seconds) from effective range (meters) using the TOF table in Constants. */
+    private double interpolateTOF(double rangeMeters) {
+        double[][] t = frc.robot.Constants.Shooter.tofTable;
+        if (rangeMeters <= t[0][0]) return t[0][1];
+        if (rangeMeters >= t[t.length - 1][0]) return t[t.length - 1][1];
+        for (int i = 1; i < t.length; i++) {
+            if (rangeMeters < t[i][0]) {
+                double frac = (rangeMeters - t[i - 1][0]) / (t[i][0] - t[i - 1][0]);
+                return t[i - 1][1] + frac * (t[i][1] - t[i - 1][1]);
+            }
+        }
+        return t[t.length - 1][1];
+    }
+
+    /** Returns true when the robot's translation speed exceeds the SOTM engagement threshold. */
+    public boolean isRobotMoving() {
+        ChassisSpeeds fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(
+            mCurrentSwerveState.Speeds, mCurrentSwerveState.Pose.getRotation());
+        double speed = Math.hypot(fieldSpeeds.vxMetersPerSecond, fieldSpeeds.vyMetersPerSecond);
+        Logger.recordOutput("Drivetrain/SOTM/IsMoving", speed > kSOTMMinSpeedThreshold);
+        Logger.recordOutput("Drivetrain/SOTM/TranslationSpeed", speed);
+        return speed > kSOTMMinSpeedThreshold;
+    }
+
+    /**
+     * Computes the SOTM-compensated drivetrain heading and stores the effective range.
+     * Accounts for the shooter's physical offset from the robot center (back-right corner).
+     * When the robot is stationary (below kSOTMMinSpeedThreshold), falls back to static aim.
+     * Call this every loop while SOTM is active; result is fed into snapToHeading.
+     */
+    public Rotation2d computeSOTMHeading() {
+        Pose2d pose = getCurrentPose2D();
+        double robotX   = pose.getX();
+        double robotY   = pose.getY();
+        double headingRad = pose.getRotation().getRadians();
+        double cosH = Math.cos(headingRad);
+        double sinH = Math.sin(headingRad);
+
+        // Field-relative robot velocity
+        ChassisSpeeds fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(
+            mCurrentSwerveState.Speeds, pose.getRotation());
+        double vxF   = fieldSpeeds.vxMetersPerSecond;
+        double vyF   = fieldSpeeds.vyMetersPerSecond;
+        double omega = fieldSpeeds.omegaRadiansPerSecond;
+
+        // Below speed threshold: skip lead compensation and use static aim
+        double translationSpeed = Math.hypot(vxF, vyF);
+        if (translationSpeed < kSOTMMinSpeedThreshold) {
+            double fwd0  = frc.robot.Constants.Shooter.shooterFwdOffset;
+            double left0 = frc.robot.Constants.Shooter.shooterLeftOffset;
+            double sX = robotX + fwd0 * Math.cos(headingRad) - left0 * Math.sin(headingRad);
+            double sY = robotY + fwd0 * Math.sin(headingRad) + left0 * Math.cos(headingRad);
+            m_sotmEffectiveRange = Math.hypot(getHubX() - sX, hubY - sY);
+            Logger.recordOutput("Drivetrain/SOTM/Mode", "STATIC");
+            return getRotationToHub();
+        }
+        Logger.recordOutput("Drivetrain/SOTM/Mode", "SOTM");
+
+        // Shooter field position (robot center + offset rotated into field frame)
+        double fwd  = frc.robot.Constants.Shooter.shooterFwdOffset;
+        double left = frc.robot.Constants.Shooter.shooterLeftOffset;
+        double rfX  = fwd * cosH - left * sinH; // offset vector, field frame
+        double rfY  = fwd * sinH + left * cosH;
+        double shooterX = robotX + rfX;
+        double shooterY = robotY + rfY;
+
+        // Static vector from shooter to hub (for heading-offset extraction)
+        double hX = getHubX();
+        double dx = hX - shooterX;
+        double dy = hubY - shooterY;
+        double staticRange = Math.hypot(dx, dy);
+
+        // Capture the offset that getRotationToHub() applies (shooter direction + alliance flip)
+        // so SOTM heading stays consistent with existing targeting
+        double staticFieldAngle = Math.atan2(dy, dx);
+        double headingOffset    = getRotationToHub().getRadians() - Math.atan2(
+            hubY - mCurrentSwerveState.Pose.getMeasureY().in(Units.Meters),
+            hX   - mCurrentSwerveState.Pose.getMeasureX().in(Units.Meters));
+
+        // Fire-time shooter position (forward-project by fire latency)
+        double dt      = frc.robot.Constants.Shooter.kFireLatency;
+        double fireRX  = robotX + vxF * dt;
+        double fireRY  = robotY + vyF * dt;
+        double fireHRad = headingRad + omega * dt;
+        double fireCosH = Math.cos(fireHRad);
+        double fireSinH = Math.sin(fireHRad);
+
+        double fireTX = fireRX + fwd * fireCosH - left * fireSinH;
+        double fireTY = fireRY + fwd * fireSinH + left * fireCosH;
+
+        // Shooter velocity at fire time (robot velocity + omega × offset)
+        double fireRFX  = fwd * fireCosH - left * fireSinH;
+        double fireRFY  = fwd * fireSinH + left * fireCosH;
+        double fireTVX  = vxF - fireRFY * omega;
+        double fireTVY  = vyF + fireRFX * omega;
+
+        // Vector from fire-projected shooter to hub
+        double fDX = hX    - fireTX;
+        double fDY = hubY  - fireTY;
+
+        // Iterative TOF convergence
+        double tof = interpolateTOF(Math.hypot(fDX, fDY));
+        double effectiveRange   = staticRange;
+        double sotmFieldAngle   = staticFieldAngle;
+        boolean isValid         = true;
+
+        for (int i = 0; i < frc.robot.Constants.Shooter.kSOTMMaxIterations; i++) {
+            double compX   = fDX - fireTVX * tof;
+            double compY   = fDY - fireTVY * tof;
+            effectiveRange = Math.hypot(compX, compY);
+            double newTof  = interpolateTOF(effectiveRange);
+            sotmFieldAngle = Math.atan2(compY, compX);
+            if (Math.abs(newTof - tof) < frc.robot.Constants.Shooter.kSOTMTofEpsilon) break;
+            tof = newTof;
+        }
+
+        // Safety: reject if lead adjustment exceeds limit
+        double adjustmentDeg = Math.toDegrees(sotmFieldAngle - staticFieldAngle);
+        while (adjustmentDeg >  180) adjustmentDeg -= 360;
+        while (adjustmentDeg < -180) adjustmentDeg += 360;
+        if (Math.abs(adjustmentDeg) > frc.robot.Constants.Shooter.kMaxSOTMAdjustmentDeg) {
+            isValid = false;
+        }
+
+        m_sotmEffectiveRange = isValid ? effectiveRange : staticRange;
+
+        // Apply same heading offset as getRotationToHub() so shooter faces the compensated target
+        return new Rotation2d(sotmFieldAngle + headingOffset);
+    }
+
+    /** Returns the SOTM effective range (m) computed by the last computeSOTMHeading() call. */
+    public double getSOTMEffectiveRange() {
+        return m_sotmEffectiveRange;
+    }
+
+    /**
+     * Like targetLock() but re-computes the snap heading every loop using SOTM lead compensation.
+     * When the robot is stationary, computeSOTMHeading() falls back to the static hub angle.
+     * Finishes (allowing startShooting() to proceed) once the heading is within tolerance.
+     */
+    public Command targetLockSOTM() {
+        return new FunctionalCommand(
+            () -> setState(WantedState.ROTATION_LOCK),
+            () -> { snapToHeading = computeSOTMHeading(); },
+            (interrupted) -> {},
+            this::isAtTargetHeading,
+            this
+        );
     }
 
     public Angle getAngleToHub(Angle offset) {
