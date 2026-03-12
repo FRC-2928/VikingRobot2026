@@ -296,11 +296,16 @@ public class Constants {
         public static final double pivotCurrentLimit = 40;
         public static final AngularVelocity pivotMaxVelocityShoot = Units.DegreesPerSecond.of(2);
         public static InterpolatingTreeMap<Double, AimValues> lookUpTable =
-                new InterpolatingTreeMap<Double, AimValues>(InverseInterpolator.forDouble(),
-                (start, end, t) -> new AimValues(
-                    Units.Rotations.of(start.hoodAngle.plus(end.hoodAngle.minus(start.hoodAngle)).in(Units.Rotations) * t),
-                    Units.RotationsPerSecond.of(start.shooterVelocity.plus(end.shooterVelocity.minus(start.shooterVelocity)).in(Units.RotationsPerSecond) * t))
-                );
+                new InterpolatingTreeMap<Double, AimValues>(
+                    InverseInterpolator.forDouble(),
+                    (start, end, t) -> {
+                        // Lerp each field: result = start + (end - start) * t
+                        Angle dTheta = (end.hoodAngle.minus(start.hoodAngle)).times(t);
+                        Angle interpolatedHoodAngle = start.hoodAngle.plus(dTheta);
+                        AngularVelocity dOmega = (end.shooterVelocity.minus(start.shooterVelocity)).times(t);
+                        AngularVelocity interpolatedFlywheelVelocity = start.shooterVelocity.plus(dOmega);
+                        return new AimValues(interpolatedHoodAngle, interpolatedFlywheelVelocity);
+                    });
 
         static {
             // Add temporary values to the tree
