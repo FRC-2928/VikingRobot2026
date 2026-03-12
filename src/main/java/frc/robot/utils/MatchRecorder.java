@@ -53,6 +53,7 @@ public class MatchRecorder {
      * {@link Constants.Shooter#lookUpTable}.  Falls back to compile-time values on any error.
      */
     private void loadLookupTable() {
+        Logger.recordOutput("MatchRecorder/LookupTableLoaded", false);
         try (BufferedReader reader = new BufferedReader(new FileReader(LOOKUP_TABLE_PATH))) {
             String line;
             boolean firstLine = true;
@@ -88,6 +89,7 @@ public class MatchRecorder {
 
             System.out.println("[MatchRecorder] Loaded " + rowsLoaded
                     + " lookup-table entries from " + LOOKUP_TABLE_PATH);
+            Logger.recordOutput("MatchRecorder/LookupTableLoaded", true);
 
         } catch (Exception e) {
             System.err.println("[MatchRecorder] Failed to load lookup table from "

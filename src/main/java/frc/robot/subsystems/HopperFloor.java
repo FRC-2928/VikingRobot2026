@@ -22,6 +22,10 @@ public class HopperFloor extends SubsystemBase {
         return new RunCommand(() -> io.runHopper(), this).finallyDo(() -> io.halt());
     }
 
+    public Command runReverseHopperCommand() {
+        return new RunCommand(() -> io.runHopperReverse(), this).finallyDo(() -> io.halt());
+    }
+
     public void halt() {
         io.halt();
     }

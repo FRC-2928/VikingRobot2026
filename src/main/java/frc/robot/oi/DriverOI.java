@@ -1,13 +1,14 @@
 package frc.robot.oi;
 
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.RobotContainer;
+import frc.robot.Constants.Intake.IntakeStates;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Superstructure;
 import frc.robot.subsystems.Superstructure.StateIntent;
-import frc.robot.vision.Limelight;
 
 public class DriverOI extends BaseOI {
     /// Class Members
@@ -33,9 +34,10 @@ public class DriverOI extends BaseOI {
     public final Trigger resetFOD;
     public final Trigger resetAngle;
 
-    public final Trigger autoIntake;
+    // public final Trigger autoIntake;
     public final Trigger manualIntake;
     public final Trigger retractIntake;
+    public final Trigger reverseIntakeRoller;
 
 
     public DriverOI(final CommandXboxController controller, Superstructure superstructure) {
@@ -57,7 +59,8 @@ public class DriverOI extends BaseOI {
         //             robotContainer.shooter.getFlywheelVelocity().lte(Constants.Shooter.shooterVelocityTolerance);
         //     return /*facingHub &&*/ correctHoodAngle && correctFlywheelVelocity;
         // });
-        this.autoIntake = this.controller.leftTrigger();
+        // this.autoIntake = this.controller.leftTrigger();
+        this.reverseIntakeRoller = this.controller.leftTrigger();
         this.manualIntake = this.controller.rightBumper();
         this.retractIntake = this.controller.povRight();
 
@@ -72,26 +75,45 @@ public class DriverOI extends BaseOI {
         // normally this would be a deadlock... we should seek to avoid such patterns...
         // this comes from a circular chain of getInstance -> init -> configureControls() -> getInstance()...
         var cont = RobotContainer.getInstance();
+        // this.lockWheels.whileTrue(new LockWheels(cont.drivetrain, this));
         this.resetFOD.onTrue(new InstantCommand(cont.drivetrain::resetAngle));
-
-        this.resetAngle
-            .onTrue(new InstantCommand(
-                () -> cont.drivetrain.setLimelightIMUModesIntent(Limelight.IMUMode.MODE_1_EXTERNAL_SEED)))
-            .onFalse(new InstantCommand(
-                () -> cont.drivetrain.setLimelightIMUModesIntent(Limelight.IMUMode.MODE_3_INTERNAL_MT1_ASSIST)));
+        // this.intake.whileTrue(cont.superstructure.extendAndIntake());
+        this.resetAngle.onTrue(cont.drivetrain.runOnce(cont.drivetrain::zeroAngle));
+        // Temporarily disable limelight seeding since LLs are not updating pose
+        // this.resetAngle.whileTrue(new RunCommand(cont.drivetrain::seedLimelightImu));
+        // this.resetAngle.whileFalse(new RunCommand(cont.drivetrain::setImuMode2));
         this.toggleRotationLockedMode.onTrue(mSuperstructure.toggleStateIntent(Superstructure.StateIntent.ACTION_TOGGLE_TARGET_LOCK_MODE));
+        // this.toggleRotationLockedMode
+        //     .onTrue(mSuperstructure.setIntent(Superstructure.StateIntent.ACTION_TOGGLE_TARGET_LOCK_MODE, true))
+        //     .onFalse(mSuperstructure.setIntent(Superstructure.StateIntent.ACTION_TOGGLE_TARGET_LOCK_MODE, false));
         this.shootOverride
             .onTrue(mSuperstructure.requestShootOverride())
             .onFalse(mSuperstructure.clearOverrideCommand());
         this.manualIntake
             .onTrue(
-                new InstantCommand(() -> cont.intake.setWantedState(Intake.WantedState.EXTEND_AND_RUN), cont.intake))
+                new InstantCommand(() -> {
+                    cont.intake.setWantedState(Intake.WantedState.EXTEND_AND_RUN);
+                    /*cont.hopperFloor.runReverseHopperCommand();*/
+                }, cont.intake, cont.hopperFloor)
+            )
             .onFalse(
-                new InstantCommand(() -> cont.intake.setWantedState(Intake.WantedState.STOP))
+                new InstantCommand(() -> {
+                    cont.intake.setWantedState(Intake.WantedState.STOP);
+                    /*cont.hopperFloor.halt();*/
+                }, cont.intake, cont.hopperFloor)
             );
+
         this.retractIntake
             .onTrue(
                 new InstantCommand(() -> cont.intake.setWantedState(Intake.WantedState.RETRACT), cont.intake))
+            .onFalse(
+                new InstantCommand(() -> cont.intake.setWantedState(Intake.WantedState.STOP))
+            );
+
+        this.reverseIntakeRoller
+            .onTrue(
+                new InstantCommand(() -> cont.intake.setWantedState(Intake.WantedState.REVERSE_ROLLER))
+            )
             .onFalse(
                 new InstantCommand(() -> cont.intake.setWantedState(Intake.WantedState.STOP))
             );

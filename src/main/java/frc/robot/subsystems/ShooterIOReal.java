@@ -1,5 +1,7 @@
 package frc.robot.subsystems;
 
+import java.util.List;
+
 import org.littletonrobotics.junction.Logger;
 
 import com.ctre.phoenix6.BaseStatusSignal;
@@ -8,7 +10,6 @@ import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MagnetSensorConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
-import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.PositionVoltage;
@@ -23,18 +24,15 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.RunCommand;
 import frc.robot.Constants;
 
 public class ShooterIOReal implements ShooterIO {
@@ -60,9 +58,30 @@ public class ShooterIOReal implements ShooterIO {
             LinearSystemId.createDCMotorSystem(DCMotor.getKrakenX44(1), 0.001, Constants.Shooter.kickerGearRatio),
             DCMotor.getKrakenX44(1));
 
-    private StatusSignal<Angle> hoodAngle;
-    private StatusSignal<AngularVelocity> velocityA;
-    private StatusSignal<AngularVelocity> velocityB;
+    /// Status Signals -- values from the motor(s) to monitor and log
+    // Hood signals
+    private final StatusSignal<Angle>           hoodAngleSignal;
+    private final StatusSignal<AngularVelocity> hoodAngularVelocitySignal;
+    private final StatusSignal<Current>         hoodStatorCurrentSignal;
+    private final StatusSignal<Current>         hoodSupplyCurrentSignal;
+
+    // Flywheel A signals
+    private final StatusSignal<AngularVelocity> flywheelAVelocitySignal;
+    private final StatusSignal<Current>         flywheelAStatorCurrentSignal;
+    private final StatusSignal<Current>         flywheelASupplyCurrentSignal;
+
+    // Flywheel B signals
+    private final StatusSignal<AngularVelocity> flywheelBVelocitySignal;
+    private final StatusSignal<Current>         flywheelBStatorCurrentSignal;
+    private final StatusSignal<Current>         flywheelBSupplyCurrentSignal;
+
+    // Kicker signals
+    private final StatusSignal<AngularVelocity> kickerVelocitySignal;
+    private final StatusSignal<Current> kickerStatorCurrentSignal;
+    private final StatusSignal<Current> kickerSupplyCurrentSignal;
+
+    // Collection of all status signals
+    private List<BaseStatusSignal> mStatusSignals;
 
     private Angle targetHoodAngle = Units.Degrees.zero();
     private AngularVelocity targetFlywheeVelocity = Units.RotationsPerSecond.zero();
@@ -80,7 +99,7 @@ public class ShooterIOReal implements ShooterIO {
                     .withKV(0.122);
         final Slot0Configs hoodSlot0Config =
                 new Slot0Configs()
-                    .withKP(20)
+                    .withKP(25)
                     .withKI(3.5);
         final Slot0Configs kickerSlot0Config =
                 new Slot0Configs().withKP(0.1);
@@ -187,9 +206,37 @@ public class ShooterIOReal implements ShooterIO {
         hood.getConfigurator().apply(hoodConfig);
         kicker.getConfigurator().apply(kickerConfig);
 
-        this.velocityA = this.flywheelA.getRotorVelocity();
-        this.velocityB = this.flywheelB.getRotorVelocity();
-        this.hoodAngle = this.hood.getPosition();
+        // TODO: ideally we'd like to iterate over these instead of having to write this each time...
+        this.hoodAngleSignal = this.hood.getPosition();
+        this.hoodAngularVelocitySignal = this.hood.getVelocity();
+        this.hoodStatorCurrentSignal = this.hood.getStatorCurrent();
+        this.hoodSupplyCurrentSignal = this.hood.getSupplyCurrent();
+        this.flywheelAVelocitySignal = this.flywheelA.getVelocity();
+        this.flywheelAStatorCurrentSignal = this.flywheelA.getStatorCurrent();
+        this.flywheelASupplyCurrentSignal = this.flywheelA.getSupplyCurrent();
+        this.flywheelBVelocitySignal = this.flywheelB.getVelocity();
+        this.flywheelBStatorCurrentSignal = this.flywheelB.getStatorCurrent();
+        this.flywheelBSupplyCurrentSignal = this.flywheelB.getSupplyCurrent();
+        this.kickerVelocitySignal = this.kicker.getVelocity();
+        this.kickerStatorCurrentSignal = this.kicker.getStatorCurrent();
+        this.kickerSupplyCurrentSignal = this.kicker.getSupplyCurrent();
+
+
+        this.mStatusSignals = List.of(
+            hoodAngleSignal,
+            hoodAngularVelocitySignal,
+            hoodStatorCurrentSignal,
+            hoodSupplyCurrentSignal,
+            flywheelAVelocitySignal,
+            flywheelAStatorCurrentSignal,
+            flywheelASupplyCurrentSignal,
+            flywheelBVelocitySignal,
+            flywheelBStatorCurrentSignal,
+            flywheelBSupplyCurrentSignal,
+            kickerVelocitySignal,
+            kickerStatorCurrentSignal,
+            kickerSupplyCurrentSignal
+        );
     }
 
     // 5-6 motors max
@@ -201,6 +248,7 @@ public class ShooterIOReal implements ShooterIO {
     @Override
     public void rotateHood(Angle hoodAngle) {
         targetHoodAngle = hoodAngle.plus(Units.Degrees.of(angleNudgeDegrees));
+        Logger.recordOutput("Shooter/targetHoodAngel", targetHoodAngle) ;
         hood.setControl(new PositionVoltage(targetHoodAngle));
     }
 
@@ -219,6 +267,8 @@ public class ShooterIOReal implements ShooterIO {
     @Override
     public void runFlywheelsVelocity(AngularVelocity speed) {
         this.targetFlywheeVelocity = speed.plus(Units.RotationsPerSecond.of(speedNudgeRPS));
+        Logger.recordOutput("Shooter/flywheelVelocityNudge", Units.RotationsPerSecond.of(speedNudgeRPS));
+        Logger.recordOutput("Shooter/targetFlywheelVelocity", targetFlywheeVelocity);
         this.flywheelA.setControl(new VelocityVoltage(targetFlywheeVelocity));
     }
 
@@ -331,15 +381,34 @@ public class ShooterIOReal implements ShooterIO {
 
     @Override
     public void updateInputs(final ShooterIOInputs inputs) {
-        BaseStatusSignal.refreshAll(this.hoodAngle, this.velocityA, this.velocityB);
-        inputs.flywheelSpeedA = Units.RotationsPerSecond.of(this.velocityA.getValueAsDouble());
-        inputs.flywheelSpeedB = Units.RotationsPerSecond.of(this.velocityB.getValueAsDouble());
-        inputs.hoodAngle = Units.Rotation.of(this.hoodAngle.getValueAsDouble());
+        BaseStatusSignal.refreshAll(mStatusSignals);
+
+        // all signals should have been refreshed via the list -- update the inputs now
+        // hood signals
+        inputs.hoodAngle = this.hoodAngleSignal.getValue();
         var isHoodAngleInTolerance = inputs.hoodAngle.isNear(this.targetHoodAngle, Constants.Shooter.hoodAngleTolerance);
         inputs.hoodAngleInTolerance = isHoodAngleInTolerance;
-        inputs.targetFlywheelVelocity = targetFlywheeVelocity;
         inputs.targetHoodAngle = targetHoodAngle;
-        var isFlywheelSpeedInTolerance = inputs.flywheelSpeedA.isNear(this.targetFlywheeVelocity, Constants.Shooter.shooterVelocityTolerance);
+        inputs.hoodAngularVelocity = hoodAngularVelocitySignal.getValue();
+        inputs.hoodStatorCurrent = hoodStatorCurrentSignal.getValue();
+        inputs.hoodSupplyCurrent = hoodSupplyCurrentSignal.getValue();
+
+        // Flywheel A Signals
+        inputs.shooterAVelocity = this.flywheelAVelocitySignal.getValue();
+        inputs.shooterAStatorCurrent = this.flywheelAStatorCurrentSignal.getValue();
+        inputs.shooterASupplyCurrent = this.flywheelASupplyCurrentSignal.getValue();
+        inputs.targetFlywheelVelocity = targetFlywheeVelocity;
+        var isFlywheelSpeedInTolerance = inputs.shooterAVelocity.isNear(this.targetFlywheeVelocity, Constants.Shooter.shooterVelocityTolerance);
         inputs.flywheelsInTolerance = isFlywheelSpeedInTolerance;
+
+        // Flywheel B signals
+        inputs.shooterBVelocity = this.flywheelBVelocitySignal.getValue();
+        inputs.shooterBStatorCurrent = this.flywheelBStatorCurrentSignal.getValue();
+        inputs.shooterBSupplyCurrent = this.flywheelBSupplyCurrentSignal.getValue();
+
+        // Kicker Signals
+        inputs.kickerVelocity = this.kickerVelocitySignal.getValue();
+        inputs.kickerStatorCurrent = this.kickerStatorCurrentSignal.getValue();
+        inputs.kickerSupplyCurrent = this.kickerSupplyCurrentSignal.getValue();
     }
 }

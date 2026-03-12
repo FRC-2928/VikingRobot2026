@@ -84,7 +84,7 @@ public class IntakeIOReal implements IntakeIO {
                 .withSupplyCurrentLimitEnable(true);
 
         MotorOutputConfigs intakeRollerOutputConfigs = new MotorOutputConfigs()
-            .withInverted(InvertedValue.CounterClockwise_Positive);
+            .withInverted(InvertedValue.Clockwise_Positive);
 
         intakeRollerConfig
             .withMotorOutput(intakeRollerOutputConfigs)

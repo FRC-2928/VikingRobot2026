@@ -36,11 +36,11 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
@@ -48,7 +48,6 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.robot.LimelightHelpers;
 import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.robot.RobotContainer;
 import frc.robot.generated.TunerConstants;
@@ -73,7 +72,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private static final double ROTATION_DEADBAND = 0.15;
 
     /// Scalar to help offset drive skew
-    private static final double SKEW_COMPENSATION_SCALAR = -0.03;
+    private static final double SKEW_COMPENSATION_SCALAR = -0.05;
 
     /// Drivetrain States
     public enum WantedState {
@@ -173,12 +172,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public final Limelight limelightRight = new Limelight("limelight-right");
     public final Limelight limelightBack = new Limelight("limelight-back");
     //intake
-    public final Limelight limelightForward = new Limelight("limelight-forward");
+    // public final Limelight limelightForward = new Limelight("limelight-forward");
 
     public final Limelight[] limelights = {limelightRight, limelightBack, limelightLeft};
-
-    /// The desired IMU mode for all limelights, set via setLimelightIMUModesIntent()
-    private Limelight.IMUMode mDesiredLimelightIMUMode = Limelight.IMUMode.MODE_1_EXTERNAL_SEED;
 
     private double xSpeed;
     private double xSpeedPid;
@@ -387,9 +383,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         Logger.recordOutput("Drivetrain/currentPose", mCurrentSwerveState.Pose);
         Logger.recordOutput("Drivetrain/currentState", mCurrentState);
         SmartDashboard.putData("Field_Pose", fieldLog);
+        Logger.recordOutput("Drivetrain/LimelightRightHasTags", limelightRight.hasValidTargets());
+        Logger.recordOutput("Drivetrain/LimelightLeftHasTags",  limelightLeft.hasValidTargets());
 
         /*
-         * Periodically try to apply the operator perspective.
+         * Periodically try to apply the operator perspective.S
          * If we haven't applied the operator perspective before, then we should apply it regardless of DS state.
          * This allows us to correct the perspective in case the robot code restarts mid-match.
          * Otherwise, only check and apply the operator perspective if the DS is disabled.
@@ -405,20 +403,33 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             });
         }
 
-        applyLimelightIMUMode();
-
         for (Limelight limelight : limelights) {
-            PoseEstimate mt2 = limelight.getPoseMegatag2();
-            if (mt2 != null) {
-                Logger.recordOutput("Drivetrain/poseMegatag2_" + limelight.getLimelightName(), mt2.pose);
-                var acceptUpdate = isUpdateable(mt2);
+			PoseEstimate mt2 = limelight.getPoseMegatag2();
+            PoseEstimate mt1 = limelight.getPoseMegatag1();
+            // TODO: re-add this once we fix LL seeding
+			// if (mt2 != null) {
+			// 	Logger.recordOutput("Drivetrain/poseMegatag2_" + limelight.getLimelightName(), mt2.pose);
+
+			// 	// if our angular velocity is greater than 720 degrees per second, ignore vision updates or if it doesnt see any tags
+			// 	var acceptUpdate = isUpdateable(mt2);
+            //     Logger.recordOutput("Drivetrain/acceptUpdate_" + limelight.getLimelightName(), acceptUpdate);
+			// 	if (acceptUpdate) {
+			// 		this.setVisionMeasurementStdDevs(limelight.getLimelightTrust());
+			// 		this.addVisionMeasurement(mt2.pose, mt2.timestampSeconds);
+			// 	}
+			// }
+            if (mt1 != null) {
+                Logger.recordOutput("Drivetrain/poseMegatag1_" + limelight.getLimelightName(), mt1.pose);
+                var acceptUpdate = isUpdateable(mt1);
                 Logger.recordOutput("Drivetrain/acceptUpdate_" + limelight.getLimelightName(), acceptUpdate);
-                if (acceptUpdate) {
-                    this.setVisionMeasurementStdDevs(limelight.getLimelightTrust());
-                    this.addVisionMeasurement(mt2.pose, mt2.timestampSeconds);
-                }
+				if (acceptUpdate) {
+                    // temp!!
+                    if (limelight != limelightLeft) continue;
+					this.setVisionMeasurementStdDevs(limelight.getLimelightTrust());
+					this.addVisionMeasurement(mt1.pose, mt1.timestampSeconds);
+				}
             }
-        }
+		}
     }
 
     public boolean isUpdateable(PoseEstimate posEst) {
@@ -440,6 +451,13 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 		
 		return true;
 	}
+
+    public void zeroAngle(){
+        this.seedFieldCentric();
+        for(Limelight limelight : limelights){
+            limelight.setRobotOrientation(Units.Degree.zero());
+        }
+    }
 
     private SystemState handleStateTransition() {
         return switch (mDesiredState) {
@@ -648,12 +666,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public void resetPose(final Pose2d newPose) {
         super.resetPose(newPose);
         for (var limelight : limelights) {
-            limelight.setIMUMode(Limelight.IMUMode.MODE_1_EXTERNAL_SEED);
-            limelight.setRobotOrientation(newPose.getRotation().getMeasure());
+            this.limelightLeft.setIMUMode(1);
+            this.limelightLeft.setRobotOrientation(newPose.getRotation().getMeasure());
         }
     }
 
-    @Deprecated
     public void setAngle(final Angle angle) {
         this.resetPose(new Pose2d(mCurrentSwerveState.Pose.getTranslation(), new Rotation2d(angle)));
     }
@@ -709,23 +726,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     public void disabledPeriodic() {
-        PoseEstimate mt1 = null;
-        PoseEstimate mostTrustedPose = null;
-        int highNumAprilTags = 0;
-        for (var limelight : limelights) {
-            mt1 = limelight.getPoseMegatag1();
-            if (limelight.hasValidTargets() && mt1 != null && limelight.getNumberOfAprilTags() > highNumAprilTags) {
-                mostTrustedPose = mt1;
-                highNumAprilTags = limelight.getNumberOfAprilTags();
-            }
-        }
-
-        if (mostTrustedPose != null) {
-            this.resetRotation(mostTrustedPose.pose.getRotation());
-            for (var limelight : limelights) {
-                limelight.setIMUMode(Limelight.IMUMode.MODE_1_EXTERNAL_SEED);
-                limelight.setRobotOrientation(mostTrustedPose.pose.getRotation().getMeasure());
-            }
+        // TODO: this needs to seed the LLs...
+        PoseEstimate mt1 = this.limelightLeft.getPoseMegatag1();
+        if (this.limelightLeft.hasValidTargets() && mt1 != null) {
+            this.resetRotation(mt1.pose.getRotation());
+            // this.limelightLeft.setRobotOrientation(mt1.pose.getRotation().getMeasure());
         }
     }
 
@@ -733,71 +738,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         disabledPeriodic();
     }
 
-    @Deprecated
     public void setImuMode2() {
-        setAllLimelightIMUModes(Limelight.IMUMode.MODE_2_INTERNAL_ONLY);
-    }
-
-    public void setAllLimelightThrottleRates(int throttleRate) {
-        for (var limelight : limelights) {
-            limelight.setThrottleRate(throttleRate);
-        }
-    }
-
-    public void setAllLimelightIMUModes(Limelight.IMUMode imuMode) {
-        for (var limelight : limelights) {
-            limelight.setIMUMode(imuMode);
-        }
-    }
-
-    /**
-     * Sets the desired IMU mode for all limelights. The mode will be applied
-     * in the next drivetrain periodic cycle.
-     */
-    public void setLimelightIMUModesIntent(Limelight.IMUMode mode) {
-        mDesiredLimelightIMUMode = mode;
-    }
-
-    /**
-     * Applies the current desired limelight IMU mode to all limelights.
-     * For MODE_1, also seeds the IMU from the best available MT1 pose estimate.
-     * For MODE_3, also sets the IMU assist alpha.
-     */
-    private void applyLimelightIMUMode() {
-        switch (mDesiredLimelightIMUMode) {
-            case MODE_1_EXTERNAL_SEED: {
-                // Seed the IMU from the best available MT1 pose estimate (same logic as disabledPeriodic)
-                PoseEstimate mostTrustedPose = null;
-                int highNumAprilTags = 0;
-                for (var limelight : limelights) {
-                    PoseEstimate mt1 = limelight.getPoseMegatag1();
-                    if (limelight.hasValidTargets() && mt1 != null && limelight.getNumberOfAprilTags() > highNumAprilTags) {
-                        mostTrustedPose = mt1;
-                        highNumAprilTags = limelight.getNumberOfAprilTags();
-                    }
-                }
-                if (mostTrustedPose != null) {
-                    this.resetRotation(mostTrustedPose.pose.getRotation());
-                    for (var limelight : limelights) {
-                        limelight.setIMUMode(Limelight.IMUMode.MODE_1_EXTERNAL_SEED);
-                        limelight.setRobotOrientation(mostTrustedPose.pose.getRotation().getMeasure());
-                    }
-                } else {
-                    setAllLimelightIMUModes(Limelight.IMUMode.MODE_1_EXTERNAL_SEED);
-                }
-                break;
-            }
-            case MODE_3_INTERNAL_MT1_ASSIST: {
-                for (var limelight : limelights) {
-                    limelight.setIMUMode(Limelight.IMUMode.MODE_3_INTERNAL_MT1_ASSIST);
-                    LimelightHelpers.SetIMUAssistAlpha(limelight.getLimelightName(), 0.001);
-                }
-                break;
-            }
-            default:
-                setAllLimelightIMUModes(mDesiredLimelightIMUMode);
-                break;
-        }
+        this.limelightLeft.setIMUMode(2);
     }
 
     // Halts the drive wheels and moves the modules in x formation for maximum traction
@@ -811,6 +753,16 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             return inputAngle;
         } else {
             return inputAngle.plus(Units.Radians.of(Math.PI));
+        }
+    }
+
+    // used only for rotate to hub error checking... update with math & justification/explanation
+    public Angle invertAllianceRotation(Angle inputAngle) {
+        var alliance = DriverStation.getAlliance();
+        if (!alliance.isEmpty() && alliance.get() == Alliance.Red) {
+            return inputAngle.plus(Units.Radians.of(Math.PI));
+        } else {
+            return inputAngle;
         }
     }
 
@@ -1015,8 +967,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      * @return Whether the current heading is within the tolerance of the target heading
      */
     private boolean isAtTargetHeading() {
-        Rotation2d rotationalError = mCurrentSwerveState.Pose.getRotation().minus(snapToHeading);
+        Rotation2d backToBlueOrigin = new Rotation2d(invertAllianceRotation(snapToHeading.getMeasure()));
+        // Rotation2d rotationalError = mCurrentSwerveState.Pose.getRotation().minus(snapToHeading);
+        Rotation2d rotationalError = mCurrentSwerveState.Pose.getRotation().minus(backToBlueOrigin);
         // TODO: determine appropriate thresholds
+        Logger.recordOutput("Drivetrain/AutoAim/RotationalErrorDegrees", rotationalError.getDegrees());
         var inRange = Degrees.of(rotationalError.getDegrees()).isNear(Degrees.zero(), Degrees.of(5));
         return inRange;
     }

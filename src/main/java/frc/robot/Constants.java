@@ -295,7 +295,7 @@ public class Constants {
         public static final Angle hoodAngleTolerance = Units.Degrees.of(3);
         public static final double pivotCurrentLimit = 40;
         public static final AngularVelocity pivotMaxVelocityShoot = Units.DegreesPerSecond.of(2);
-        public static final InterpolatingTreeMap<Double, AimValues> lookUpTable =
+        public static InterpolatingTreeMap<Double, AimValues> lookUpTable =
                 new InterpolatingTreeMap<Double, AimValues>(InverseInterpolator.forDouble(),
                 (start, end, t) -> new AimValues(
                     Units.Rotations.of(start.hoodAngle.plus(end.hoodAngle.minus(start.hoodAngle)).in(Units.Rotations) * t),
@@ -306,9 +306,9 @@ public class Constants {
             // Add temporary values to the tree
             // Shooter.lookUpTable.put(5.0, new AimValues(Units.Degrees.of(20), Units.RotationsPerSecond.of(50)));
 
-            for(double[] point: temporaryLookupTable ){
-                Shooter.lookUpTable.put(Units.Inches.of(point[2]).in(Units.Meters), new AimValues(Units.Degrees.of(point[0]), Units.RotationsPerSecond.of(point[1]/8)));
-            }
+            // for(double[] point: temporaryLookupTable ){
+            //     Shooter.lookUpTable.put(Units.Inches.of(point[2]).in(Units.Meters), new AimValues(Units.Degrees.of(point[0]), Units.RotationsPerSecond.of(point[1]/8)));
+            // }
         }
 
         public static class AimValues {
@@ -356,8 +356,8 @@ public class Constants {
         public static final double DISTANCE_CONVERSION_RATIO = (Math.PI * GEAR_DIAMETER.in(Units.Inches)) / INTAKE_RACK_GEARING;
         public static final double INTAKE_ROLLER_GEARING = 1.0;
         public enum IntakeStates {
-            FORWARD(1.0),
-            REVERSE(-1.0),
+            FORWARD(0.4),
+            REVERSE(-0.4),
             OFF(0);
 
             private double mSpeed;
