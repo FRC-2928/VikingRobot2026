@@ -587,6 +587,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         double yVelocity = (isRedAlliance ? -yMagnitude * maxSpeed : yMagnitude * maxSpeed);
         double angularVelocity = angularMagnitude * maxAngularRate;
 
+        // Feedforward correction for translational-rotational coupling drift.
+        // The robot drifts rotationally when translating due to CoM offset or module asymmetry.
+        // This applies a small counter-rotation proportional to forward velocity to cancel it.
+        // Tune Tuning/TranslationalRotationCoupling: positive if robot drifts CCW when driving forward, negative if CW.
+        angularVelocity += -xVelocity * frc.robot.Tuning.translationalRotationCoupling.get();
+
         Rotation2d skewCompensationFactor =
                 Rotation2d.fromRadians(mCurrentSwerveState.Speeds.omegaRadiansPerSecond * SKEW_COMPENSATION_SCALAR);
 

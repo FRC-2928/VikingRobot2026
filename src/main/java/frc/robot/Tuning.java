@@ -26,6 +26,12 @@ public final class Tuning {
     public static final LoggedNetworkNumber intakeSpeed = new LoggedNetworkNumber("Tuning/IntakeSpeed", 0.8);
 
     public static final LoggedNetworkNumber drivetrainP = new LoggedNetworkNumber("Tuning/Drivetrain P", 0.15);
+
+    /// Feedforward correction for translational-rotational coupling drift.
+    /// Tune empirically: drive straight forward, observe drift direction, negate the sign.
+    /// Typical range: 0.001 to 0.005 rad/s per m/s
+    public static final LoggedNetworkNumber translationalRotationCoupling =
+            new LoggedNetworkNumber("Tuning/TranslationalRotationCoupling", 0.0);
     public static final LoggedNetworkNumber shootSpeakerPivotThreshold =
             new LoggedNetworkNumber("Tuning/ShootSpeakerPivotThreshold", 1.25);
     public static final LoggedNetworkNumber shootSpeakerExponent =
