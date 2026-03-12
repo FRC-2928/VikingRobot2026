@@ -27,6 +27,7 @@ public class Shooter extends SubsystemBase {
     private final ShooterIO io;
     private final ShooterIOInputsAutoLogged inputs = new ShooterIOInputsAutoLogged();
     private final RobotContainer cont;
+    private double lastMetersToHub = 0.0;
 
     public Angle getHoodAngle() {
         return inputs.hoodAngle;
@@ -49,7 +50,10 @@ public class Shooter extends SubsystemBase {
     }
 
     public void aim() {
-        AimValues val = Constants.Shooter.lookUpTable.get(RobotContainer.getInstance().drivetrain.getDistanceFromHub().in(Units.Meters));
+        var metersToHub = RobotContainer.getInstance().drivetrain.getDistanceFromHub().in(Units.Meters);
+        lastMetersToHub = metersToHub;
+        AimValues val = Constants.Shooter.lookUpTable.get(metersToHub);
+        Logger.recordOutput("Shooter/AimValueMetersToHub", metersToHub);
         if (val != null) {
             Logger.recordOutput("Shooter/AimValueHoodAngle", val.hoodAngle);
             Logger.recordOutput("Shooter/AimValueFlywheelSpeeds", val.shooterVelocity);
@@ -135,10 +139,29 @@ public class Shooter extends SubsystemBase {
             this);
     }
 
+    public void adjustAim () {
+        if (lastMetersToHub < 1.5 || lastMetersToHub > 3) {
+            var metersToHub = RobotContainer.getInstance().drivetrain.getDistanceFromHub().in(Units.Meters);
+
+            AimValues val = Constants.Shooter.lookUpTable.get(metersToHub);
+            Logger.recordOutput("Shooter/AimValueMetersToHub", metersToHub);
+            if (val != null) {
+                Logger.recordOutput("Shooter/AimValueHoodAngle", val.hoodAngle);
+                Logger.recordOutput("Shooter/AimValueFlywheelSpeeds", val.shooterVelocity);
+                this.io.runFlywheelsVelocity(val.shooterVelocity);
+                // Hood angle is between 0 (home) and 40 (up) degreesaq
+                // Aimvalues expects shoot angle between 80 (home) and 40 (up) degrees
+                // This line converts the requested angle to hood setpoint, and clamps between 0 and 40
+                Angle requestedAngle = Units.Degrees.of(MathUtil.clamp(80 - val.hoodAngle.in(Units.Degrees), 0, 40));
+                this.io.rotateHood(requestedAngle);
+            }
+        }
+    }
+
     public Command aimAtHub() {
         return new FunctionalCommand(
             this::aim,
-            () -> {},
+            this::adjustAim,
             (interrupted) -> {
                 if (interrupted) {
                     home();  // TODO: probably don't want to do this, because interrupt could come from override
