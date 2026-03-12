@@ -274,9 +274,9 @@ public class Superstructure extends SubsystemBase {
                 break;
             case OVERRIDE_INTAKE_SHOOT_MODE: {
                 mActiveOverrides.add(StateOverrides.OVERRIDE_INTAKE_SHOOT);
-                if () {
+                /*if () {
                     
-                }
+                }*/
             }
             // ... other overrides here
             case OVERRIDE_NONE:
