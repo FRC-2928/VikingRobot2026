@@ -14,18 +14,31 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.Units;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 
 import frc.robot.Constants;
 import frc.robot.Tuning;
+import frc.robot.subsystems.ShooterIO.ShooterIOInputs;
+
+import java.util.List;
 
 import org.littletonrobotics.junction.Logger;
 
 public class HopperFloorIOReal implements HopperFloorIO {
     private TalonFX hopper;
+
+    private final StatusSignal<AngularVelocity> hopperAngularVelocitySignal;
+    private final StatusSignal<Current>         hopperStatorCurrentSignal;
+    private final StatusSignal<Current>         hopperSupplyCurrentSignal;
+
+    // Collection of all status signals
+    private List<BaseStatusSignal> mStatusSignals;
+
     // --------------------Simulation----------------------
     private DCMotorSim floorDCMotorSim = new DCMotorSim(
             LinearSystemId.createDCMotorSystem(DCMotor.getKrakenX60(1), 0.001, Constants.HopperFloor.indexerGearRatio),
@@ -54,6 +67,16 @@ public class HopperFloorIOReal implements HopperFloorIO {
         config.CurrentLimits.StatorCurrentLimit = 120.0;
 
         hopper.getConfigurator().apply(config);
+
+        this.hopperAngularVelocitySignal = this.hopper.getVelocity();
+        this.hopperStatorCurrentSignal = this.hopper.getStatorCurrent();
+        this.hopperSupplyCurrentSignal = this.hopper.getSupplyCurrent();
+
+        this.mStatusSignals = List.of(
+            hopperAngularVelocitySignal,
+            hopperStatorCurrentSignal,
+            hopperSupplyCurrentSignal
+        );
     }
 
     @Override
@@ -83,6 +106,11 @@ public class HopperFloorIOReal implements HopperFloorIO {
     @Override
     public void updateInputs(HopperFloorIOInputs hopperInputs) {
         BaseStatusSignal.refreshAll(statusSignal);
+        
+        hopperInputs.hopperAngularVelocity = hopperAngularVelocitySignal.getValue();
+        hopperInputs.hopperStatorCurrent = hopperStatorCurrentSignal.getValue();
+        hopperInputs.hopperSupplyCurrent = hopperSupplyCurrentSignal.getValue();
+
         hopperInputs.angularVelocity = statusSignal.getValue();
     }
 

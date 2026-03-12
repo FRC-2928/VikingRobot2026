@@ -1,5 +1,7 @@
 package frc.robot.subsystems;
 
+import java.util.List;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
@@ -12,11 +14,19 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
 import frc.robot.Constants;
 
 public class IndexerIOReal implements IndexerIO {
     public TalonFX indexer;
+
     public StatusSignal<AngularVelocity> indexerVelocity;
+    private final StatusSignal<AngularVelocity> indexerAngularVelocitySignal;
+    private final StatusSignal<Current>         indexerStatorCurrentSignal;
+    private final StatusSignal<Current>         indexerSupplyCurrentSignal;
+
+    // Collection of all status signals
+    private List<BaseStatusSignal> mStatusSignals;
 
     public IndexerIOReal() {
         this.indexer = new TalonFX(Constants.CAN.CTRE.indexer, Constants.CAN.CTRE.bus);
@@ -39,6 +49,16 @@ public class IndexerIOReal implements IndexerIO {
         config.CurrentLimits.StatorCurrentLimit = 120.0;
 
         indexer.getConfigurator().apply(config);
+
+        this.indexerAngularVelocitySignal = this.indexer.getVelocity();
+        this.indexerStatorCurrentSignal = this.indexer.getStatorCurrent();
+        this.indexerSupplyCurrentSignal = this.indexer.getSupplyCurrent();
+
+        this.mStatusSignals = List.of(
+            indexerAngularVelocitySignal,
+            indexerStatorCurrentSignal,
+            indexerSupplyCurrentSignal
+        );
     }
 
     @Override
@@ -61,8 +81,13 @@ public class IndexerIOReal implements IndexerIO {
 
     @Override
     public void updateInputs(IndexerIOInputs indexerInputs) {
-        // BaseStatusSignal.refreshAll(indexerVelocity);
-        // indexerInputs.angularVelocity = indexerVelocity.getValue();
+        BaseStatusSignal.refreshAll(mStatusSignals);
+
+        indexerInputs.angularVelocity = indexerVelocity.getValue();
+        
+        indexerInputs.indexerAngularVelocity = indexerAngularVelocitySignal.getValue();
+        indexerInputs.indexerStatorCurrent = indexerStatorCurrentSignal.getValue();
+        indexerInputs.indexerSupplyCurrent = indexerSupplyCurrentSignal.getValue();
     }
 
     @Override
