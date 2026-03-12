@@ -280,7 +280,7 @@ public class ShooterIOReal implements ShooterIO {
 
     @Override
     public void simPeriodic() {
-        System.out.println("Shooter Being Simulated");
+        
 
         TalonFXSimState flywheelASimState = flywheelA.getSimState();
         TalonFXSimState flywheelBSimState = flywheelB.getSimState();
