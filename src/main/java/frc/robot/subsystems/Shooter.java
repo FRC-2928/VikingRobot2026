@@ -3,6 +3,7 @@ package frc.robot.subsystems;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -28,6 +29,26 @@ public class Shooter extends SubsystemBase {
     private final ShooterIOInputsAutoLogged inputs = new ShooterIOInputsAutoLogged();
     private final RobotContainer cont;
     private double lastMetersToHub = 0.0;
+    private WantedState mDesiredState = WantedState.HALT;
+    private SystemState mCurrentState = SystemState.HALT;
+
+    public enum WantedState {
+        SHOOT,
+        HALT,
+        AIM_HUB_AUTO,
+        SHOOT_OVERRIDE,
+        SHOOT_HOME,
+        HOME
+    }
+
+    public enum SystemState {
+        SHOOT,
+        HALT,
+        AIM_HUB_AUTO,
+        SHOOT_OVERRIDE,
+        SHOOT_HOME,
+        HOME
+    }
 
     public Angle getHoodAngle() {
         return inputs.hoodAngle;
@@ -78,7 +99,7 @@ public class Shooter extends SubsystemBase {
         //aim();
 
         // only run the kicker -- flywheels + hood are already commanded to hold setpoints by aim() methods
-        this.io.runKicker(Units.Volts.of(7));
+        this.io.runKicker(Units.RotationsPerSecond.of(64));
         // this.aimAtHub();
         // this.runShooter();
     }
@@ -88,7 +109,7 @@ public class Shooter extends SubsystemBase {
     }
 
     public void runShooter(){
-        this.io.runKicker(Units.Volts.of(7));
+        this.io.runKicker(Units.RotationsPerSecond.of(64));
         this.io.runFlywheelsVelocity(Units.RotationsPerSecond.of(38));
         this.io.rotateHood(Units.Degrees.of(13));   
     }
@@ -122,7 +143,7 @@ public class Shooter extends SubsystemBase {
     public void home() {
         this.io.stopFlyWheels();
         this.io.rotateHood(Units.Degrees.zero());
-        this.io.runKicker(Units.Volts.zero());
+        this.io.runKicker(Units.RotationsPerSecond.zero());
     }
 
     public Command shootOverrideCommand() {

@@ -30,6 +30,7 @@ import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
@@ -85,6 +86,8 @@ public class ShooterIOReal implements ShooterIO {
 
     private Angle targetHoodAngle = Units.Degrees.zero();
     private AngularVelocity targetFlywheeVelocity = Units.RotationsPerSecond.zero();
+
+    final VelocityVoltage kickerVelocityVoltage;
 
     public ShooterIOReal(final Shooter shooter) {
         this.flywheelA = new TalonFX(Constants.CAN.CTRE.shooterFlywheelA, Constants.CAN.CTRE.bus);
@@ -184,6 +187,7 @@ public class ShooterIOReal implements ShooterIO {
         //
         final TalonFXConfiguration kickerConfig = new TalonFXConfiguration(); // TODO: Check everything about this
 
+
         kickerConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         kickerConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
@@ -198,13 +202,22 @@ public class ShooterIOReal implements ShooterIO {
         kickerConfig.CurrentLimits.SupplyCurrentLimit = 60; // max current draw allowed
         kickerConfig.CurrentLimits.SupplyCurrentLowerLimit = 35; // current allowed *after* the supply current limit is reached
         kickerConfig.CurrentLimits.SupplyCurrentLowerTime = 0.1; // max time allowed to draw SupplyCurrentLimit
-
+        
         // PID Values
+        Slot0Configs kickerFloorSlot0Configs = new Slot0Configs();
+        kickerFloorSlot0Configs.kS = 0.45; // Add 0.1 V output to overcome static friction
+        kickerFloorSlot0Configs.kV = 0.11; // A velocity target of 1 rps results in 0.12 V output
+        kickerFloorSlot0Configs.kP = 0.6; // An error of 1 rps results in 0.11 V output
+        kickerFloorSlot0Configs.kI = 0; // no output for integrated error
+        kickerFloorSlot0Configs.kD = 0; // no output for error derivative
         kickerConfig.Slot0 = kickerSlot0Config;
 
         // Apply all the configs
         hood.getConfigurator().apply(hoodConfig);
         kicker.getConfigurator().apply(kickerConfig);
+
+         // create a velocity closed-loop request, voltage output, slot 0 configs
+        this.kickerVelocityVoltage = new VelocityVoltage(0).withSlot(0);
 
         // TODO: ideally we'd like to iterate over these instead of having to write this each time...
         this.hoodAngleSignal = this.hood.getPosition();
@@ -274,8 +287,9 @@ public class ShooterIOReal implements ShooterIO {
 
     // Runs the kicker. Shoots ball into flywheels.
     @Override
-    public void runKicker(Voltage kickerVoltage) {
-        this.kicker.setControl(new VoltageOut(kickerVoltage));
+    public void runKicker(AngularVelocity kickerVelocity) {
+        kicker.setControl(this.kickerVelocityVoltage.withVelocity(kickerVelocity));
+        //this.kicker.setControl(new VoltageOut(kickerVoltage));
     }
 
     @Override

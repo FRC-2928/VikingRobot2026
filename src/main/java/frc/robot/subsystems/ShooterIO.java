@@ -46,7 +46,7 @@ public interface ShooterIO {
 
     public default void runFlywheelsVelocity(AngularVelocity speed) {}
 
-    public default void runKicker(Voltage kickerVoltage) {}
+    public default void runKicker(AngularVelocity kickerVelocity) {}
 
     public default void simPeriodic() {}
 
