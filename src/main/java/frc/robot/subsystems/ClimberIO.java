@@ -17,11 +17,11 @@ public interface ClimberIO {
 
     public default void periodic() {} // runs periodically
 
-    public default void goUp() {}
+    public default void goHome() {}
 
-    public default void goDown() {}
+    public default void extend() {}
 
-    public default void goToPosition(Distance distance) {}
+    public default void climb(Distance distance) {}
 
     public default boolean isEngaged() {
         return false;

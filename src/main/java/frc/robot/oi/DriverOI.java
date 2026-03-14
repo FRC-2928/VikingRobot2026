@@ -1,14 +1,11 @@
 package frc.robot.oi;
 
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.RobotContainer;
-import frc.robot.Constants.Intake.IntakeStates;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Superstructure;
-import frc.robot.subsystems.Superstructure.StateIntent;
 
 public class DriverOI extends BaseOI {
     /// Class Members
@@ -39,6 +36,7 @@ public class DriverOI extends BaseOI {
     public final Trigger retractIntake;
     public final Trigger reverseIntakeRoller;
 
+    public final Trigger climbTrigger;
 
     public DriverOI(final CommandXboxController controller, Superstructure superstructure) {
         super(controller);
@@ -49,16 +47,6 @@ public class DriverOI extends BaseOI {
         // left bumper toggles into/out of rotation locked mode
         this.toggleRotationLockedMode = this.controller.leftBumper();
 
-        // this.shotConditionsMet = new Trigger(() -> true);
-        // new Trigger(() -> {
-        //     /*boolean facingHub = Robot.cont.drivetrain
-        //     .getAngleToHub(Constants.Shooter.shooterAngleOffsetFromFront)
-        //     .lte(Constants.Shooter.toleranceFromHub);*/
-        //     boolean correctHoodAngle = robotContainer.shooter.getHoodAngle().lte(Constants.Shooter.hoodAngleTolerance);
-        //     boolean correctFlywheelVelocity =
-        //             robotContainer.shooter.getFlywheelVelocity().lte(Constants.Shooter.shooterVelocityTolerance);
-        //     return /*facingHub &&*/ correctHoodAngle && correctFlywheelVelocity;
-        // });
         // this.autoIntake = this.controller.leftTrigger();
         this.reverseIntakeRoller = this.controller.leftTrigger();
         this.manualIntake = this.controller.rightBumper();
@@ -68,6 +56,7 @@ public class DriverOI extends BaseOI {
         this.resetAngle = this.controller.a();
         this.lockWheels = this.controller.x();
         this.unjam = this.controller.povLeft();
+        this.climbTrigger = this.controller.povUp();
     }
 
     public void configureControls() {
@@ -75,7 +64,6 @@ public class DriverOI extends BaseOI {
         // normally this would be a deadlock... we should seek to avoid such patterns...
         // this comes from a circular chain of getInstance -> init -> configureControls() -> getInstance()...
         var cont = RobotContainer.getInstance();
-        // this.lockWheels.whileTrue(new LockWheels(cont.drivetrain, this));
         this.resetFOD.onTrue(new InstantCommand(cont.drivetrain::resetAngle));
         // this.intake.whileTrue(cont.superstructure.extendAndIntake());
         this.resetAngle.onTrue(cont.drivetrain.runOnce(cont.drivetrain::zeroAngle));
@@ -83,9 +71,6 @@ public class DriverOI extends BaseOI {
         // this.resetAngle.whileTrue(new RunCommand(cont.drivetrain::seedLimelightImu));
         // this.resetAngle.whileFalse(new RunCommand(cont.drivetrain::setImuMode2));
         this.toggleRotationLockedMode.onTrue(mSuperstructure.toggleStateIntent(Superstructure.StateIntent.ACTION_TOGGLE_TARGET_LOCK_MODE));
-        // this.toggleRotationLockedMode
-        //     .onTrue(mSuperstructure.setIntent(Superstructure.StateIntent.ACTION_TOGGLE_TARGET_LOCK_MODE, true))
-        //     .onFalse(mSuperstructure.setIntent(Superstructure.StateIntent.ACTION_TOGGLE_TARGET_LOCK_MODE, false));
         this.shootOverride
             .onTrue(mSuperstructure.requestShootOverride())
             .onFalse(mSuperstructure.clearOverrideCommand());
@@ -129,12 +114,5 @@ public class DriverOI extends BaseOI {
         // this.retractIntake
         //     .onTrue(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_RETRACT, true))
         //     .onFalse(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_RETRACT, false));
-        // this.spinKicker.onTrue(cont.shooter.startKicker());
-        // this.shotConditionsMet
-        //         .and(() -> cont.drivetrain
-        //                 .getAngleToHub(Constants.Shooter.shooterAngleOffsetFromFront)
-        //                 .lte(Constants.Shooter.toleranceFromHub))
-        //         .whileTrue(mSuperstructure.getReadyToShoot());
-        // this.startShoot.whileTrue(mSuperstructure.shootAutomated());
     }
 }

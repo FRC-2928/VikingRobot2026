@@ -15,15 +15,15 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
-import frc.robot.commands.climber.ClimberDescend;
 import frc.robot.subsystems.ClimberIO.ClimberIOInputs;
 
 public class Climber extends SubsystemBase {
     /** Creates a new Climber. */
     public Climber() {
-        this.climberIO = switch (Constants.mode) {
+        this.io = switch (Constants.mode) {
             case REAL -> new ClimberIOReal();
             default -> throw new Error();};
 
@@ -60,7 +60,7 @@ public class Climber extends SubsystemBase {
     private ClimberHeight targetHeight = ClimberHeight.HOMEPOS;
     public ClimberState currentState = ClimberState.IDLE;
 
-    public final ClimberIO climberIO;
+    public final ClimberIO io;
     public final ClimberIOInputs inputs = new ClimberIOInputs() {};
 
     // changes the target heights based on the current height
@@ -77,93 +77,117 @@ public class Climber extends SubsystemBase {
     }
 
     public void descend() {
-        if (height.getValueAsDouble() == ClimberHeight.L1.height) {
-            this.targetHeight = ClimberHeight.HOMEPOS;
-            this.currentState = ClimberState.DESCENDING;
+        //checks the driver station mode the robot is in
+        this.targetHeight = ClimberHeight.HOMEPOS;
+        this.currentState = ClimberState.DESCENDING;
+    }
+
+    public void ClimberToggleState(Boolean hasClimbed) {
+        if (hasClimbed) {
+            descend();
+            return;
         }
+        ascend();
     }
 
     public void initDefaultCommand() {
-        setDefaultCommand(new ClimberDescend()); // sets the default command to go home
+        setDefaultCommand(reset()); // sets the default command to go home
     }
 
     private boolean isEngaged() {
-
-        return climberIO.isEngaged();
+        return this.io.isEngaged(); //will always return true for week 1
     }
 
     //command that raises the arm of the climber for driving into climber zone.
-    public Command raiseClimber(ClimberHeight target) {
+    public Command prepClimber(ClimberHeight target) {
         return new InstantCommand(() -> {
-            Distance distance = Units.Inches.of(target.height);
-            climberIO.goToPosition(distance);
+            this.io.extend();
         });
     }
 
+    public Command runClimber(Boolean hasClimbed)  {
+        return new RunCommand(()  -> {
+            ClimberToggleState(hasClimbed);
+        }).until(() -> currentState == ClimberState.IDLE);
+    }
+
+    //command to handle setting the state and target for climbing down
+    public Command reset() {
+        return new InstantCommand(() -> {
+            this.currentState = ClimberState.FAILED;
+        });
+    }
+
+    public void climberIdle(){
+        currentState = ClimberState.IDLE;
+    }
+    
+    
     @Override
     public void periodic() {
-        this.climberIO.updateInputs(this.inputs);
+        this.io.updateInputs(this.inputs);
 
-        Logger.recordOutput("Climber/State", this.currentState);
-        Logger.recordOutput("Climber/TargetHeight", targetHeight.height); // records the target height of the climber
+        Logger.recordOutput("Climber/State", this.currentState); //records the current state of the robot
+        Logger.recordOutput("Climber/TargetHeight", targetHeight.height); //records the target height of the climber
         Logger.recordOutput(
-                "Climber/CurrentHeight", height.getValueAsDouble()); // records the current height of the climber
+                "Climber/CurrentHeight", height.getValueAsDouble()); //records the current height of the climber
 
-        if (targetHeight.height != height.getValueAsDouble()) {
-
-            switch (currentState) {
-                case TELEOP_ASCENDING: {
-                    if (this.height.getValueAsDouble() <= 30 && this.engaged == false) {
-                        climberIO.goUp();
-                    } else if (this.height.getValueAsDouble() == targetHeight.height) {
-                        Distance distance = Units.Inches.of(Math.abs(targetHeight.height
-                                - 1)); // the robot goes 1 inch off the ground to see if the climber is hooked
-                        climberIO.goToPosition(distance);
-                        this.engaged = isEngaged();
-                        if (!this.engaged) {
-                            distance = Units.Inches.of(targetHeight.height);
-                            climberIO.goToPosition(distance);
-                        }
-                    } else if (this.engaged) {
-                        climberIO.goDown();
-                    } else if (this.height.getValueAsDouble() == 0 && this.engaged == true) {
-                        currentState = ClimberState.IDLE;
-                    }
-                    break;
+        switch (currentState) {
+            case TELEOP_ASCENDING: {
+                if (this.height.getValueAsDouble() == targetHeight.height) {
+                    this.engaged = isEngaged();
+                } else if (this.engaged) {
+                    Distance distance = Units.Inches.of(ClimberHeight.HOMEPOS.height);
+                    this.io.climb(distance);
+                } else if (this.height.getValueAsDouble() == 0 && this.engaged == true) {
+                    currentState = ClimberState.IDLE;
                 }
+                break;
+            }
 
-                case AUTO_ASCENDING: {
-                    if (this.height.getValueAsDouble() <= 30 && this.engaged == false) {
-                        climberIO.goUp();
-                    } else if (this.height.getValueAsDouble() == targetHeight.height) {
-                        Distance distance = Units.Inches.of(Math.abs(targetHeight.height
-                                - 1)); // the robot goes 1 inch off the ground to see if the climber is hooked
-                        climberIO.goToPosition(distance);
-                        this.engaged = isEngaged();
-                        if (!this.engaged) {
-                            distance = Units.Inches.of(targetHeight.height);
-                            climberIO.goToPosition(distance);
-                        }
-                    } else if (this.engaged) {
-                        Distance distance = Units.Inches.of(
+            case AUTO_ASCENDING: {
+                if (this.height.getValueAsDouble() == targetHeight.height) {
+                    this.engaged = isEngaged();
+                } else if (this.engaged) {
+                    Distance distance = Units.Inches.of(
                                 Math.abs(targetHeight.height - 5)); // the robot goes 5 inches off the ground
-                        climberIO.goToPosition(distance); // set the position
-                    } else if (this.height.getValueAsDouble() == 0 && this.engaged == true) {
-                        currentState = ClimberState.IDLE;
-                    }
-                    break;
+                    this.io.climb(distance); // set the position
+                } else if (this.height.getValueAsDouble() == 0 && this.engaged == true) {
+                    currentState = ClimberState.IDLE;
                 }
+                break;
+            }
 
-                case DESCENDING: {
-                    climberIO.goDown(); // makes the climber go home
-                    break;
+            case DESCENDING: {
+                if (this.height.getValueAsDouble() != ClimberHeight.HOMEPOS.height) {
+                    this.io.goHome(); // makes the climber go home
+                    this.engaged = false;
+                } else {
+                    this.currentState = ClimberState.IDLE;
                 }
+                break;
+            }
 
-                case FAILED: {
-                    climberIO.goDown();
+            case IDLE: {
+                //does nothing
+                break;
+            }
+
+            case FAILED: {
+                if (this.height.getValueAsDouble() != ClimberHeight.HOMEPOS.height) {
+                    this.io.goHome(); // makes the climber go home
+                } else {
+                    this.currentState = ClimberState.IDLE;
                 }
+                break;
             }
         }
+    }
+
+    public Command prepareClimber() {
+        return new RunCommand(() -> {
+            prepClimber(ClimberHeight.L1); //command that raises the arm of the robot before driving forward
+        });
     }
 }
 

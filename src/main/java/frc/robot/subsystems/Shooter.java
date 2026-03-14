@@ -55,8 +55,8 @@ public class Shooter extends SubsystemBase {
         AimValues val = Constants.Shooter.lookUpTable.get(metersToHub);
         Logger.recordOutput("Shooter/AimValueMetersToHub", metersToHub);
         if (val != null) {
-            Logger.recordOutput("Shooter/AimValueHoodAngle", val.hoodAngle);
-            Logger.recordOutput("Shooter/AimValueFlywheelSpeeds", val.shooterVelocity);
+            Logger.recordOutput("Shooter/AimValueHoodAngleDegrees", val.hoodAngle.in(Units.Degrees));
+            Logger.recordOutput("Shooter/AimValueFlywheelSpeedsRPS", val.shooterVelocity.in(Units.RotationsPerSecond));
             this.io.runFlywheelsVelocity(val.shooterVelocity);
             // Hood angle is between 0 (home) and 40 (up) degreesaq
             // Aimvalues expects shoot angle between 80 (home) and 40 (up) degrees
@@ -68,8 +68,8 @@ public class Shooter extends SubsystemBase {
 
     public void aimHome() { // TODO: Find actual values for these
         AimValues val = new AimValues(Units.Degrees.of(40), Units.RotationsPerSecond.of(40));
-        Logger.recordOutput("Shooter/AimValue", val.hoodAngle);
-        Logger.recordOutput("Shooter/flywheelSpeeds", val.shooterVelocity);
+        Logger.recordOutput("Shooter/AimValueHoodAngleDegrees", val.hoodAngle.in(Units.Degrees));
+        Logger.recordOutput("Shooter/AimValueFlywheelSpeedsRPS", val.shooterVelocity.in(Units.RotationsPerSecond));
         this.io.runFlywheelsVelocity(val.shooterVelocity);
         this.io.rotateHood(val.hoodAngle);
     }
@@ -140,14 +140,19 @@ public class Shooter extends SubsystemBase {
     }
 
     public void adjustAim () {
+        // FIXME: this is not the right check -- fix this or delete it...
+        // The intention is to:
+        // 1. Account for potentially bad pose estimates in the initial lookup
+        // 2. Help eliminate variation in shot profile due to noise in the system once we have a good pose estimate
+        // However, the current logic here won't scale for when we incorporate shoot-on-the-fly
         if (lastMetersToHub < 1.5 || lastMetersToHub > 3) {
             var metersToHub = RobotContainer.getInstance().drivetrain.getDistanceFromHub().in(Units.Meters);
 
             AimValues val = Constants.Shooter.lookUpTable.get(metersToHub);
             Logger.recordOutput("Shooter/AimValueMetersToHub", metersToHub);
             if (val != null) {
-                Logger.recordOutput("Shooter/AimValueHoodAngle", val.hoodAngle);
-                Logger.recordOutput("Shooter/AimValueFlywheelSpeeds", val.shooterVelocity);
+                Logger.recordOutput("Shooter/AimValueHoodAngleDegrees", val.hoodAngle.in(Units.Degrees));
+                Logger.recordOutput("Shooter/AimValueFlywheelSpeedsRPS", val.shooterVelocity.in(Units.RotationsPerSecond));
                 this.io.runFlywheelsVelocity(val.shooterVelocity);
                 // Hood angle is between 0 (home) and 40 (up) degreesaq
                 // Aimvalues expects shoot angle between 80 (home) and 40 (up) degrees
