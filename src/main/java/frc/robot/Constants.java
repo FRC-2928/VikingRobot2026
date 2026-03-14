@@ -20,6 +20,7 @@ import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
 import edu.wpi.first.math.interpolation.InverseInterpolator;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
@@ -280,8 +281,6 @@ public class Constants {
         }
 
         public static final Angle shooterAngleOffsetFromFront = Units.Degrees.of(90);
-        //hoodAngle, velocity, distance
-        public static final double[][] temporaryLookupTable = {{75, 240, 60}, {70, 245, 72}, {68, 245, 84}, {61, 258, 108}, {57, 270, 132}, {54, 282, 156}, {54, 302, 180}, {53, 317, 204}, {53, 328, 228}, {52, 243, 252}};
 
         // Gear Ratios
         public static final double flywheelGearRatio = 1.0;
@@ -306,15 +305,6 @@ public class Constants {
                         AngularVelocity interpolatedFlywheelVelocity = start.shooterVelocity.plus(dOmega);
                         return new AimValues(interpolatedHoodAngle, interpolatedFlywheelVelocity);
                     });
-
-        static {
-            // Add temporary values to the tree
-            // Shooter.lookUpTable.put(5.0, new AimValues(Units.Degrees.of(20), Units.RotationsPerSecond.of(50)));
-
-            // for(double[] point: temporaryLookupTable ){
-            //     Shooter.lookUpTable.put(Units.Inches.of(point[2]).in(Units.Meters), new AimValues(Units.Degrees.of(point[0]), Units.RotationsPerSecond.of(point[1]/8)));
-            // }
-        }
 
         public static class AimValues {
             public final Angle hoodAngle;
@@ -392,5 +382,8 @@ public class Constants {
         public static final double max = 129;
         public static final double disengageDistance = 0.5;
         public static final double initializeRaiseDistance = 2;
+
+        public static final Pose2d prepClimbPosition = new Pose2d(); //for the position a few feet from the climber hook
+        public static final Pose2d engageClimbPosition = new Pose2d(); //for the position at the climber hook
     }
 }

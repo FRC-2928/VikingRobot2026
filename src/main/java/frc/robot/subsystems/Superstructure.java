@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.commands.Intake.ExtendAndRunIntake;
 
@@ -35,6 +36,7 @@ public class Superstructure extends SubsystemBase {
         ACTION_SHOOT_HOME,
         ACTION_SHOOT_HUB,
         ACTION_INTAKE_RETRACT,
+        ACTION_CLIMB,
         ACTION_NONE;
 
         private StateIntent() {
@@ -92,6 +94,8 @@ public class Superstructure extends SubsystemBase {
     /// boolean tracking the target lock state
     private boolean mTargetLockRequested = false;
 
+    /// boolean tracking if the climb has been executed
+    private boolean isClimbed = false;
     // Overrides
     /**
      * Enumeration of different overrides -- represented as bitflags
@@ -161,6 +165,7 @@ public class Superstructure extends SubsystemBase {
         initState(RobotState.RETRACT_INTAKE, retractIntake());
         initState(RobotState.SHOOTING, startShootingOverride());
         initState(RobotState.SHOOT_HOME, shootTowardsHome());
+        initState(RobotState.GET_READY_CLIMB, pathToHookandClimb());
 
         transitionFunctions = new HashMap<>();
 
@@ -176,6 +181,7 @@ public class Superstructure extends SubsystemBase {
         transitionFunctions.put(RobotState.MANUAL_INTAKE, this::checkManualIntakeTransition);
         transitionFunctions.put(RobotState.AUTO_INTAKE, this::checkTransitionFromAutoIntake);
         transitionFunctions.put(RobotState.RETRACT_INTAKE, this::checkTransitionFromRetractIntake);
+        transitionFunctions.put(RobotState.GET_READY_CLIMB, this::checkTransitionFromClimber);
     }
 
     /**
@@ -319,6 +325,12 @@ public class Superstructure extends SubsystemBase {
         Logger.recordOutput("Superstructure/CurrentState", currentState);
     }
 
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// 
+    /// DEFINE STATE COMMAND FACTORIES
+    /// 
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     private Command handleDisabled() {
         // TODO: implement this... no-op state, put everything into a ground/idle state...
         return new InstantCommand(() -> resetSubsystems());
@@ -334,11 +346,6 @@ public class Superstructure extends SubsystemBase {
         // TODO: Set the intake to retract when driving
         mRobotContainer.intake.setWantedState(Intake.WantedState.STOP);
         return mRobotContainer.drivetrain.freeDrive();
-    }
-
-    private Command handleShooting() {
-        // TODO: implement this
-        return new InstantCommand();
     }
 
     private Command prepareShootHome() {
@@ -369,6 +376,100 @@ public class Superstructure extends SubsystemBase {
             mRobotContainer.intake.setWantedState(Intake.WantedState.EXTEND));
         // return mRobotContainer.intake.extend();
     }
+
+    // Runs flywheels and kicker. Command will not end on its own
+    public Command startShooting() {
+        // TODO: also retract when shooting
+        return new RunCommand(
+                () -> {
+                    mRobotContainer.shooter.shoot();
+                },
+                mRobotContainer.shooter)
+            .alongWith(mRobotContainer.drivetrain.brake())
+            .alongWith(mRobotContainer.hopperFloor.runHopperCommand())
+            .alongWith(mRobotContainer.indexer.runIndexerCommand());
+    }
+
+    public Command startShootingOverride() {
+        // TODO: also retract when shooting
+        return mRobotContainer.shooter.shootOverrideCommand()
+            .alongWith(mRobotContainer.drivetrain.brake())
+            .alongWith(mRobotContainer.hopperFloor.runHopperCommand())
+            .alongWith(mRobotContainer.indexer.runIndexerCommand());
+    }
+
+    // Spins up flywheels to speed and turns hood to correct angle. Command will not end on its own
+    public Command prepareShooter() {
+        return mRobotContainer.shooter.aimAtHub();
+    }
+
+    public Command shootAutomated() {
+        return new SequentialCommandGroup(prepareShooter(), startShooting());
+    }
+
+    // Stops robot from shooting
+    public Command idle() {
+        return new InstantCommand(
+            () -> {
+                mRobotContainer.drivetrain.setState(CommandSwerveDrivetrain.WantedState.TELEOP_DRIVE);      
+            });
+    }
+
+    public Command extendAndIntake() {
+        return new RunCommand(() -> mRobotContainer.intake.setWantedState(Intake.WantedState.EXTEND_AND_RUN), mRobotContainer.intake);
+    }
+
+    public Command retractIntake() {
+        return new ParallelCommandGroup(new InstantCommand(() -> mRobotContainer.intake.setWantedState(Intake.WantedState.RETRACT)), mRobotContainer.drivetrain.freeDrive());
+    }
+
+    public Command autoIntake() {
+        return new RunCommand(() -> {
+            mRobotContainer.drivetrain.setState(CommandSwerveDrivetrain.WantedState.INTAKE_GROUND);
+            mRobotContainer.intake.setWantedState(Intake.WantedState.INTAKE);
+        }, mRobotContainer.drivetrain);
+    }
+
+    public Command pathWhileIntaking(String pathFileName) {
+        return new ParallelDeadlineGroup(mRobotContainer.drivetrain.runPath(pathFileName), this.extendAndIntake())
+                .finallyDo(() -> {
+                    mRobotContainer.intake.retract();
+                });
+    }
+
+    public Command moveToClimbPrepPos() {
+        return new RunCommand(() -> {
+            mRobotContainer.drivetrain.centerLimeLight(Constants.Climber.prepClimbPosition);
+        });
+    }
+
+    public Command moveToClimbPos() {
+        return new RunCommand(() -> {
+            mRobotContainer.drivetrain.centerLimeLight(Constants.Climber.engageClimbPosition);
+        });
+    }
+
+    public Command pathToHookandClimb() {
+        if (this.isClimbed) {
+            this.isClimbed = false;
+            return mRobotContainer.climber.runClimber(true);
+        } else {
+            return new SequentialCommandGroup(
+                new ParallelCommandGroup(
+                    mRobotContainer.climber.prepareClimber(), 
+                    moveToClimbPrepPos()
+                ), //command to go to pose
+                moveToClimbPos(), 
+                mRobotContainer.climber.runClimber(false)
+            );
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// 
+    /// DEFINE TRANSITION FUNCTIONS
+    /// 
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private void checkTransitionFromDisabled() {
         if (DriverStation.isAutonomousEnabled()) {
@@ -450,68 +551,17 @@ public class Superstructure extends SubsystemBase {
         }
     }
 
-    // Runs flywheels and kicker. Command will not end on its own
-    public Command startShooting() {
-        // TODO: also retract when shooting
-        return new RunCommand(
-                () -> {
-                    mRobotContainer.shooter.shoot();
-                },
-                mRobotContainer.shooter)
-            .alongWith(mRobotContainer.drivetrain.brake())
-            .alongWith(mRobotContainer.hopperFloor.runHopperCommand())
-            .alongWith(mRobotContainer.indexer.runIndexerCommand());
+    private void checkTransitionFromClimber() {
+        //driver intent for climb can be set to false
+        if (!StateIntent.ACTION_CLIMB.getIsInteded()) {
+            currentState = RobotState.GET_READY_CLIMB;
+        }
     }
 
-    public Command startShootingOverride() {
-        // TODO: also retract when shooting
-        return mRobotContainer.shooter.shootOverrideCommand()
-            .alongWith(mRobotContainer.drivetrain.brake())
-            .alongWith(mRobotContainer.hopperFloor.runHopperCommand())
-            .alongWith(mRobotContainer.indexer.runIndexerCommand());
-    }
-
-    // Spins up flywheels to speed and turns hood to correct angle. Command will not end on its own
-    public Command prepareShooter() {
-        return mRobotContainer.shooter.aimAtHub();
-    }
-
-    public Command shootAutomated() {
-        return new SequentialCommandGroup(prepareShooter(), startShooting());
-    }
-
-    // Stops robot from shooting
-    public Command idle() {
-        return new InstantCommand(
-            () -> {
-                mRobotContainer.drivetrain.setState(CommandSwerveDrivetrain.WantedState.TELEOP_DRIVE);      
-            });
-    }
-
-    public Command extendAndIntake() {
-        return new RunCommand(() -> mRobotContainer.intake.setWantedState(Intake.WantedState.EXTEND_AND_RUN), mRobotContainer.intake);
-    }
-
-    public Command retractIntake() {
-        return new ParallelCommandGroup(new InstantCommand(() -> mRobotContainer.intake.setWantedState(Intake.WantedState.RETRACT)), mRobotContainer.drivetrain.freeDrive());
-    }
-
-    public Command autoIntake() {
-        return new RunCommand(() -> {
-            mRobotContainer.drivetrain.setState(CommandSwerveDrivetrain.WantedState.INTAKE_GROUND);
-            mRobotContainer.intake.setWantedState(Intake.WantedState.INTAKE);
-        }, mRobotContainer.drivetrain);
-    }
-
-    public Command pathWhileIntaking(String pathFileName) {
-        return new ParallelDeadlineGroup(mRobotContainer.drivetrain.runPath(pathFileName), this.extendAndIntake())
-                .finallyDo(() -> {
-                    mRobotContainer.intake.retract();
-                });
-    }
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void resetSubsystems() {
-        // TODO: Implement Climber
+        mRobotContainer.climber.reset();
         mRobotContainer.drivetrain.setState(CommandSwerveDrivetrain.WantedState.IDLE);
         mRobotContainer.hopperFloor.halt();
         mRobotContainer.indexer.halt();
