@@ -51,7 +51,7 @@ public class RobotContainer {
     private Telemetry logger;
     public HopperFloor hopperFloor;
     public Indexer indexer;
-    public Climber climber;
+    // public Climber climber;
     // public LEDSubsystem ledSubsystem;
     public MatchRecorder matchRecorder;
     private double teleopStart = 0;
@@ -80,7 +80,7 @@ public class RobotContainer {
         this.intake = new Intake();
         this.indexer = new Indexer();
         this.hopperFloor = new HopperFloor();
-        this.climber = new Climber();
+        // this.climber = new Climber();
         this.logger = new Telemetry(MaxSpeed, drivetrain);
         this.autoChooser = Autonomous.getChoreoAutoChooser(this);
         // this.ledSubsystem = new LEDSubsystem(new LEDIOReal(), mSuperstructure.getRobotStateSupplier());

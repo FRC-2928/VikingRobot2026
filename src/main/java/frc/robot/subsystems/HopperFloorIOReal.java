@@ -48,14 +48,10 @@ public class HopperFloorIOReal implements HopperFloorIO {
             LinearSystemId.createDCMotorSystem(DCMotor.getKrakenX60(1), 0.001, Constants.HopperFloor.indexerGearRatio),
             DCMotor.getKrakenX60(1));
 
-    public StatusSignal<AngularVelocity> statusSignal;
-
     public HopperFloorIOReal() {
         // TODO: change CAN ID
         this.hopper = new TalonFX(Constants.CAN.CTRE.hopper, Constants.CAN.CTRE.bus);
-        this.statusSignal = this.hopper.getRotorVelocity();
 
-        BaseStatusSignal.setUpdateFrequencyForAll(100, statusSignal);
         TalonFXConfiguration hopperConfig = new TalonFXConfiguration();
         CurrentLimitsConfigs currentLimitsConfigs = new CurrentLimitsConfigs();
         hopperConfig.CurrentLimits = currentLimitsConfigs;
@@ -85,6 +81,8 @@ public class HopperFloorIOReal implements HopperFloorIO {
         this.hopperAngularVelocitySignal = this.hopper.getVelocity();
         this.hopperStatorCurrentSignal = this.hopper.getStatorCurrent();
         this.hopperSupplyCurrentSignal = this.hopper.getSupplyCurrent();
+
+        BaseStatusSignal.setUpdateFrequencyForAll(100, hopperAngularVelocitySignal, hopperStatorCurrentSignal, hopperSupplyCurrentSignal);
 
         this.mStatusSignals = List.of(
             hopperAngularVelocitySignal,
@@ -126,13 +124,11 @@ public class HopperFloorIOReal implements HopperFloorIO {
 
     @Override
     public void updateInputs(HopperFloorIOInputs hopperInputs) {
-        BaseStatusSignal.refreshAll(statusSignal);
+        BaseStatusSignal.refreshAll(mStatusSignals);
 
         hopperInputs.hopperAngularVelocity = hopperAngularVelocitySignal.getValue();
         hopperInputs.hopperStatorCurrent = hopperStatorCurrentSignal.getValue();
         hopperInputs.hopperSupplyCurrent = hopperSupplyCurrentSignal.getValue();
-
-        hopperInputs.angularVelocity = statusSignal.getValue();
     }
 
     @Override

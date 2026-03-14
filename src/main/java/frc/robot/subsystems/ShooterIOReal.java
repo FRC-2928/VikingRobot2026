@@ -102,8 +102,10 @@ public class ShooterIOReal implements ShooterIO {
                     .withKV(0.122);
         final Slot0Configs hoodSlot0Config =
                 new Slot0Configs()
-                    .withKP(25)
-                    .withKI(3.5);
+                    .withKP(50)
+                    .withKI(10)
+                    .withKS(0.1)
+                    .withKV(0.25);
         final Slot0Configs kickerSlot0Config =
                 new Slot0Configs().withKP(0.1);
 
@@ -261,7 +263,8 @@ public class ShooterIOReal implements ShooterIO {
     @Override
     public void rotateHood(Angle hoodAngle) {
         targetHoodAngle = hoodAngle.plus(Units.Degrees.of(angleNudgeDegrees));
-        Logger.recordOutput("Shooter/targetHoodAngel", targetHoodAngle) ;
+        Logger.recordOutput("Shooter/angleNudgeDegrees", Units.Degrees.of(angleNudgeDegrees));
+        Logger.recordOutput("Shooter/targetHoodAngle", targetHoodAngle) ;
         hood.setControl(new PositionVoltage(targetHoodAngle));
     }
 
