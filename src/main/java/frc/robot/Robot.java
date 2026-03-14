@@ -78,7 +78,7 @@ public class Robot extends LoggedRobot {
             mRobotContainer.drivetrain.setAllLimelightThrottleRates(enabled ? 0 : 100);
             m_lastEnabledState = enabled;
             mRobotContainer.drivetrain.setLimelightIMUModesIntent(
-                    enabled ? Limelight.IMUMode.MODE_3_INTERNAL_MT1_ASSIST : Limelight.IMUMode.MODE_1_EXTERNAL_SEED);
+                    enabled ? Limelight.IMUMode.MODE_4_INTERNAL_EXTERNAL_ASSIST : Limelight.IMUMode.MODE_1_EXTERNAL_SEED);
         }
 
         // Update shooter data collector (checks for dashboard input)

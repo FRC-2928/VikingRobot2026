@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
@@ -27,6 +28,7 @@ import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
@@ -387,6 +389,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         mCurrentSwerveState = this.getStateCopy();
         Logger.recordOutput("Drivetrain/currentPose", mCurrentSwerveState.Pose);
         Logger.recordOutput("Drivetrain/currentState", mCurrentState);
+        Logger.recordOutput("Drivetrain/DesiredLimelightIMUMode", mDesiredLimelightIMUMode);
         SmartDashboard.putData("Field_Pose", fieldLog);
         Logger.recordOutput("Drivetrain/LimelightRightHasTags", limelightRight.hasValidTargets());
         Logger.recordOutput("Drivetrain/LimelightLeftHasTags",  limelightLeft.hasValidTargets());
@@ -793,17 +796,27 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private void applyLimelightIMUMode() {
         switch (mDesiredLimelightIMUMode) {
             case MODE_1_EXTERNAL_SEED: {
+                Logger.recordOutput("UpdatedTrustedFromLeftLL", false);
                 // Seed the IMU from the best available MT1 pose estimate (same logic as disabledPeriodic)
                 PoseEstimate mostTrustedPose = null;
                 int highNumAprilTags = 0;
                 for (var limelight : limelights) {
                     PoseEstimate mt1 = limelight.getPoseMegatag1();
-                    if (limelight.hasValidTargets() && mt1 != null && limelight.getNumberOfAprilTags() > highNumAprilTags) {
-                        mostTrustedPose = mt1;
-                        highNumAprilTags = limelight.getNumberOfAprilTags();
+                    if (mt1 != null) {
+                        Logger.recordOutput("Drivetrain/LL_MT1_" + limelight.getLimelightName(), mt1.pose);
                     }
+
+                    if (limelight.getLimelightName().equals("limelight-left")) {
+                        Logger.recordOutput("UpdatedTrustedFromLeftLL", true);
+                        mostTrustedPose = mt1;
+                    }
+                    // if (limelight.hasValidTargets() && mt1 != null && limelight.getNumberOfAprilTags() > highNumAprilTags) {
+                    //     mostTrustedPose = mt1;
+                    //     highNumAprilTags = limelight.getNumberOfAprilTags();
+                    // }
                 }
                 if (mostTrustedPose != null) {
+                    Logger.recordOutput("Drivetrain/MostTrustedPose", mostTrustedPose.pose);
                     this.resetRotation(mostTrustedPose.pose.getRotation());
                     for (var limelight : limelights) {
                         limelight.setIMUMode(Limelight.IMUMode.MODE_1_EXTERNAL_SEED);
@@ -817,9 +830,16 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             case MODE_3_INTERNAL_MT1_ASSIST: {
                 for (var limelight : limelights) {
                     limelight.setIMUMode(Limelight.IMUMode.MODE_3_INTERNAL_MT1_ASSIST);
-                    LimelightHelpers.SetIMUAssistAlpha(limelight.getLimelightName(), 0.001);
+                    LimelightHelpers.SetIMUAssistAlpha(limelight.getLimelightName(), 0.01);
                 }
                 break;
+            }
+            case MODE_4_INTERNAL_EXTERNAL_ASSIST: {
+                for (var limelight : limelights) {
+                    limelight.setIMUMode(Limelight.IMUMode.MODE_4_INTERNAL_EXTERNAL_ASSIST);
+                    LimelightHelpers.SetIMUAssistAlpha(limelight.getLimelightName(), 0.001);
+                    limelight.setRobotOrientation(mCurrentSwerveState.Pose.getRotation().getMeasure());
+                }
             }
             default:
                 setAllLimelightIMUModes(mDesiredLimelightIMUMode);
@@ -911,14 +931,20 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     public Angle getAngleToHub(Angle offset) {
+        Distance kBackRightXPos = Inches.of(-9.73);
+        Distance kBackRightYPos = Inches.of(-11.73);
         Logger.recordOutput("Drivetrain/AngleToHub/Pose", mCurrentSwerveState.Pose);
+        var computedShooterPose = mCurrentSwerveState.Pose;
+        Transform2d shooterPoseTransform = new Transform2d(kBackRightXPos, kBackRightYPos, mCurrentSwerveState.Pose.getRotation());
+        computedShooterPose = computedShooterPose.plus(shooterPoseTransform);
+        Logger.recordOutput("Drivetrain/AngleToHub/ComputedShooterPose", computedShooterPose);
         var angleToHub = Units.Radians.of(Math.atan2(
-                        (hubY - mCurrentSwerveState.Pose.getMeasureY().in(Units.Meters)),
-                        (getHubX() - mCurrentSwerveState.Pose.getMeasureX().in(Units.Meters))))
+                        (hubY - computedShooterPose.getMeasureY().in(Units.Meters)),
+                        (getHubX() - computedShooterPose.getMeasureX().in(Units.Meters))))
                 .plus(offset);
         Logger.recordOutput("Drivetrain/AngleToHub/AngleToHub", angleToHub);
         angleToHub = applyAllianceRotation(angleToHub);
-        Logger.recordOutput("Drivetrain/AngleToHub/AngleToHubAlliancApplied", angleToHub);
+        Logger.recordOutput("Drivetrain/AngleToHub/AngleToHubAllianceApplied", angleToHub);
         return angleToHub;
     }
 
