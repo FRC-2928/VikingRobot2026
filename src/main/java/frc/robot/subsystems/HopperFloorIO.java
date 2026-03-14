@@ -9,7 +9,6 @@ import org.littletonrobotics.junction.AutoLog;
 public interface HopperFloorIO {
     @AutoLog
     public static class HopperFloorIOInputs {
-        public AngularVelocity angularVelocity;
         public AngularVelocity hopperAngularVelocity = Units.RotationsPerSecond.zero();
         public Current         hopperStatorCurrent = Units.Amps.zero();
         public Current         hopperSupplyCurrent = Units.Amps.zero();

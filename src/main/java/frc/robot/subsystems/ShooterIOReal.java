@@ -24,13 +24,13 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
@@ -263,6 +263,12 @@ public class ShooterIOReal implements ShooterIO {
     @Override
     public void rotateHood(Angle hoodAngle) {
         targetHoodAngle = hoodAngle.plus(Units.Degrees.of(angleNudgeDegrees));
+        var targetHoodAngleDegrees = targetHoodAngle.in(Units.Degrees);
+
+        // Hood angle is between 0 (home) and 40 (up) degrees -- clamp it to ensure that
+        // the nudges don't try to exceed the physical limits of the system
+        var clampedHoodAngleDegrees = MathUtil.clamp(targetHoodAngleDegrees, 0, 40);
+        targetHoodAngle = Units.Degrees.of(clampedHoodAngleDegrees);
         Logger.recordOutput("Shooter/angleNudgeDegrees", Units.Degrees.of(angleNudgeDegrees));
         Logger.recordOutput("Shooter/targetHoodAngle", targetHoodAngle) ;
         hood.setControl(new PositionVoltage(targetHoodAngle));
@@ -297,8 +303,6 @@ public class ShooterIOReal implements ShooterIO {
 
     @Override
     public void simPeriodic() {
-        
-
         TalonFXSimState flywheelASimState = flywheelA.getSimState();
         TalonFXSimState flywheelBSimState = flywheelB.getSimState();
         TalonFXSimState kickerSimState = kicker.getSimState();

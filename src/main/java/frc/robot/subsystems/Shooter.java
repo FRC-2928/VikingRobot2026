@@ -96,7 +96,7 @@ public class Shooter extends SubsystemBase {
     }
 
     public void shoot() {
-        //aim();
+        aim();
 
         // only run the kicker -- flywheels + hood are already commanded to hold setpoints by aim() methods
         this.io.runKicker(Units.RotationsPerSecond.of(64));
@@ -175,7 +175,7 @@ public class Shooter extends SubsystemBase {
                 Logger.recordOutput("Shooter/AimValueHoodAngleDegrees", val.hoodAngle.in(Units.Degrees));
                 Logger.recordOutput("Shooter/AimValueFlywheelSpeedsRPS", val.shooterVelocity.in(Units.RotationsPerSecond));
                 this.io.runFlywheelsVelocity(val.shooterVelocity);
-                // Hood angle is between 0 (home) and 40 (up) degreesaq
+                // Hood angle is between 0 (home) and 40 (up) degrees
                 // Aimvalues expects shoot angle between 80 (home) and 40 (up) degrees
                 // This line converts the requested angle to hood setpoint, and clamps between 0 and 40
                 Angle requestedAngle = Units.Degrees.of(MathUtil.clamp(80 - val.hoodAngle.in(Units.Degrees), 0, 40));
@@ -187,7 +187,7 @@ public class Shooter extends SubsystemBase {
     public Command aimAtHub() {
         return new FunctionalCommand(
             this::aim,
-            this::adjustAim,
+            this::aim,
             (interrupted) -> {
                 if (interrupted) {
                     home();  // TODO: probably don't want to do this, because interrupt could come from override

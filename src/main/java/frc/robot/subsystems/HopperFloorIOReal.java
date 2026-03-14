@@ -108,7 +108,7 @@ public class HopperFloorIOReal implements HopperFloorIO {
         // hopper.setControl(new DutyCycleOut(MathUtil.clamp(Tuning.hopperVelocity.get(), -1, 1)));
         //hopper.setControl(new VoltageOut(Units.Volts.of(5)));
         // set velocity to 8 rps, add 0.5 V to overcome gravity
-        hopper.setControl(hopperVelocityVoltage.withVelocity(50));
+        hopper.setControl(hopperVelocityVoltage.withVelocity(45));
         Logger.recordOutput("HopperFloorIOReal/runHopper", Tuning.hopperVelocity.get());
     }
 
