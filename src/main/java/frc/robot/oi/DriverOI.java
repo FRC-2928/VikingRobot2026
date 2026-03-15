@@ -72,7 +72,7 @@ public class DriverOI extends BaseOI {
             .onTrue(new InstantCommand(
                 () -> cont.drivetrain.setLimelightIMUModesIntent(Limelight.IMUMode.MODE_1_EXTERNAL_SEED)))
             .onFalse(new InstantCommand(
-                () -> cont.drivetrain.setLimelightIMUModesIntent(Limelight.IMUMode.MODE_3_INTERNAL_MT1_ASSIST)));
+                () -> cont.drivetrain.setLimelightIMUModesIntent(Limelight.IMUMode.MODE_4_INTERNAL_EXTERNAL_ASSIST)));
         this.toggleRotationLockedMode.onTrue(mSuperstructure.toggleStateIntent(Superstructure.StateIntent.ACTION_TOGGLE_TARGET_LOCK_MODE));
         this.shootOverride
             .onTrue(mSuperstructure.requestShootOverride())

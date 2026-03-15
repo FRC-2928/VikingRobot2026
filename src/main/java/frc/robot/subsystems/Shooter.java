@@ -143,7 +143,7 @@ public class Shooter extends SubsystemBase {
     public void home() {
         this.io.stopFlyWheels();
         this.io.rotateHood(Units.Degrees.zero());
-        this.io.runKicker(Units.RotationsPerSecond.zero());
+        this.io.stopKicker();
     }
 
     public Command shootOverrideCommand() {

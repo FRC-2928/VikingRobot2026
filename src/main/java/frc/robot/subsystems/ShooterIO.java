@@ -20,7 +20,7 @@ public interface ShooterIO {
         public boolean         hoodAngleInTolerance = false;
 
         // Shooter A data values
-        public AngularVelocity shooterAVelocity;
+        public AngularVelocity shooterAVelocity = Units.RotationsPerSecond.zero();
         // TODO: should really measure for B as well...
         public AngularVelocity targetFlywheelVelocity = Units.RotationsPerSecond.zero();
         public Current         shooterAStatorCurrent = Units.Amps.zero();
@@ -47,6 +47,8 @@ public interface ShooterIO {
     public default void runFlywheelsVelocity(AngularVelocity speed) {}
 
     public default void runKicker(AngularVelocity kickerVelocity) {}
+
+    public default void stopKicker() {}
 
     public default void simPeriodic() {}
 
