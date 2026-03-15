@@ -123,6 +123,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private final double hubY = 8.07 / 2;
     private final double hubXOffset = 7.2898;
 
+    private final Distance homeX = Units.Inches.of(182.11/2);
+    private final Distance homeXOffset = Units.Inches.of(651.22-182.11);
+
     private final double maxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
     private final double maxAngularRate = Units.RotationsPerSecond.of(0.75)
             .in(Units.RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
@@ -386,6 +389,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         SmartDashboard.putData("Field_Pose", fieldLog);
         Logger.recordOutput("Drivetrain/LimelightRightHasTags", limelightRight.hasValidTargets());
         Logger.recordOutput("Drivetrain/LimelightLeftHasTags",  limelightLeft.hasValidTargets());
+        Logger.recordOutput("Drivetrain/distanceFromHome", getDistanceFromHome());
 
         /*
          * Periodically try to apply the operator perspective.S
@@ -789,6 +793,15 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         }
     }
 
+    public Distance getHomeX() {
+        var alliance = DriverStation.getAlliance();
+        if (!alliance.isEmpty() && alliance.get() == Alliance.Red) {
+            return homeXOffset.plus(homeX);
+        } else {
+            return homeX;
+        }
+    }
+
     // spotless: off
     // Command to aim at hub while moving with max translation speed scaler not deadband (Overrides Rotational aspect)
 
@@ -853,8 +866,17 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     public Distance getDistanceFromHub() {
         return Units.Meters.of(Math.hypot(
-                (getHubX() - mCurrentSwerveState.Pose.getMeasureX().in(Units.Meters)),
-                (hubY - mCurrentSwerveState.Pose.getMeasureY().in(Units.Meters))));
+            (getHubX() - mCurrentSwerveState.Pose.getMeasureX().in(Units.Meters)),
+            (hubY - mCurrentSwerveState.Pose.getMeasureY().in(Units.Meters))));
+    }
+
+    public Distance getDistanceFromHome() {
+        return Units.Meters.of(
+            Math.abs(
+                getHomeX()
+                .minus(mCurrentSwerveState.Pose.getMeasureX()).in(Units.Meters)
+            )
+        );
     }
 
      public void intakeGround(double speedMultiplier) {
@@ -960,9 +982,19 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public Command targetLock() {
         return new FunctionalCommand(
             this::initTargetLock,
-            () -> {} /* empty execute block; already covered by subsystem periodic */,
+            this::initTargetLock /* empty execute block; already covered by subsystem periodic */,
             (interrupted) -> {} /* TODO: should probably set brake mode, or no-op depending on interrupt... */,
             this::isAtTargetHeading,
+            this
+        );
+    }
+
+    public Command targetLockEndlCommand() {
+        return new FunctionalCommand(
+            () -> {},
+            this::initTargetLock /* empty execute block; already covered by subsystem periodic */,
+            (interrupted) -> {} /* TODO: should probably set brake mode, or no-op depending on interrupt... */,
+            () -> false,
             this
         );
     }
