@@ -1,11 +1,15 @@
 package frc.robot.oi;
 
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Superstructure;
+import frc.robot.vision.Limelight;
 
 public class DriverOI extends BaseOI {
     /// Class Members
@@ -38,6 +42,8 @@ public class DriverOI extends BaseOI {
 
     public final Trigger climbTrigger;
 
+    public final Haptics haptics;
+
     public DriverOI(final CommandXboxController controller, Superstructure superstructure) {
         super(controller);
 
@@ -57,6 +63,10 @@ public class DriverOI extends BaseOI {
         this.lockWheels = this.controller.x();
         this.unjam = this.controller.povLeft();
         this.climbTrigger = this.controller.povUp();
+
+        this.haptics = new BaseOI.Haptics(hid);
+
+        this.haptics.type = RumbleType.kBothRumble;
     }
 
     public void configureControls() {
@@ -65,12 +75,18 @@ public class DriverOI extends BaseOI {
         // this comes from a circular chain of getInstance -> init -> configureControls() -> getInstance()...
         var cont = RobotContainer.getInstance();
         this.resetFOD.onTrue(new InstantCommand(cont.drivetrain::resetAngle));
-        // this.intake.whileTrue(cont.superstructure.extendAndIntake());
-        this.resetAngle.onTrue(cont.drivetrain.runOnce(cont.drivetrain::zeroAngle));
-        // Temporarily disable limelight seeding since LLs are not updating pose
-        // this.resetAngle.whileTrue(new RunCommand(cont.drivetrain::seedLimelightImu));
-        // this.resetAngle.whileFalse(new RunCommand(cont.drivetrain::setImuMode2));
-        this.toggleRotationLockedMode.onTrue(mSuperstructure.toggleStateIntent(Superstructure.StateIntent.ACTION_TOGGLE_TARGET_LOCK_MODE));
+        // this.resetAngle.onTrue(cont.drivetrain.runOnce(cont.drivetrain::zeroAngle));
+        this.resetAngle
+            .onTrue(new InstantCommand(
+                () -> cont.drivetrain.setLimelightIMUModesIntent(Limelight.IMUMode.MODE_1_EXTERNAL_SEED)))
+            .onFalse(new InstantCommand(
+                () -> cont.drivetrain.setLimelightIMUModesIntent(Limelight.IMUMode.MODE_4_INTERNAL_EXTERNAL_ASSIST)));
+        this.toggleRotationLockedMode
+            .onTrue(new ParallelCommandGroup(
+                        mSuperstructure.toggleStateIntent(Superstructure.StateIntent.ACTION_TOGGLE_TARGET_LOCK_MODE), 
+                        new InstantCommand(() -> { haptics.toggleRumble(); }),
+                        new PrintCommand("Target Lock Trigger")
+            ));
         this.shootOverride
             .onTrue(mSuperstructure.requestShootOverride())
             .onFalse(mSuperstructure.clearOverrideCommand());

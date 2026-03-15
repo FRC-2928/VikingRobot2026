@@ -6,6 +6,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 import org.littletonrobotics.junction.Logger;
@@ -112,25 +114,25 @@ public class MatchRecorder {
             teleopExit();
         }
 
-        String eventCode   = DriverStation.getEventName();
-        if (eventCode == null || eventCode.isEmpty()) {
-            eventCode = "unknown";
+        String eventCode = DriverStation.getEventName();
+        int matchNum     = DriverStation.getMatchNumber();
+        boolean hasFmsInfo = (eventCode != null && !eventCode.isEmpty()) || matchNum != 0;
+
+        String fileName;
+        if (hasFmsInfo) {
+            if (eventCode == null || eventCode.isEmpty()) eventCode = "unknown";
+            String matchStr    = String.valueOf(matchNum);
+            Optional<DriverStation.Alliance> allianceOpt = DriverStation.getAlliance();
+            String allianceStr = allianceOpt.isPresent()
+                    ? (allianceOpt.get() == DriverStation.Alliance.Red ? "Red" : "Blue")
+                    : "Unknown";
+            int location = DriverStation.getLocation().orElse(0);
+            fileName = "shots_" + eventCode + "_match" + matchStr + "_" + allianceStr + location + ".csv";
+        } else {
+            // No FMS connection — use local date/time so each session gets a unique file
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
+            fileName = "shots_" + timestamp + ".csv";
         }
-
-        int matchNum = DriverStation.getMatchNumber();
-        String matchStr = (matchNum == 0) ? "practice" : String.valueOf(matchNum);
-
-        Optional<DriverStation.Alliance> allianceOpt = DriverStation.getAlliance();
-        String allianceStr = allianceOpt.isPresent()
-                ? (allianceOpt.get() == DriverStation.Alliance.Red ? "Red" : "Blue")
-                : "Unknown";
-
-        int location = DriverStation.getLocation().orElse(0);
-
-        String fileName = "shots_" + eventCode
-                + "_match" + matchStr
-                + "_" + allianceStr + location
-                + ".csv";
 
         File outputDir = new File(OUTPUT_DIR);
         if (!outputDir.exists()) {

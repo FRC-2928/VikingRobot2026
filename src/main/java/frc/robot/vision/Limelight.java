@@ -1,5 +1,8 @@
 package frc.robot.vision;
 
+import org.littletonrobotics.junction.AutoLogOutput;
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -12,19 +15,43 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.RobotBase;
-
 import frc.robot.LimelightHelpers;
 import frc.robot.LimelightHelpers.LimelightResults;
 import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.robot.LimelightHelpers.RawFiducial;
 
-import org.littletonrobotics.junction.AutoLogOutput;
-import org.littletonrobotics.junction.Logger;
-
 public class Limelight {
     public final NetworkTable nt;
     public final String limelightName;
     private Vector<N3> limelightTrust;
+
+    public enum IMUMode {
+        MODE_0_EXTERNAL_ONLY(0),             // No internal IMU processing. MT2 uses interpolated yaw from robot's gyro
+                                             // sent via SetRobotOrientation().
+                                             //
+        MODE_1_EXTERNAL_SEED(1),             // Internal IMU offset is calibrated to match external yaw each
+                                             // frame (seeding). MT2 still uses external yaw for botpose.
+                                             //
+        MODE_2_INTERNAL_ONLY(2),             // Uses internal IMU's fused yaw only. No external input required.
+                                             //
+        MODE_3_INTERNAL_MT1_ASSIST(3),       // Complementary filter fuses internal IMU with MT1 vision yaw. When MT1
+                                             // gets a valid pose, it slowly corrects internal IMU drift.
+                                             //
+        MODE_4_INTERNAL_EXTERNAL_ASSIST(4);  // Complementary filter fuses internal IMU with external yaw from 
+                                             // SetRobotOrientation(). This is the recommended mode, as the internal
+                                             // IMU's 1khz update rate is utilized for frame-by-frame motion while the
+                                             // robot's IMU corrects for any drift over time.
+
+        /// integer representing the IMU Mode
+        private int mIMUMode;
+        private IMUMode(int imuMode) {
+            mIMUMode = imuMode;
+        }
+
+        public int getImuMode() {
+            return mIMUMode;
+        }
+    }
 
     public Limelight(final String limelightName) {
         this.nt = NetworkTableInstance.getDefault().getTable(limelightName);
@@ -121,8 +148,8 @@ public class Limelight {
         LimelightHelpers.SetRobotOrientation(limelightName, yaw.in(Units.Degrees), 0, 0, 0, 0, 0);
     }
 
-    public void setIMUMode(int mode) {
-        LimelightHelpers.SetIMUMode(limelightName, mode);
+    public void setIMUMode(IMUMode mode) {
+        LimelightHelpers.SetIMUMode(limelightName, mode.getImuMode());
     }
 
     public double getImuMode() {

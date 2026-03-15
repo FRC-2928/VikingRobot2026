@@ -165,7 +165,6 @@ public class Superstructure extends SubsystemBase {
         initState(RobotState.RETRACT_INTAKE, retractIntake());
         initState(RobotState.SHOOTING, startShootingOverride());
         initState(RobotState.SHOOT_HOME, shootTowardsHome());
-        initState(RobotState.GET_READY_CLIMB, pathToHookandClimb());
 
         transitionFunctions = new HashMap<>();
 
@@ -437,34 +436,6 @@ public class Superstructure extends SubsystemBase {
                 });
     }
 
-    public Command moveToClimbPrepPos() {
-        return new RunCommand(() -> {
-            mRobotContainer.drivetrain.centerLimeLight(Constants.Climber.prepClimbPosition);
-        });
-    }
-
-    public Command moveToClimbPos() {
-        return new RunCommand(() -> {
-            mRobotContainer.drivetrain.centerLimeLight(Constants.Climber.engageClimbPosition);
-        });
-    }
-
-    public Command pathToHookandClimb() {
-        if (this.isClimbed) {
-            this.isClimbed = false;
-            return mRobotContainer.climber.runClimber(true);
-        } else {
-            return new SequentialCommandGroup(
-                new ParallelCommandGroup(
-                    mRobotContainer.climber.prepareClimber(), 
-                    moveToClimbPrepPos()
-                ), //command to go to pose
-                moveToClimbPos(), 
-                mRobotContainer.climber.runClimber(false)
-            );
-        }
-    }
-
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// 
     /// DEFINE TRANSITION FUNCTIONS
@@ -561,7 +532,6 @@ public class Superstructure extends SubsystemBase {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void resetSubsystems() {
-        mRobotContainer.climber.reset();
         mRobotContainer.drivetrain.setState(CommandSwerveDrivetrain.WantedState.IDLE);
         mRobotContainer.hopperFloor.halt();
         mRobotContainer.indexer.halt();

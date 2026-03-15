@@ -3,6 +3,7 @@ package frc.robot.subsystems;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -28,6 +29,26 @@ public class Shooter extends SubsystemBase {
     private final ShooterIOInputsAutoLogged inputs = new ShooterIOInputsAutoLogged();
     private final RobotContainer cont;
     private double lastMetersToHub = 0.0;
+    private WantedState mDesiredState = WantedState.HALT;
+    private SystemState mCurrentState = SystemState.HALT;
+
+    public enum WantedState {
+        SHOOT,
+        HALT,
+        AIM_HUB_AUTO,
+        SHOOT_OVERRIDE,
+        SHOOT_HOME,
+        HOME
+    }
+
+    public enum SystemState {
+        SHOOT,
+        HALT,
+        AIM_HUB_AUTO,
+        SHOOT_OVERRIDE,
+        SHOOT_HOME,
+        HOME
+    }
 
     public Angle getHoodAngle() {
         return inputs.hoodAngle;
@@ -75,10 +96,10 @@ public class Shooter extends SubsystemBase {
     }
 
     public void shoot() {
-        //aim();
+        aim();
 
         // only run the kicker -- flywheels + hood are already commanded to hold setpoints by aim() methods
-        this.io.runKicker(Units.Volts.of(7));
+        this.io.runKicker(Units.RotationsPerSecond.of(64));
         // this.aimAtHub();
         // this.runShooter();
     }
@@ -88,7 +109,7 @@ public class Shooter extends SubsystemBase {
     }
 
     public void runShooter(){
-        this.io.runKicker(Units.Volts.of(7));
+        this.io.runKicker(Units.RotationsPerSecond.of(64));
         this.io.runFlywheelsVelocity(Units.RotationsPerSecond.of(38));
         this.io.rotateHood(Units.Degrees.of(13));   
     }
@@ -122,7 +143,7 @@ public class Shooter extends SubsystemBase {
     public void home() {
         this.io.stopFlyWheels();
         this.io.rotateHood(Units.Degrees.zero());
-        this.io.runKicker(Units.Volts.zero());
+        this.io.stopKicker();
     }
 
     public Command shootOverrideCommand() {
@@ -154,7 +175,7 @@ public class Shooter extends SubsystemBase {
                 Logger.recordOutput("Shooter/AimValueHoodAngleDegrees", val.hoodAngle.in(Units.Degrees));
                 Logger.recordOutput("Shooter/AimValueFlywheelSpeedsRPS", val.shooterVelocity.in(Units.RotationsPerSecond));
                 this.io.runFlywheelsVelocity(val.shooterVelocity);
-                // Hood angle is between 0 (home) and 40 (up) degreesaq
+                // Hood angle is between 0 (home) and 40 (up) degrees
                 // Aimvalues expects shoot angle between 80 (home) and 40 (up) degrees
                 // This line converts the requested angle to hood setpoint, and clamps between 0 and 40
                 Angle requestedAngle = Units.Degrees.of(MathUtil.clamp(80 - val.hoodAngle.in(Units.Degrees), 0, 40));
@@ -166,7 +187,7 @@ public class Shooter extends SubsystemBase {
     public Command aimAtHub() {
         return new FunctionalCommand(
             this::aim,
-            this::adjustAim,
+            this::aim,
             (interrupted) -> {
                 if (interrupted) {
                     home();  // TODO: probably don't want to do this, because interrupt could come from override

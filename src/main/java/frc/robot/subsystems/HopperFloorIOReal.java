@@ -48,14 +48,10 @@ public class HopperFloorIOReal implements HopperFloorIO {
             LinearSystemId.createDCMotorSystem(DCMotor.getKrakenX60(1), 0.001, Constants.HopperFloor.indexerGearRatio),
             DCMotor.getKrakenX60(1));
 
-    public StatusSignal<AngularVelocity> statusSignal;
-
     public HopperFloorIOReal() {
         // TODO: change CAN ID
         this.hopper = new TalonFX(Constants.CAN.CTRE.hopper, Constants.CAN.CTRE.bus);
-        this.statusSignal = this.hopper.getRotorVelocity();
 
-        BaseStatusSignal.setUpdateFrequencyForAll(100, statusSignal);
         TalonFXConfiguration hopperConfig = new TalonFXConfiguration();
         CurrentLimitsConfigs currentLimitsConfigs = new CurrentLimitsConfigs();
         hopperConfig.CurrentLimits = currentLimitsConfigs;
@@ -64,9 +60,9 @@ public class HopperFloorIOReal implements HopperFloorIO {
 
         //TODO: actually tune these PID's
         Slot0Configs hopperFloorSlot0Configs = new Slot0Configs();
-        hopperFloorSlot0Configs.kS = 0.1; // Add 0.1 V output to overcome static friction
-        hopperFloorSlot0Configs.kV = 0.12; // A velocity target of 1 rps results in 0.12 V output
-        hopperFloorSlot0Configs.kP = 0.11; // An error of 1 rps results in 0.11 V output
+        hopperFloorSlot0Configs.kS = 0.7; // Add 0.1 V output to overcome static friction
+        hopperFloorSlot0Configs.kV = 0.15; // A velocity target of 1 rps results in 0.12 V output
+        hopperFloorSlot0Configs.kP = 0.4; // An error of 1 rps results in 0.11 V output
         hopperFloorSlot0Configs.kI = 0; // no output for integrated error
         hopperFloorSlot0Configs.kD = 0; // no output for error derivative
 
@@ -86,6 +82,8 @@ public class HopperFloorIOReal implements HopperFloorIO {
         this.hopperStatorCurrentSignal = this.hopper.getStatorCurrent();
         this.hopperSupplyCurrentSignal = this.hopper.getSupplyCurrent();
 
+        BaseStatusSignal.setUpdateFrequencyForAll(100, hopperAngularVelocitySignal, hopperStatorCurrentSignal, hopperSupplyCurrentSignal);
+
         this.mStatusSignals = List.of(
             hopperAngularVelocitySignal,
             hopperStatorCurrentSignal,
@@ -101,7 +99,7 @@ public class HopperFloorIOReal implements HopperFloorIO {
         // Do a feed forward later
         //hopper.setControl(new DutyCycleOut(MathUtil.clamp(angularVelocity, -1, 1)));
         // set velocity to 8 rps, add 0.5 V to overcome gravity
-        hopper.setControl(this.hopperVelocityVoltage.withVelocity(angularVelocity).withFeedForward(0.5));
+        hopper.setControl(this.hopperVelocityVoltage.withVelocity(angularVelocity));
         Logger.recordOutput("HopperFloorIOReal/setSpeed", angularVelocity);
     }
 
@@ -110,14 +108,13 @@ public class HopperFloorIOReal implements HopperFloorIO {
         // hopper.setControl(new DutyCycleOut(MathUtil.clamp(Tuning.hopperVelocity.get(), -1, 1)));
         //hopper.setControl(new VoltageOut(Units.Volts.of(5)));
         // set velocity to 8 rps, add 0.5 V to overcome gravity
-        hopper.setControl(hopperVelocityVoltage.withVelocity(8).withFeedForward(0.5));
+        hopper.setControl(hopperVelocityVoltage.withVelocity(45));
         Logger.recordOutput("HopperFloorIOReal/runHopper", Tuning.hopperVelocity.get());
     }
 
     @Override
     public void runHopperReverse() {
-        //hopper.setControl(new VoltageOut(Units.Volts.of(-5)));
-        hopper.setControl(hopperVelocityVoltage.withVelocity(-8).withFeedForward(0.5));
+        hopper.setControl(new VoltageOut(Units.Volts.of(-5)));
     }
 
     @Override
@@ -127,13 +124,11 @@ public class HopperFloorIOReal implements HopperFloorIO {
 
     @Override
     public void updateInputs(HopperFloorIOInputs hopperInputs) {
-        BaseStatusSignal.refreshAll(statusSignal);
+        BaseStatusSignal.refreshAll(mStatusSignals);
 
         hopperInputs.hopperAngularVelocity = hopperAngularVelocitySignal.getValue();
         hopperInputs.hopperStatorCurrent = hopperStatorCurrentSignal.getValue();
         hopperInputs.hopperSupplyCurrent = hopperSupplyCurrentSignal.getValue();
-
-        hopperInputs.angularVelocity = statusSignal.getValue();
     }
 
     @Override

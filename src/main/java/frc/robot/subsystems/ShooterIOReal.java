@@ -1,5 +1,7 @@
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.Volts;
+
 import java.util.List;
 
 import org.littletonrobotics.junction.Logger;
@@ -24,6 +26,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.Units;
@@ -86,6 +89,8 @@ public class ShooterIOReal implements ShooterIO {
     private Angle targetHoodAngle = Units.Degrees.zero();
     private AngularVelocity targetFlywheeVelocity = Units.RotationsPerSecond.zero();
 
+    // final VelocityVoltage kickerVelocityVoltage;
+
     public ShooterIOReal(final Shooter shooter) {
         this.flywheelA = new TalonFX(Constants.CAN.CTRE.shooterFlywheelA, Constants.CAN.CTRE.bus);
         this.flywheelB = new TalonFX(Constants.CAN.CTRE.shooterFlywheelB, Constants.CAN.CTRE.bus);
@@ -99,11 +104,15 @@ public class ShooterIOReal implements ShooterIO {
                     .withKV(0.122);
         final Slot0Configs hoodSlot0Config =
                 new Slot0Configs()
-                    .withKP(25)
-                    .withKI(3.5);
+                    .withKP(50)
+                    .withKI(10)
+                    .withKS(0.3)
+                    .withKV(0.25);
         final Slot0Configs kickerSlot0Config =
-                new Slot0Configs().withKP(0.1);
-
+                new Slot0Configs()
+                    .withKP(0.6)
+                    .withKV(0.11)
+                    .withKS(0.45);
         //
         // Flywheels
         //
@@ -184,6 +193,7 @@ public class ShooterIOReal implements ShooterIO {
         //
         final TalonFXConfiguration kickerConfig = new TalonFXConfiguration(); // TODO: Check everything about this
 
+
         kickerConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         kickerConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
@@ -198,13 +208,15 @@ public class ShooterIOReal implements ShooterIO {
         kickerConfig.CurrentLimits.SupplyCurrentLimit = 60; // max current draw allowed
         kickerConfig.CurrentLimits.SupplyCurrentLowerLimit = 35; // current allowed *after* the supply current limit is reached
         kickerConfig.CurrentLimits.SupplyCurrentLowerTime = 0.1; // max time allowed to draw SupplyCurrentLimit
-
-        // PID Values
+        
         kickerConfig.Slot0 = kickerSlot0Config;
 
         // Apply all the configs
         hood.getConfigurator().apply(hoodConfig);
         kicker.getConfigurator().apply(kickerConfig);
+
+         // create a velocity closed-loop request, voltage output, slot 0 configs
+        // this.kickerVelocityVoltage = new VelocityVoltage(0).withSlot(0);
 
         // TODO: ideally we'd like to iterate over these instead of having to write this each time...
         this.hoodAngleSignal = this.hood.getPosition();
@@ -248,7 +260,14 @@ public class ShooterIOReal implements ShooterIO {
     @Override
     public void rotateHood(Angle hoodAngle) {
         targetHoodAngle = hoodAngle.plus(Units.Degrees.of(angleNudgeDegrees));
-        Logger.recordOutput("Shooter/targetHoodAngel", targetHoodAngle) ;
+        var targetHoodAngleDegrees = targetHoodAngle.in(Units.Degrees);
+
+        // Hood angle is between 0 (home) and 40 (up) degrees -- clamp it to ensure that
+        // the nudges don't try to exceed the physical limits of the system
+        var clampedHoodAngleDegrees = MathUtil.clamp(targetHoodAngleDegrees, 0, 40);
+        targetHoodAngle = Units.Degrees.of(clampedHoodAngleDegrees);
+        Logger.recordOutput("Shooter/angleNudgeDegrees", Units.Degrees.of(angleNudgeDegrees));
+        Logger.recordOutput("Shooter/targetHoodAngle", targetHoodAngle) ;
         hood.setControl(new PositionVoltage(targetHoodAngle));
     }
 
@@ -274,14 +293,18 @@ public class ShooterIOReal implements ShooterIO {
 
     // Runs the kicker. Shoots ball into flywheels.
     @Override
-    public void runKicker(Voltage kickerVoltage) {
-        this.kicker.setControl(new VoltageOut(kickerVoltage));
+    public void runKicker(AngularVelocity kickerVelocity) {
+        kicker.setControl(new VelocityVoltage(kickerVelocity));
+        //this.kicker.setControl(new VoltageOut(kickerVoltage));
+    }
+
+    @Override
+    public void stopKicker() {
+        kicker.setControl(new VoltageOut(Volts.zero()));
     }
 
     @Override
     public void simPeriodic() {
-        
-
         TalonFXSimState flywheelASimState = flywheelA.getSimState();
         TalonFXSimState flywheelBSimState = flywheelB.getSimState();
         TalonFXSimState kickerSimState = kicker.getSimState();

@@ -54,9 +54,9 @@ public class IndexerIOReal implements IndexerIO {
 
         //TODO: actually tune these PID's
         Slot0Configs indexerFloorSlot0Configs = new Slot0Configs();
-        indexerFloorSlot0Configs.kS = 0.1; // Add 0.1 V output to overcome static friction
-        indexerFloorSlot0Configs.kV = 0.12; // A velocity target of 1 rps results in 0.12 V output
-        indexerFloorSlot0Configs.kP = 0.11; // An error of 1 rps results in 0.11 V output
+        indexerFloorSlot0Configs.kS = 0.65; // Add 0.1 V output to overcome static friction
+        indexerFloorSlot0Configs.kV = 0.105; // A velocity target of 1 rps results in 0.12 V output
+        indexerFloorSlot0Configs.kP = 0.5; // An error of 1 rps results in 0.11 V output
         indexerFloorSlot0Configs.kI = 0; // no output for integrated error
         indexerFloorSlot0Configs.kD = 0; // no output for error derivative
 
@@ -89,7 +89,8 @@ public class IndexerIOReal implements IndexerIO {
     @Override
     public void runIndexer() {
         // indexer.setControl(new DutyCycleOut(MathUtil.clamp(Tuning.intakeVelocity.get(), -1, 1)));
-        indexer.setControl(new VoltageOut(8));
+        indexer.setControl(indexerVelocityVoltage.withVelocity(60));
+        //indexer.setControl(new VoltageOut(8));
     }
 
     @Override
