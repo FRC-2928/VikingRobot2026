@@ -1,5 +1,7 @@
 package frc.robot.oi;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Timer;
@@ -40,6 +42,7 @@ public abstract class BaseOI {
         public void toggleRumble() {
             rumbleState = !rumbleState;
             this.hid.setRumble(this.type, rumbleState ? 1 : 0);
+            Logger.recordOutput("Haptics/Rumble", rumbleState);
         }
     }
 

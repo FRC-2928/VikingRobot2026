@@ -3,6 +3,7 @@ package frc.robot.oi;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.RobotContainer;
@@ -81,8 +82,11 @@ public class DriverOI extends BaseOI {
             .onFalse(new InstantCommand(
                 () -> cont.drivetrain.setLimelightIMUModesIntent(Limelight.IMUMode.MODE_4_INTERNAL_EXTERNAL_ASSIST)));
         this.toggleRotationLockedMode
-            .onTrue(new ParallelCommandGroup(mSuperstructure.toggleStateIntent(Superstructure.StateIntent.ACTION_TOGGLE_TARGET_LOCK_MODE), 
-                    new InstantCommand(() -> {haptics.toggleRumble();})));
+            .onTrue(new ParallelCommandGroup(
+                        mSuperstructure.toggleStateIntent(Superstructure.StateIntent.ACTION_TOGGLE_TARGET_LOCK_MODE), 
+                        new InstantCommand(() -> { haptics.toggleRumble(); }),
+                        new PrintCommand("Target Lock Trigger")
+            ));
         this.shootOverride
             .onTrue(mSuperstructure.requestShootOverride())
             .onFalse(mSuperstructure.clearOverrideCommand());
