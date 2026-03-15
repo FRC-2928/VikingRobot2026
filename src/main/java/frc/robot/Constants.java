@@ -305,6 +305,17 @@ public class Constants {
                         AngularVelocity interpolatedFlywheelVelocity = start.shooterVelocity.plus(dOmega);
                         return new AimValues(interpolatedHoodAngle, interpolatedFlywheelVelocity);
                     });
+        public static InterpolatingTreeMap<Double, AimValues> lookUpTableShootHome =
+                new InterpolatingTreeMap<Double, AimValues>(
+                    InverseInterpolator.forDouble(),
+                    (start, end, t) -> {
+                        // Lerp each field: result = start + (end - start) * t
+                        Angle dTheta = (end.hoodAngle.minus(start.hoodAngle)).times(t);
+                        Angle interpolatedHoodAngle = start.hoodAngle.plus(dTheta);
+                        AngularVelocity dOmega = (end.shooterVelocity.minus(start.shooterVelocity)).times(t);
+                        AngularVelocity interpolatedFlywheelVelocity = start.shooterVelocity.plus(dOmega);
+                        return new AimValues(interpolatedHoodAngle, interpolatedFlywheelVelocity);
+                    });
 
         public static class AimValues {
             public final Angle hoodAngle;

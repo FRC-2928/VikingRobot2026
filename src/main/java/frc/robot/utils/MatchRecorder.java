@@ -12,6 +12,7 @@ import java.util.Optional;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.Constants;
@@ -33,6 +34,7 @@ public class MatchRecorder {
     // Constants
     // -----------------------------------------------------------------------
     private static final String LOOKUP_TABLE_PATH = "/home/lvuser/deploy/shooter_lookup_table.csv";
+    private static final String LOOKUP_TABLE_SHOOT_HOME_PATH = "/home/lvuser/deploy/shooter_lookup_table_home.csv";
     private static final String OUTPUT_DIR = "/home/lvuser/match_shots/";
 
     // -----------------------------------------------------------------------
@@ -45,7 +47,7 @@ public class MatchRecorder {
     // Constructor – spawns background lookup-table loader (sub-task 3.2)
     // -----------------------------------------------------------------------
     public MatchRecorder() {
-        Thread loaderThread = new Thread(this::loadLookupTable, "MatchRecorder-LookupTableLoader");
+        Thread loaderThread = new Thread(this::loadAllLookupTables, "MatchRecorder-LookupTableLoader");
         loaderThread.setDaemon(true);
         loaderThread.start();
     }
@@ -54,9 +56,8 @@ public class MatchRecorder {
      * Reads shooter_lookup_table.csv from the deploy directory and populates
      * {@link Constants.Shooter#lookUpTable}.  Falls back to compile-time values on any error.
      */
-    private void loadLookupTable() {
-        Logger.recordOutput("MatchRecorder/LookupTableLoaded", false);
-        try (BufferedReader reader = new BufferedReader(new FileReader(LOOKUP_TABLE_PATH))) {
+    private void loadLookupTable(InterpolatingTreeMap<Double, Constants.Shooter.AimValues> lookUpTable, String filePath) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String line;
             boolean firstLine = true;
             int rowsLoaded = 0;
@@ -81,7 +82,7 @@ public class MatchRecorder {
                 double hoodAngleDeg   = Double.parseDouble(parts[1].trim());
                 double flywheelRPS    = Double.parseDouble(parts[2].trim());
 
-                Constants.Shooter.lookUpTable.put(
+                lookUpTable.put(
                         distanceMeters,
                         new Constants.Shooter.AimValues(
                                 Units.Degrees.of(hoodAngleDeg),
@@ -90,14 +91,18 @@ public class MatchRecorder {
             }
 
             System.out.println("[MatchRecorder] Loaded " + rowsLoaded
-                    + " lookup-table entries from " + LOOKUP_TABLE_PATH);
-            Logger.recordOutput("MatchRecorder/LookupTableLoaded", true);
+                    + " lookup-table entries from " + filePath);
 
         } catch (Exception e) {
             System.err.println("[MatchRecorder] Failed to load lookup table from "
-                    + LOOKUP_TABLE_PATH + ": " + e.getMessage());
+                    + filePath + ": " + e.getMessage());
             System.err.println("[MatchRecorder] Retaining compile-time lookup table values.");
         }
+    }
+
+    private void loadAllLookupTables() {
+        loadLookupTable(Constants.Shooter.lookUpTable, LOOKUP_TABLE_PATH);
+        loadLookupTable(Constants.Shooter.lookUpTableShootHome, LOOKUP_TABLE_SHOOT_HOME_PATH);
     }
 
     // -----------------------------------------------------------------------
