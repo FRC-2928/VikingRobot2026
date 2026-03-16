@@ -2,13 +2,9 @@ package frc.robot.subsystems;
 
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.units.Units;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.Intake.IntakeStates;
-import frc.robot.commands.Intake.RetractAndStop;
 
 public class Intake extends SubsystemBase {
     private IntakeIO intakeIO;
@@ -21,86 +17,98 @@ public class Intake extends SubsystemBase {
         INTAKE,
         STOP,
         EXTEND,
-        EXTEND_INTAKE,
-        RETRACT
+        EXTEND_AND_RUN,
+        RETRACT,
+        REVERSE_ROLLER
     }
 
     public enum SystemState {
         INTAKE,
         STOP,
         EXTEND,
-        EXTEND_INTAKE,
-        RETRACT
+        EXTEND_AND_RUN,
+        RETRACT,
+        REVERSE_ROLLER
     }
 
     public Intake() {
         this.intakeIO = new IntakeIOReal();
-        initDefaultCommand();
+        //initDefaultCommand();
     }
 
     public void retract() {
-        intakeIO.retract();
+        // TODO: use this when the intake is fixed to be able to retract fully
+        // intakeIO.retract();
+        intakeIO.moveToPosition(Constants.Intake.INTAKE_RETRACTION_LIMIT);
     }
 
-    public Command extend() {
-        return new InstantCommand(() -> intakeIO.extend(), this);
+    public void extend() {
+        // intakeIO.moveToPosition(Constants.Intake.INTAKE_FORWARD_DISTANCE_LIMIT);
+        intakeIO.extendForward();
+        // return new InstantCommand(() -> intakeIO.moveToPosition(Constants.Intake.INTAKE_FORWARD_DISTANCE_LIMIT), this);
     }
 
-    public Command extendAndRun() {
-        return new InstantCommand(() -> {
-            intakeIO.extend();
-            intakeIO.setState(IntakeStates.FORWARD);
-        }, this);
+    public void extendAndRun() {
+        extend();
+        run();
     }
+
+    public void run() {
+        intakeIO.setState(IntakeStates.FORWARD);
+    }
+
+    // public Command extendAndRun() {
+    //     return new InstantCommand(() -> {
+    //         intakeIO.moveToPosition(Constants.Intake.INTAKE_FORWARD_DISTANCE_LIMIT);
+    //         intakeIO.setState(IntakeStates.FORWARD);
+    //     }, this);
+    // }
 
     public boolean checkExtended() {
         // Rotations value is actually inches because of configured gear ratio
-        Boolean isExtended = (intakeInputs.expansionMotorAngle.gte(Constants.Intake.expansionMotorMaxDistance));
-        Logger.recordOutput("Intake/IsExtended", isExtended);
-        return isExtended;
+        // boolean isExtended = (intakeInputs.expansionMotorAngle.gte(Constants.Intake.expansionMotorMaxDistance));
+        // Logger.recordOutput("Intake/IsExtended", isExtended);
+        // return isExtended;
+        return false;
     }
 
     private boolean checkRetracted() {
         // Rotations value is actually inches because of configured gear ratio
         // TODO: Find acutal retracted value
-        Boolean isRetracted = intakeInputs.expansionMotorAngle.lte(Units.Inches.of(0));
-        return isRetracted;
+        // boolean isRetracted = intakeInputs.expansionMotorAngle.lte(Units.Inches.of(0));
+        // return isRetracted;
+        return false;
     }
 
     public void setWantedState(WantedState state) {
         mDesiredState = state;
     }
 
+    /* 
     public void initDefaultCommand() {
         setDefaultCommand(new RetractAndStop(this));
     }
+    */
 
-        private SystemState handleStateTransition() {
+    private SystemState handleStateTransition() {
         return switch (mDesiredState) {
             case STOP -> SystemState.STOP;
             case INTAKE -> {
-                if (!checkExtended()) {
-                    yield SystemState.EXTEND;
-                }
+                // TODO: add protections in here in future iteration
                 yield SystemState.INTAKE;
             }
             case EXTEND -> {
-                if (!checkExtended()) {
-                    yield SystemState.EXTEND;
-                }
-                yield SystemState.STOP;
+                yield SystemState.EXTEND;
             }
-            case EXTEND_INTAKE -> {
-                if(!checkExtended()){
-                    yield SystemState.EXTEND;
-                }
-                yield SystemState.INTAKE;
+            case EXTEND_AND_RUN -> {
+                // TODO: add protections in here in future iteration
+                yield SystemState.EXTEND_AND_RUN;
             }
             case RETRACT -> {
-                if(!checkRetracted()) {
-                    yield SystemState.RETRACT;
-                }
-                yield SystemState.STOP;
+                yield SystemState.RETRACT;
+            }
+            case REVERSE_ROLLER -> {
+                yield SystemState.REVERSE_ROLLER;
             }
             default -> SystemState.STOP;
         };
@@ -112,6 +120,7 @@ public class Intake extends SubsystemBase {
                 break;
             case STOP:
                 intakeIO.setState(IntakeStates.OFF);
+                intakeIO.stopMotion();
                 break;
             case INTAKE:
                 intakeIO.setState(IntakeStates.FORWARD);
@@ -122,17 +131,27 @@ public class Intake extends SubsystemBase {
             case RETRACT:
                 retract();
                 break;
+            case EXTEND_AND_RUN:
+                extendAndRun();
+                break;
+            case REVERSE_ROLLER:
+                intakeIO.setState(IntakeStates.REVERSE);
+                break;
         }
     }
 
     @Override
     public void periodic() {
-        this.checkExtended(); // Testing only
-
+        // this.checkExtended(); // Testing only
+        Logger.recordOutput("Intake/State", mCurrentState);
+        Logger.recordOutput("Intake/Intakevelocity", this.intakeInputs.intakeAngularVelocity);
+        Logger.recordOutput("Intake/position", this.intakeInputs.intakePosition);
+        Logger.recordOutput("Intake/RackVelocity", this.intakeInputs.intakeRackSpeed);
         this.intakeIO.updateInputs(this.intakeInputs);
+        Logger.processInputs("Intake", this.intakeInputs);
+
         mCurrentState = handleStateTransition();
         applyStates();
-        Logger.processInputs("Intake", this.intakeInputs);
     }
 
     @Override

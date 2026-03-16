@@ -1,12 +1,15 @@
 package frc.robot.oi;
 
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.RobotContainer;
+import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Superstructure;
-import frc.robot.subsystems.Superstructure.StateIntent;
+import frc.robot.vision.Limelight;
 
 public class DriverOI extends BaseOI {
     /// Class Members
@@ -17,6 +20,8 @@ public class DriverOI extends BaseOI {
     private final Trigger toggleRotationLockedMode;
     /// Trigger to handle shoot override
     private final Trigger shootOverride;
+
+    public final Trigger shoot;
 
     // public final Trigger intake;
 
@@ -30,35 +35,38 @@ public class DriverOI extends BaseOI {
     public final Trigger resetFOD;
     public final Trigger resetAngle;
 
-    public final Trigger autoIntake;
+    // public final Trigger autoIntake;
+    public final Trigger manualIntake;
+    public final Trigger retractIntake;
+    public final Trigger reverseIntakeRoller;
 
     public final Trigger climbTrigger;
+
+    public final Haptics haptics;
 
     public DriverOI(final CommandXboxController controller, Superstructure superstructure) {
         super(controller);
 
         this.mSuperstructure = superstructure;
         this.shootOverride = this.controller.rightTrigger();
+        this.shoot = this.controller.b();
         // left bumper toggles into/out of rotation locked mode
         this.toggleRotationLockedMode = this.controller.leftBumper();
 
-        // this.shotConditionsMet = new Trigger(() -> true);
-        // new Trigger(() -> {
-        //     /*boolean facingHub = Robot.cont.drivetrain
-        //     .getAngleToHub(Constants.Shooter.shooterAngleOffsetFromFront)
-        //     .lte(Constants.Shooter.toleranceFromHub);*/
-        //     boolean correctHoodAngle = robotContainer.shooter.getHoodAngle().lte(Constants.Shooter.hoodAngleTolerance);
-        //     boolean correctFlywheelVelocity =
-        //             robotContainer.shooter.getFlywheelVelocity().lte(Constants.Shooter.shooterVelocityTolerance);
-        //     return /*facingHub &&*/ correctHoodAngle && correctFlywheelVelocity;
-        // });
-        this.autoIntake = this.controller.leftTrigger();
+        // this.autoIntake = this.controller.leftTrigger();
+        this.reverseIntakeRoller = this.controller.leftTrigger();
+        this.manualIntake = this.controller.rightBumper();
+        this.retractIntake = this.controller.povRight();
 
         this.resetFOD = this.controller.y();
         this.resetAngle = this.controller.a();
         this.lockWheels = this.controller.x();
         this.unjam = this.controller.povLeft();
         this.climbTrigger = this.controller.povUp();
+
+        this.haptics = new BaseOI.Haptics(hid);
+
+        this.haptics.type = RumbleType.kBothRumble;
     }
 
     public void configureControls() {
@@ -66,27 +74,61 @@ public class DriverOI extends BaseOI {
         // normally this would be a deadlock... we should seek to avoid such patterns...
         // this comes from a circular chain of getInstance -> init -> configureControls() -> getInstance()...
         var cont = RobotContainer.getInstance();
-        // this.lockWheels.whileTrue(new LockWheels(cont.drivetrain, this));
         this.resetFOD.onTrue(new InstantCommand(cont.drivetrain::resetAngle));
-        // this.intake.whileTrue(cont.superstructure.extendAndIntake());
-        this.resetAngle.whileTrue(new RunCommand(cont.drivetrain::seedLimelightImu));
-        this.resetAngle.whileFalse(new RunCommand(cont.drivetrain::setImuMode2));
-        this.toggleRotationLockedMode.onTrue(mSuperstructure.toggleStateIntent(Superstructure.StateIntent.ACTION_TOGGLE_TARGET_LOCK_MODE));
+        // this.resetAngle.onTrue(cont.drivetrain.runOnce(cont.drivetrain::zeroAngle));
+        this.resetAngle
+            .onTrue(new InstantCommand(
+                () -> cont.drivetrain.setLimelightIMUModesIntent(Limelight.IMUMode.MODE_1_EXTERNAL_SEED)))
+            .onFalse(new InstantCommand(
+                () -> cont.drivetrain.setLimelightIMUModesIntent(Limelight.IMUMode.MODE_4_INTERNAL_EXTERNAL_ASSIST)));
+        this.toggleRotationLockedMode
+            .onTrue(new ParallelCommandGroup(
+                        mSuperstructure.toggleStateIntent(Superstructure.StateIntent.ACTION_TOGGLE_TARGET_LOCK_MODE), 
+                        new InstantCommand(() -> { haptics.toggleRumble(); }),
+                        new PrintCommand("Target Lock Trigger")
+            ));
         this.shootOverride
             .onTrue(mSuperstructure.requestShootOverride())
             .onFalse(mSuperstructure.clearOverrideCommand());
-        this.autoIntake
-            .onTrue(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_AUTO, true))
-            .onFalse(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_AUTO, false));
-        this.climbTrigger
-            .onTrue(mSuperstructure.setIntent(StateIntent.ACTION_CLIMB, true))
-            .onFalse(mSuperstructure.setIntent(StateIntent.ACTION_CLIMB, false));
-        // this.spinKicker.onTrue(cont.shooter.startKicker());
-        // this.shotConditionsMet
-        //         .and(() -> cont.drivetrain
-        //                 .getAngleToHub(Constants.Shooter.shooterAngleOffsetFromFront)
-        //                 .lte(Constants.Shooter.toleranceFromHub))
-        //         .whileTrue(mSuperstructure.getReadyToShoot());
-        // this.startShoot.whileTrue(mSuperstructure.shootAutomated());
+        this.manualIntake
+            .onTrue(
+                new InstantCommand(() -> {
+                    cont.intake.setWantedState(Intake.WantedState.EXTEND_AND_RUN);
+                    /*cont.hopperFloor.runReverseHopperCommand();*/
+                }, cont.intake, cont.hopperFloor)
+            )
+            .onFalse(
+                new InstantCommand(() -> {
+                    cont.intake.setWantedState(Intake.WantedState.STOP);
+                    /*cont.hopperFloor.halt();*/
+                }, cont.intake, cont.hopperFloor)
+            );
+
+        this.retractIntake
+            .onTrue(
+                new InstantCommand(() -> cont.intake.setWantedState(Intake.WantedState.RETRACT), cont.intake))
+            .onFalse(
+                new InstantCommand(() -> cont.intake.setWantedState(Intake.WantedState.STOP))
+            );
+
+        this.reverseIntakeRoller
+            .onTrue(
+                new InstantCommand(() -> cont.intake.setWantedState(Intake.WantedState.REVERSE_ROLLER))
+            )
+            .onFalse(
+                new InstantCommand(() -> cont.intake.setWantedState(Intake.WantedState.STOP))
+            );
+        // this.shoot
+        //     .onTrue(mSuperstructure.setIntent(StateIntent.ACTION_SHOOT_HUB, true))
+        //     .onFalse(mSuperstructure.setIntent(StateIntent.ACTION_SHOOT_HUB, false));
+        // this.autoIntake
+        //     .onTrue(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_AUTO, true))
+        //     .onFalse(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_AUTO, false));
+        // this.manualIntake
+        //     .onTrue(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_MANUAL, true))
+        //     .onFalse(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_MANUAL, false));
+        // this.retractIntake
+        //     .onTrue(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_RETRACT, true))
+        //     .onFalse(mSuperstructure.setIntent(StateIntent.ACTION_INTAKE_RETRACT, false));
     }
 }

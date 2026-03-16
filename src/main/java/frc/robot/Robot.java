@@ -4,30 +4,31 @@
 
 package frc.robot;
 
-import com.ctre.phoenix6.HootAutoReplay;
-
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
-
-import frc.robot.subsystems.CommandSwerveDrivetrain;
-import frc.robot.utils.ShooterDataCollector;
-import frc.robot.utils.ShooterDataCollectorIO;
-import frc.robot.utils.ShooterDataCollectorIOReal;
-import frc.robot.utils.ShooterLookupTableBuilder;
-import frc.robot.vision.Limelight;
-
 import org.littletonrobotics.junction.LoggedPowerDistribution;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
+import com.ctre.phoenix6.HootAutoReplay;
+
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.utils.MatchRecorder;
+import frc.robot.utils.ShooterDataCollector;
+import frc.robot.utils.ShooterDataCollectorIO;
+import frc.robot.utils.ShooterDataCollectorIOReal;
+import frc.robot.utils.ShooterLookupTableBuilder;
+import frc.robot.vision.Limelight;
+
 public class Robot extends LoggedRobot {
     private Command mAutonomousCommand;
 
     private final RobotContainer mRobotContainer;
+    private LoggedPowerDistribution pdh;
 
     /* log and replay timestamp and joystick data */
     private final HootAutoReplay m_timeAndJoystickReplay =
@@ -36,12 +37,15 @@ public class Robot extends LoggedRobot {
     private ShooterLookupTableBuilder shooterDataBuilder;
     private ShooterDataCollector shooterDataCollector;
 
+    public MatchRecorder matchRecorder;
+
     public Robot() {
         Logger.addDataReceiver(new WPILOGWriter());
         Logger.addDataReceiver(new NT4Publisher());
         Logger.start();
 
         mRobotContainer = RobotContainer.getInstance();
+        pdh = LoggedPowerDistribution.getInstance(Constants.CAN.Misc.pdh, ModuleType.kRev);
 
         DriverStation.silenceJoystickConnectionWarning(true);
     }
@@ -56,41 +60,33 @@ public class Robot extends LoggedRobot {
         // Use real IO for robot hardware, could use sim IO for simulation
         ShooterDataCollectorIO io = new ShooterDataCollectorIOReal();
         shooterDataCollector = new ShooterDataCollector(shooterDataBuilder, io);
+
+        // Initialize match recorder (starts background lookup-table load)
+        matchRecorder = new MatchRecorder();
+        mRobotContainer.matchRecorder = matchRecorder;
     }
+
+    private boolean m_lastEnabledState = false;
 
     @Override
     public void robotPeriodic() {
         m_timeAndJoystickReplay.update();
         CommandScheduler.getInstance().run();
-        LoggedPowerDistribution.getInstance(Constants.CAN.Misc.pdh, ModuleType.kRev);
-        mRobotContainer.drivetrain.limelightLeft.setThrottleRate(isEnabled() ? 0 : 100);
+
+        boolean enabled = isEnabled();
+        if (enabled != m_lastEnabledState) {
+            mRobotContainer.drivetrain.setAllLimelightThrottleRates(enabled ? 0 : 100);
+            m_lastEnabledState = enabled;
+            mRobotContainer.drivetrain.setLimelightIMUModesIntent(
+                    enabled ? Limelight.IMUMode.MODE_4_INTERNAL_EXTERNAL_ASSIST : Limelight.IMUMode.MODE_1_EXTERNAL_SEED);
+        }
 
         // Update shooter data collector (checks for dashboard input)
         shooterDataCollector.periodic();
-
-        // try {
-        //     if (Tuning.publishData.get()) {
-        //         // TODO PUT IN REAL VALUES!!!!
-        //         Tuning.writeToCSV(
-        //                 Tuning.hoodAngle.get(),
-        //                 Tuning.releaseVelocity.get(),
-        //                 mRobotContainer.drivetrain.getDistanceFromHub());
-        //         Tuning.publishData.set(false);
-        //     }
-        // } catch (FileNotFoundException e) {
-        //     e.printStackTrace();
-        // }
-        // mRobotContainer.drivetrain.limelight.setRobotOrientation(
-        //         mRobotContainer.drivetrain.getCurrentPose2D().getRotation().getMeasure());
     }
 
     @Override
-    public void disabledInit() {
-        mRobotContainer.drivetrain.limelightLeft.setIMUMode(1);
-        for(Limelight limelight : mRobotContainer.drivetrain.limelights) {
-            limelight.setThrottleRate(100);
-        }
-    }
+    public void disabledInit() {}
 
     @Override
     public void disabledPeriodic() {
@@ -104,18 +100,14 @@ public class Robot extends LoggedRobot {
     public void autonomousInit() {
         mAutonomousCommand = mRobotContainer.getAutonomousCommand();
         mRobotContainer.drivetrain.setState(CommandSwerveDrivetrain.WantedState.AUTONOMOUS);
-        for(Limelight limelight : mRobotContainer.drivetrain.limelights) {
-            limelight.setThrottleRate(1);
-        }
+
         if (mAutonomousCommand != null) {
             CommandScheduler.getInstance().schedule(mAutonomousCommand);
         }
     }
 
     @Override
-    public void autonomousPeriodic() {
-        mRobotContainer.drivetrain.limelightLeft.setIMUMode(2);
-    }
+    public void autonomousPeriodic() {}
 
     @Override
     public void autonomousExit() {}
@@ -125,17 +117,18 @@ public class Robot extends LoggedRobot {
         if (mAutonomousCommand != null) {
             CommandScheduler.getInstance().cancel(mAutonomousCommand);
         }
+
         mRobotContainer.setTeleopStartTime();
-        for(Limelight limelight : mRobotContainer.drivetrain.limelights) {
-            limelight.setThrottleRate(1);
-        }
+        matchRecorder.teleopInit();
     }
 
     @Override
     public void teleopPeriodic() {}
 
     @Override
-    public void teleopExit() {}
+    public void teleopExit() {
+        matchRecorder.teleopExit();
+    }
 
     @Override
     public void testInit() {

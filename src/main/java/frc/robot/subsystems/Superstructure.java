@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.ParallelDeadlineGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -24,7 +25,6 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.commands.Intake.ExtendAndRunIntake;
-import frc.robot.subsystems.Climber.ClimberHeight;
 
 public class Superstructure extends SubsystemBase {
 
@@ -33,6 +33,9 @@ public class Superstructure extends SubsystemBase {
         ACTION_SHOOT_OVERRIDE,
         ACTION_INTAKE_MANUAL,
         ACTION_INTAKE_AUTO,
+        ACTION_SHOOT_HOME,
+        ACTION_SHOOT_HUB,
+        ACTION_INTAKE_RETRACT,
         ACTION_CLIMB,
         ACTION_NONE;
 
@@ -52,6 +55,7 @@ public class Superstructure extends SubsystemBase {
     public enum OverrideIntent {
         OVERRIDE_SHOOT_MODE,
         OVERRIDE_INTAKE_MODE,
+        OVERRIDE_INTAKE_SHOOT_MODE,
         OVERRIDE_NONE
     }
 
@@ -63,9 +67,11 @@ public class Superstructure extends SubsystemBase {
         SHOOTING,
         MANUAL_INTAKE,
         AUTO_INTAKE,
+        RETRACT_INTAKE,
         MID_FIELD,
         GET_READY_CLIMB,
-        UNJAM
+        UNJAM,
+        SHOOT_HOME
     }
 
     // --------------------- Class Members ---------------------
@@ -96,7 +102,8 @@ public class Superstructure extends SubsystemBase {
      */
     private enum StateOverrides {
         OVERRIDE_SHOOTING,    // bit 0
-        OVERRIDE_INTAKING     // bit 1
+        OVERRIDE_INTAKING,    // bit 1
+        OVERRIDE_INTAKE_SHOOT // bit 2 
         // ... future overrides would be bit 2, 3, etc.
     }
 
@@ -137,11 +144,14 @@ public class Superstructure extends SubsystemBase {
      *
      * @param robotContainer the @c RobotContainer convenience reference
      */
-
-
-     private Superstructure(RobotContainer robotContainer) {
+    private Superstructure(RobotContainer robotContainer) {
         this.mRobotContainer = robotContainer;
         this.stateTriggers = new ArrayList<>();
+    }
+
+    // Initializes trigger for when given state is active, and runs given command when trigger is active
+    private void initState(RobotState state, Command runWhenCurrentState) {
+        stateTriggers.add(new Trigger(() -> this.currentState == state).whileTrue(runWhenCurrentState));
     }
 
     public void init() {
@@ -152,8 +162,9 @@ public class Superstructure extends SubsystemBase {
         initState(RobotState.DRIVE_TARGET_LOCK, driveTargetLock());
         initState(RobotState.MANUAL_INTAKE, extendAndIntake());
         initState(RobotState.AUTO_INTAKE, autoIntake());
-        initState(RobotState.SHOOTING, startShooting());
-        initState(RobotState.GET_READY_CLIMB, pathToHookandClimb());
+        initState(RobotState.RETRACT_INTAKE, retractIntake());
+        initState(RobotState.SHOOTING, startShootingOverride());
+        initState(RobotState.SHOOT_HOME, shootTowardsHome());
 
         transitionFunctions = new HashMap<>();
 
@@ -168,14 +179,8 @@ public class Superstructure extends SubsystemBase {
         transitionFunctions.put(RobotState.SHOOTING, this::checkTransitionFromShooting);
         transitionFunctions.put(RobotState.MANUAL_INTAKE, this::checkManualIntakeTransition);
         transitionFunctions.put(RobotState.AUTO_INTAKE, this::checkTransitionFromAutoIntake);
+        transitionFunctions.put(RobotState.RETRACT_INTAKE, this::checkTransitionFromRetractIntake);
         transitionFunctions.put(RobotState.GET_READY_CLIMB, this::checkTransitionFromClimber);
-    }
-
-    
-
-    // Initializes trigger for when given state is active, and runs given command when trigger is active
-    private void initState(RobotState state, Command runWhenCurrentState) {
-        stateTriggers.add(new Trigger(() -> this.currentState == state).whileTrue(runWhenCurrentState));
     }
 
     /**
@@ -183,7 +188,7 @@ public class Superstructure extends SubsystemBase {
      *
      * @param intent the requested @c StateIntent
      */
-    public void toggleIntent(StateIntent intent) {
+    private void toggleIntent(StateIntent intent) {
         switch (intent) {
             case ACTION_TOGGLE_TARGET_LOCK_MODE: {
                 mTargetLockRequested = !mTargetLockRequested;
@@ -203,7 +208,6 @@ public class Superstructure extends SubsystemBase {
     public Command toggleStateIntent(StateIntent intent) {
         return new InstantCommand(() -> toggleIntent(intent));
     }
-
 
     /**
      * Handles override requests and transitions the internal state machine accordingly
@@ -237,6 +241,7 @@ public class Superstructure extends SubsystemBase {
 
             // Clear all active overrides
             mActiveOverrides.clear();
+            Logger.recordOutput("Superstructure/OverrideState", "NONE");
             
             // Restore previous state
             if (prevState != null) {
@@ -261,12 +266,23 @@ public class Superstructure extends SubsystemBase {
             case OVERRIDE_SHOOT_MODE: {
                 // Add OVERRIDE_SHOOTING to the set of active overrides
                 mActiveOverrides.add(StateOverrides.OVERRIDE_SHOOTING);  // Internally: 01 (bit 0 is now 1)
-                currentState = RobotState.SHOOTING;  // transition directly into shooting mode
+                currentState = RobotState.SHOOTING; // transition directly into shooting mode
+                // if (mRobotContainer.drivetrain.isAtHome()) {
+                //     currentState = RobotState.SHOOTING; // transition directly into shooting mode
+                // } else {
+                //     currentState = RobotState.SHOOT_HOME; // transition directly into shooting towards home
+                // }
                 Logger.recordOutput("Superstructure/OverrideState", "SHOOTING");
                 break;
             }
             case OVERRIDE_INTAKE_MODE:
                 break;
+            case OVERRIDE_INTAKE_SHOOT_MODE: {
+                mActiveOverrides.add(StateOverrides.OVERRIDE_INTAKE_SHOOT);
+                /*if () {
+                    
+                }*/
+            }
             // ... other overrides here
             case OVERRIDE_NONE:
             default:
@@ -291,21 +307,32 @@ public class Superstructure extends SubsystemBase {
         Logger.recordOutput("Superstructure/SimultaneousOverrideRequests", mSimultaneousOverrideRequests);
         Logger.recordOutput("Superstructure/NoActiveOverridesCount", mNoActiveOverridesCount);
 
+        // Logger.recordOutput("Superstructure/isHubActive", isHubActive());
+
         RobotState lastState;
         do {
             lastState = currentState;  // track the most recent state of the robot in case it changes
             // Get the transition function for the current state and execute it
             transitionFunctions
                     .getOrDefault(currentState, () -> {
-                        // TODO Log warning about missing transition function for current state
+                        Logger.recordOutput("Superstructure/ErrorCurrentStateMissingTransitionFunction", true);
+                        System.out.println(String.format("[ERROR] Missing transition function for current state: %s", currentState));
                     })
                     .run();
         } while (currentState != lastState);
+
+        Logger.recordOutput("Superstructure/CurrentState", currentState);
     }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// 
+    /// DEFINE STATE COMMAND FACTORIES
+    /// 
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private Command handleDisabled() {
         // TODO: implement this... no-op state, put everything into a ground/idle state...
-        return new InstantCommand();
+        return new InstantCommand(() -> resetSubsystems());
     }
 
     private Command handleAutonomous() {
@@ -315,30 +342,113 @@ public class Superstructure extends SubsystemBase {
     }
 
     private Command freeDrive() {
+        // TODO: Set the intake to retract when driving
         mRobotContainer.intake.setWantedState(Intake.WantedState.STOP);
         return mRobotContainer.drivetrain.freeDrive();
     }
 
-    private Command handleShooting() {
-        // TODO: implement this
-        return new InstantCommand();
+    private Command prepareShootHome() {
+        return mRobotContainer.shooter.aimAtHome();
     }
 
+    private Command shootTowardsHome() {
+        return new RunCommand(() -> mRobotContainer.shooter.shoot())
+            .alongWith(mRobotContainer.hopperFloor.runHopperCommand())
+            .alongWith(mRobotContainer.indexer.runIndexerCommand());
+    }
+
+    private Command shootHomeAutomated() {
+        return new SequentialCommandGroup(prepareShootHome(), shootTowardsHome());
+    }
+    
     private Command driveTargetLock() {
         return new ParallelCommandGroup(
                 mRobotContainer.drivetrain.targetLock(),
-                prepareShooter());
-            // .andThen(nowShootTheBalls());
+                prepareShooter())
+            .andThen(startShooting());
     }
 
+    // TODO: this doesn't need to be in superstructure since it's independent of other states
     private Command extendIntakeCommand()
     {
-        return mRobotContainer.intake.extend();
+        return new InstantCommand(() ->
+            mRobotContainer.intake.setWantedState(Intake.WantedState.EXTEND));
+        // return mRobotContainer.intake.extend();
     }
+
+    // Runs flywheels and kicker. Command will not end on its own
+    public Command startShooting() {
+        // TODO: also retract when shooting
+        return new RunCommand(
+                () -> {
+                    mRobotContainer.shooter.shoot();
+                },
+                mRobotContainer.shooter)
+            .alongWith(mRobotContainer.drivetrain.brake())
+            .alongWith(mRobotContainer.hopperFloor.runHopperCommand())
+            .alongWith(mRobotContainer.indexer.runIndexerCommand());
+    }
+
+    public Command startShootingOverride() {
+        // TODO: also retract when shooting
+        return mRobotContainer.shooter.shootOverrideCommand()
+            .alongWith(mRobotContainer.drivetrain.brake())
+            .alongWith(mRobotContainer.hopperFloor.runHopperCommand())
+            .alongWith(mRobotContainer.indexer.runIndexerCommand());
+    }
+
+    // Spins up flywheels to speed and turns hood to correct angle. Command will not end on its own
+    public Command prepareShooter() {
+        return mRobotContainer.shooter.aimAtHub();
+    }
+
+    public Command shootAutomated() {
+        return new SequentialCommandGroup(prepareShooter(), startShooting());
+    }
+
+    // Stops robot from shooting
+    public Command idle() {
+        return new InstantCommand(
+            () -> {
+                mRobotContainer.drivetrain.setState(CommandSwerveDrivetrain.WantedState.TELEOP_DRIVE);      
+            });
+    }
+
+    public Command extendAndIntake() {
+        return new RunCommand(() -> mRobotContainer.intake.setWantedState(Intake.WantedState.EXTEND_AND_RUN), mRobotContainer.intake);
+    }
+
+    public Command retractIntake() {
+        return new ParallelCommandGroup(new InstantCommand(() -> mRobotContainer.intake.setWantedState(Intake.WantedState.RETRACT)), mRobotContainer.drivetrain.freeDrive());
+    }
+
+    public Command autoIntake() {
+        return new RunCommand(() -> {
+            mRobotContainer.drivetrain.setState(CommandSwerveDrivetrain.WantedState.INTAKE_GROUND);
+            mRobotContainer.intake.setWantedState(Intake.WantedState.INTAKE);
+        }, mRobotContainer.drivetrain);
+    }
+
+    public Command pathWhileIntaking(String pathFileName) {
+        return new ParallelDeadlineGroup(mRobotContainer.drivetrain.runPath(pathFileName), this.extendAndIntake())
+                .finallyDo(() -> {
+                    mRobotContainer.intake.retract();
+                });
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// 
+    /// DEFINE TRANSITION FUNCTIONS
+    /// 
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private void checkTransitionFromDisabled() {
         if (DriverStation.isAutonomousEnabled()) {
             currentState = RobotState.AUTONOMOUS;
+        }
+
+        if (DriverStation.isTeleopEnabled()) {
+            currentState = RobotState.FREE_DRIVE;
         }
     }
 
@@ -358,6 +468,17 @@ public class Superstructure extends SubsystemBase {
     private void checkTransitionFromFreeDrive() {
         if (mTargetLockRequested) {
             currentState = RobotState.DRIVE_TARGET_LOCK;
+        } else if (StateIntent.ACTION_INTAKE_AUTO.getIsInteded()) {
+            currentState = RobotState.AUTO_INTAKE;
+        }
+        else if (StateIntent.ACTION_INTAKE_MANUAL.getIsInteded()) {
+            currentState = RobotState.MANUAL_INTAKE;
+        }
+        else if(StateIntent.ACTION_INTAKE_RETRACT.getIsInteded()){
+            currentState= RobotState.RETRACT_INTAKE;
+        }
+        else if(StateIntent.ACTION_SHOOT_HUB.getIsInteded()){
+            currentState = RobotState.SHOOTING;
         }
     }
 
@@ -383,10 +504,20 @@ public class Superstructure extends SubsystemBase {
         // if (driverOI.intake.getAsBoolean()) {
         //     currentState = RobotState.MANUAL_INTAKE;
         // }
+        if (!StateIntent.ACTION_INTAKE_MANUAL.getIsInteded()) {
+            currentState = RobotState.FREE_DRIVE;
+            mRobotContainer.intake.setWantedState(Intake.WantedState.STOP);
+        }
     }
 
     private void checkTransitionFromAutoIntake() {
         if (!StateIntent.ACTION_INTAKE_AUTO.getIsInteded()) {
+            currentState = RobotState.FREE_DRIVE;
+        }
+    }
+
+    private void checkTransitionFromRetractIntake() {
+        if (!StateIntent.ACTION_INTAKE_RETRACT.getIsInteded()) {
             currentState = RobotState.FREE_DRIVE;
         }
     }
@@ -398,106 +529,9 @@ public class Superstructure extends SubsystemBase {
         }
     }
 
-    // Runs flywheels and kicker. Command will not end on its own
-    public Command startShooting() {
-        return new RunCommand(
-                () -> {
-                    mRobotContainer.shooter.shoot();
-                },
-                mRobotContainer.shooter)
-            .alongWith(mRobotContainer.drivetrain.brake())
-            .alongWith(mRobotContainer.hopperFloor.runHopperCommand());
-    }
-
-    // Spins up flywheels to speed and turns hood to correct angle. Command will not end on its own
-    public Command prepareShooter() {
-        return new RunCommand(
-                () -> {
-                    mRobotContainer.shooter.aim();
-                },
-                mRobotContainer.shooter)
-            .alongWith(mRobotContainer.drivetrain.aimAtHubAndMove(mRobotContainer.driverOI, 0));
-    }
-
-    public Command shootAutomated() {
-        return new SequentialCommandGroup(prepareShooter(), startShooting());
-    }
-
-    // Stops robot from shooting
-    public Command idle() {
-        return new InstantCommand(
-            () -> {
-                mRobotContainer.drivetrain.setState(CommandSwerveDrivetrain.WantedState.TELEOP_DRIVE);      
-            });
-    }
-
-    public Command extendAndIntake() {
-        return new ExtendAndRunIntake(mRobotContainer.intake);
-    }
-
-    public Command autoIntake() {
-        return new RunCommand(() -> {
-            mRobotContainer.drivetrain.setState(CommandSwerveDrivetrain.WantedState.INTAKE_GROUND);
-            mRobotContainer.intake.setWantedState(Intake.WantedState.INTAKE);
-        }, mRobotContainer.drivetrain);
-    }
-
-    public Command pathWhileIntaking(String pathFileName) {
-        return new InstantCommand();
-        // return new ParallelDeadlineGroup(mRobotContainer.drivetrain.runPath(pathFileName), this.extendAndIntake())
-        //         .finallyDo(() -> {
-        //             mRobotContainer.intake.;
-        //             mRobotContainer.intake.retract();
-        //         });
-    }
-
-
-    public Command prepareClimber() {
-        return new RunCommand(() -> {
-            mRobotContainer.climber.prepClimber(ClimberHeight.L1); //command that raises the arm of the robot before driving forward
-        });
-    }
-
-    public Command runClimber(Boolean climbed) {
-        return new RunCommand(() -> {
-            mRobotContainer.climber.runClimber(climbed); //command that changes the robot between ascending and descending
-        });
-    }
-    
-    public Command moveToClimbPrepPos() {
-        return new RunCommand(() -> {
-            mRobotContainer.drivetrain.centerLimeLight(Constants.Climber.prepClimbPosition);
-        });
-    }
-
-    public Command moveToClimbPos() {
-        return new RunCommand(() -> {
-            mRobotContainer.drivetrain.centerLimeLight(Constants.Climber.engageClimbPosition);
-        });
-    }
-
-
-    public Command pathToHookandClimb() {
-        if (this.isClimbed) {
-            this.isClimbed = false;
-            return runClimber(true);
-        } else {
-            return new SequentialCommandGroup(
-            new ParallelCommandGroup(prepareClimber(), moveToClimbPrepPos()), //command to go to pose
-
-            moveToClimbPos(), runClimber(false)
-            
-        );
-        }
-
-
-    }
-
-    
-
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void resetSubsystems() {
-        mRobotContainer.climber.reset();
         mRobotContainer.drivetrain.setState(CommandSwerveDrivetrain.WantedState.IDLE);
         mRobotContainer.hopperFloor.halt();
         mRobotContainer.indexer.halt();
@@ -565,4 +599,10 @@ public class Superstructure extends SubsystemBase {
             return true;
         }
     }
+
+    /*
+     * |  | ||
+     * --------
+     * || | |-
+     */
 }

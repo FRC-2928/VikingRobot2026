@@ -63,19 +63,17 @@ public class Climber extends SubsystemBase {
     public final ClimberIO io;
     public final ClimberIOInputs inputs = new ClimberIOInputs() {};
 
-    public boolean climberDownToggle = false;
-
-
     // changes the target heights based on the current height
     public void ascend() {
-        //checks the driver station mode the robot is in
-        if (DriverStation.isTeleopEnabled()) {
+        if (height.getValueAsDouble() == ClimberHeight.HOMEPOS.height && DriverStation.isTeleopEnabled()) {
+            // when the robot is in teleop
             this.targetHeight = ClimberHeight.L1;
-            this.currentState = ClimberState.TELEOP_ASCENDING; //sets the state to be the teleop ascending mode
+            this.currentState = ClimberState.TELEOP_ASCENDING;
         } else if (DriverStation.isAutonomousEnabled()){
+            //when the robot is in auto
             this.targetHeight = ClimberHeight.L1;
-            this.currentState = ClimberState.AUTO_ASCENDING; //sets the state to be the auto ascending mode
-        } 
+            this.currentState = ClimberState.AUTO_ASCENDING;
+          } 
     }
 
     public void descend() {
@@ -118,21 +116,6 @@ public class Climber extends SubsystemBase {
         return new InstantCommand(() -> {
             this.currentState = ClimberState.FAILED;
         });
-    }
-
-    // ---- TOGGLES FOR THE OPERATOR OI ---- \\
-    public void moveClimberToggle() {
-        Distance distance;
-        if (climberDownToggle) {
-            distance = Units.Inches.of(Math.abs(this.height.getValueAsDouble() - 0.5));
-            this.io.climb(distance);
-        }
-        distance = Units.Inches.of(Math.abs(this.height.getValueAsDouble() + 0.5));
-        this.io.climb(distance);
-    }
-
-    public  void changeClimberToggle(){
-        climberDownToggle = !climberDownToggle;
     }
 
     public void climberIdle(){
@@ -187,6 +170,7 @@ public class Climber extends SubsystemBase {
 
             case IDLE: {
                 //does nothing
+                break;
             }
 
             case FAILED: {
@@ -197,8 +181,13 @@ public class Climber extends SubsystemBase {
                 }
                 break;
             }
-
         }
+    }
+
+    public Command prepareClimber() {
+        return new RunCommand(() -> {
+            prepClimber(ClimberHeight.L1); //command that raises the arm of the robot before driving forward
+        });
     }
 }
 

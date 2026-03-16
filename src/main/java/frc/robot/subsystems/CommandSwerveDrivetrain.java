@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
@@ -27,6 +28,7 @@ import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
@@ -40,16 +42,18 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.robot.RobotContainer;
+import frc.robot.LimelightHelpers;
 import frc.robot.LimelightHelpers.PoseEstimate;
+import frc.robot.RobotContainer;
 import frc.robot.generated.TunerConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.lib.BLine.FollowPath;
@@ -72,7 +76,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private static final double ROTATION_DEADBAND = 0.15;
 
     /// Scalar to help offset drive skew
-    private static final double SKEW_COMPENSATION_SCALAR = -0.03;
+    private static final double SKEW_COMPENSATION_SCALAR = -0.05;
 
     /// Drivetrain States
     public enum WantedState {
@@ -115,10 +119,15 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     /* Keep track if we've ever applied the operator perspective before or not */
     private boolean m_hasAppliedOperatorPerspective = false;
 
+    public Field2d fieldLog = new Field2d();
+
     // TODO: move this to constants
     private final double hubX = 4.625594;
     private final double hubY = 8.07 / 2;
     private final double hubXOffset = 7.2898;
+
+    private final Distance homeX = Units.Inches.of(182.11/2);
+    private final Distance homeXOffset = Units.Inches.of(651.22-182.11);
 
     private final double maxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
     private final double maxAngularRate = Units.RotationsPerSecond.of(0.75)
@@ -170,19 +179,24 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public final Limelight limelightRight = new Limelight("limelight-right");
     public final Limelight limelightBack = new Limelight("limelight-back");
     //intake
-    public final Limelight limelightForward = new Limelight("limelight-forward");
+    // public final Limelight limelightForward = new Limelight("limelight-forward");
 
-    public final Limelight[] limelights = {limelightRight, limelightBack, limelightForward, limelightForward};
+    public final Limelight[] limelights = {limelightRight, limelightBack, limelightLeft};
+
+    /// The desired IMU mode for all limelights, set via setLimelightIMUModesIntent()
+    private Limelight.IMUMode mDesiredLimelightIMUMode = Limelight.IMUMode.MODE_1_EXTERNAL_SEED;
 
     private double xSpeed;
     private double xSpeedPid;
     private double ySpeed;
     private double ySpeedPid;
     private double thetaSpeed;
+    private double omega;
+    private double omegaPID;
     private double thetaPid;
     private PIDController centerPIDx;
     private PIDController centerPIDy;
-    private PIDController centerRotaionPid;
+    private PIDController centerRotationPid;
     private Pose2d robotPoseTagspace;
     private Pose2d tagPoseRobotspace;
     private int tag;
@@ -193,6 +207,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private final PIDController choreoXController = new PIDController(5, 0, 0);
     private final PIDController choreoYController = new PIDController(5, 0, 0);
     private final PIDController choreoHeadingController = new PIDController(5, 0, 0.2);
+
+    // Shooter pose
+    private Pose2d computedShooterPose = mCurrentSwerveState.Pose;
 
     private Rotation2d snapToHeading = (!DriverStation.getAlliance().isEmpty()
                     && DriverStation.getAlliance().get() == Alliance.Red)
@@ -372,14 +389,20 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public void periodic() {
         // handle state transitions as applicable
         mCurrentState = handleStateTransition();
+        fieldLog.setRobotPose(mCurrentSwerveState.Pose);
         // apply the latest state
         applyStates();
         mCurrentSwerveState = this.getStateCopy();
         Logger.recordOutput("Drivetrain/currentPose", mCurrentSwerveState.Pose);
         Logger.recordOutput("Drivetrain/currentState", mCurrentState);
+        Logger.recordOutput("Drivetrain/DesiredLimelightIMUMode", mDesiredLimelightIMUMode);
+        SmartDashboard.putData("Field_Pose", fieldLog);
+        Logger.recordOutput("Drivetrain/LimelightRightHasTags", limelightRight.hasValidTargets());
+        Logger.recordOutput("Drivetrain/LimelightLeftHasTags",  limelightLeft.hasValidTargets());
+        Logger.recordOutput("Drivetrain/distanceFromHome", getDistanceFromHome());
 
         /*
-         * Periodically try to apply the operator perspective.
+         * Periodically try to apply the operator perspective.S
          * If we haven't applied the operator perspective before, then we should apply it regardless of DS state.
          * This allows us to correct the perspective in case the robot code restarts mid-match.
          * Otherwise, only check and apply the operator perspective if the DS is disabled.
@@ -395,43 +418,23 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             });
         }
 
-        // if (mt2 != null) {
-        //     Logger.recordOutput("Drivetrain/poseMegatag", mt2.pose);
-        //     boolean rejectUpdate = false;
+        applyLimelightIMUMode();
 
-        //     if (mt2.tagCount == 0) {
-        //         rejectUpdate = true;
-        //     }
-
-        //     Logger.recordOutput("Drivetrain/RejectUpdate", rejectUpdate);
-        //     if (!rejectUpdate) {
-        //         this.setVisionMeasurementStdDevs(VecBuilder.fill(.7, .7, 9999999));
-        //         this.addVisionMeasurement(mt2.pose, mt2.timestampSeconds);
-        //     }
-
-        // }
-        for(Limelight limelight : limelights){
-			PoseEstimate mt2 = limelight.getPoseMegatag2();
-			if (mt2 != null) {
-				Logger.recordOutput("Drivetrain/poseMegatag"+limelight.getLimelightName(), mt2.pose);
-
-				// if our angular velocity is greater than 720 degrees per second, ignore vision updates or if it doesnt see any tags		
-				Logger.recordOutput("Drivetrain/doRejectUpdate" +limelight.getLimelightName(), isUpdateable(mt2));
-				if(isUpdateable(mt2)) {
-                    //VecBuilder.fill(0.7,0.7,9999999) default trust
-					this.setVisionMeasurementStdDevs(limelight.getLimelightTrust());
-					this.addVisionMeasurement(
-						mt2.pose,
-						mt2.timestampSeconds);
-				}
-			}
-		}
-
-        Logger.recordOutput("Drivetrain/Pose", mCurrentSwerveState.Pose);
-        Logger.recordOutput("Drivetrain/Imumode", limelightLeft.getImuMode());
-        PoseEstimate mt1 = this.limelightLeft.getPoseMegatag1();
-        if (mt1 != null) {
-            Logger.recordOutput("Drivetrain/Mt1", mt1.pose);
+        for (Limelight limelight : limelights) {
+            PoseEstimate mt2 = limelight.getPoseMegatag2();
+            PoseEstimate mt1 = limelight.getPoseMegatag1();
+            if (mt2 != null) {
+                Logger.recordOutput("Drivetrain/poseMegatag2_" + limelight.getLimelightName(), mt2.pose);
+                Logger.recordOutput("Drivetrain/poseMegatag1_" + limelight.getLimelightName(), mt1.pose);
+                var acceptUpdate = isUpdateable(mt2);
+                Logger.recordOutput("Drivetrain/acceptUpdate_" + limelight.getLimelightName(), acceptUpdate);
+                if (acceptUpdate) {
+                    // temp!! remove once we get all LLs seeding properly
+                    if (limelight != limelightLeft) continue;
+                    this.setVisionMeasurementStdDevs(limelight.getLimelightTrust());
+                    this.addVisionMeasurement(mt2.pose, mt2.timestampSeconds);
+                }
+            }
         }
     }
 
@@ -454,6 +457,13 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 		
 		return true;
 	}
+
+    public void zeroAngle(){
+        this.seedFieldCentric();
+        for(Limelight limelight : limelights){
+            limelight.setRobotOrientation(Units.Degree.zero());
+        }
+    }
 
     private SystemState handleStateTransition() {
         return switch (mDesiredState) {
@@ -484,13 +494,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             case SYS_ID:
                 break;
             case TELEOP_DRIVE: {
-                this.setControl((driveApplyFieldSpeeds.withSpeeds(calculateSpeedsBasedOnJoystickInputs(RobotContainer.getInstance().driverOI))));
-                // FIXME: this needs to be our internal call...
-                // applyRequest(new SwerveRequest.ApplyFieldSpeeds()
-                //         .withSpeeds(calculateSpeedsBasedOnJoystickInputs())
-                //         .withDriveRequestType(SwerveModule.DriveRequestType.OpenLoopVoltage)
-                //         .withDesaturateWheelSpeeds(true));
-                // joystickDrive(RobotContainer.getInstance().driverOI);
+                ChassisSpeeds freeDriveSpeeds = calculateSpeedsBasedOnJoystickInputs(RobotContainer.getInstance().driverOI);
+                this.setControl((driveApplyFieldSpeeds.withSpeeds(freeDriveSpeeds)));
                 break;
             }
             case AUTONOMOUS: {
@@ -499,21 +504,16 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 break;
             }
             case ROTATION_LOCK: {
+                ChassisSpeeds rotLockSpeeds = calculateSpeedsBasedOnJoystickInputs(RobotContainer.getInstance().driverOI);
                 this.setControl((driveAndPoint
-                            .withVelocityX(calculateSpeedsBasedOnJoystickInputs(RobotContainer.getInstance().driverOI).vxMetersPerSecond)
-                            .withVelocityY(calculateSpeedsBasedOnJoystickInputs(RobotContainer.getInstance().driverOI).vyMetersPerSecond)
+                            .withVelocityX(rotLockSpeeds.vxMetersPerSecond)
+                            .withVelocityY(rotLockSpeeds.vyMetersPerSecond)
                             .withTargetDirection(snapToHeading)));
-                // FIXME: this needs to be our internal call...
-                aimAtHubAndMove(RobotContainer.getInstance().driverOI, 0);
-                // io.setSwerveState(driveAtAngle
-                //         .withVelocityX(calculateSpeedsBasedOnJoystickInputs().vxMetersPerSecond)
-                //         .withVelocityY(calculateSpeedsBasedOnJoystickInputs().vyMetersPerSecond)
-                //         .withTargetDirection(desiredRotationForRotationLockState));
                 break;
             }
             case DRIVE_TO_POINT:
                 // TODO: this is basically CenterLimelight...
-                centerLimelight(new Pose2d());
+                // centerLimelight(new Pose2d());
                 break;
             case INTAKE_GROUND:
                 intakeGround(1);
@@ -544,53 +544,35 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         }
     }
 
-    public ChassisSpeeds centerLimelight(Distance offsetX, Distance offsetY, Angle offsetTheta, Pose2d targetPose) {
+    public ChassisSpeeds centerLimelight(Pose2d targetPose) {
         Pose2d robotPose = this.getCurrentPose2D();
-        robotPoseTagspace = robotPose.relativeTo(targetPose);
-        tagPoseRobotspace = targetPose.relativeTo(robotPose);
-        // xSpeed = tagPoseRobotspace.getX();
-        // ySpeed = tagPoseRobotspace.getY();
-        // thetaSpeed = tagPoseRobotspace.getRotation().getRadians();
-        xSpeed = robotPoseTagspace.getX();
-        ySpeed = robotPoseTagspace.getY();
-        thetaSpeed = robotPoseTagspace.getRotation().getRadians();
-        // xSpeedPid = -centerPIDx.calculate(xSpeed,offsetX.in(Units.Meters));
-        // ySpeedPid = -centerPIDy.calculate(ySpeed,offsetY.in(Units.Meters));
-        // thetaPid = -centerRotaionPid.calculate(thetaSpeed,offsetTheta.in(Units.Radians));
-        xSpeedPid = centerPIDx.calculate(xSpeed, offsetX.in(Units.Meters));
-        ySpeedPid = centerPIDy.calculate(ySpeed, offsetY.in(Units.Meters));
-        double xSpeedRotated = xSpeedPid * Math.cos(offsetTheta.in(Units.Radians))
-                - ySpeedPid * Math.sin(offsetTheta.in(Units.Radians));
-        double ySpeedRotated = xSpeedPid * Math.sin(offsetTheta.in(Units.Radians))
-                + ySpeedPid * Math.cos(offsetTheta.in(Units.Radians));
-        thetaPid = centerRotaionPid.calculate(thetaSpeed, offsetTheta.in(Units.Radians));
-        // this.controlRobotDrivetrainAutonomus(new ChassisSpeeds(xSpeedRotated, ySpeedRotated, thetaPid * 1.5));
-
-        var limelight = limelightLeft;
-        Logger.recordOutput("Drivetrain/Auto/XSpeed", xSpeed);
-        Logger.recordOutput("Drivetrain/Auto/YSpeed", ySpeed);
+        Distance xError = Units.Meters.of(targetPose.getX() - robotPose.getX());
+        Distance yError = Units.Meters.of(targetPose.getY() - robotPose.getY());
+        Angle thetaError = targetPose.getRotation().minus(robotPose.getRotation()).getMeasure();
+        // Get PID outputs based on error between current pose and target pose (both blue origin)
+        this.xSpeed = centerPIDx.calculate(robotPose.getX(), targetPose.getX());
+        this.ySpeed = centerPIDy.calculate(robotPose.getY(), targetPose.getY());
+        this.omega = centerRotationPid.calculate(robotPose.getRotation().getRadians(), targetPose.getRotation().getRadians());
+       
+        var limelight = this.limelightLeft;
         Logger.recordOutput("Drivetrain/Auto/Center Is Finished", false);
-        Logger.recordOutput("Drivetrain/Auto/XSpeedPid", xSpeedPid);
-        Logger.recordOutput("Drivetrain/Auto/YSpeedPid", ySpeedPid);
+        Logger.recordOutput("Drivetrain/Auto/XError", xError);
+        Logger.recordOutput("Drivetrain/Auto/YError", yError);
+        Logger.recordOutput("Drivetrain/Auto/ThetaError", thetaError);
+        Logger.recordOutput("Drivetrain/Auto/XSpeed", this.xSpeed);
+        Logger.recordOutput("Drivetrain/Auto/YSpeed", this.ySpeed);
+        Logger.recordOutput("Drivetrain/Auto/Omega", this.omega);
         Logger.recordOutput("Drivetrain/Auto/limelightHasValidTargets", limelight.hasValidTargets());
         Logger.recordOutput(
                 "Drivetrain/Auto/Theta",
                 limelight.getBotPose3d_TargetSpace().getRotation().getAngle());
-        Logger.recordOutput("Drivetrain/Auto/robotPoseTagSpace", robotPoseTagspace);
-        Logger.recordOutput("Drivetrain/Auto/tagPoseRobotSpace", tagPoseRobotspace);
-        Logger.recordOutput("Drivetrain/Auto/thetaSpeed", thetaSpeed);
-        Logger.recordOutput("Drivetrain/Auto/thetaPid", thetaPid);
         Logger.recordOutput(
                 "Drivetrain/Auto/estRotation", this.getCurrentPose2D().getRotation());
-        Logger.recordOutput("Drivetrain/Auto/offsetX", offsetX);
-        Logger.recordOutput("Drivetrain/Auto/offsetTheta", offsetTheta.in(Units.Radians));
 
-        return new ChassisSpeeds(xSpeedRotated, ySpeedRotated, thetaPid * 1.5);
+         // Convert blue origin chassis speed to robot relative chassis speed and apply control
+        return ChassisSpeeds.fromFieldRelativeSpeeds(this.xSpeed, this.ySpeed, this.omega, robotPose.getRotation());
     }
 
-    public ChassisSpeeds centerLimelight(Pose2d targetPose) {
-        return centerLimelight(Units.Inches.of(0), Units.Inches.of(0), Units.Radians.of(0), targetPose);
-    }
 
     // spotless: off
     private ChassisSpeeds calculateSpeedsBasedOnJoystickInputs(BaseOI controllerOI) {
@@ -610,6 +592,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         double xVelocity = (isRedAlliance ? -xMagnitude * maxSpeed : xMagnitude * maxSpeed);
         double yVelocity = (isRedAlliance ? -yMagnitude * maxSpeed : yMagnitude * maxSpeed);
         double angularVelocity = angularMagnitude * maxAngularRate;
+
+        // Feedforward correction for translational-rotational coupling drift.
+        // The robot drifts rotationally when translating due to CoM offset or module asymmetry.
+        // This applies a small counter-rotation proportional to forward velocity to cancel it.
+        // Tune Tuning/TranslationalRotationCoupling: positive if robot drifts CCW when driving forward, negative if CW.
+        angularVelocity += -xVelocity * frc.robot.Tuning.translationalRotationCoupling.get();
 
         Rotation2d skewCompensationFactor =
                 Rotation2d.fromRadians(mCurrentSwerveState.Speeds.omegaRadiansPerSecond * SKEW_COMPENSATION_SCALAR);
@@ -636,28 +624,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                     .withDriveRequestType(DriveRequestType.OpenLoopVoltage)
                     .withDesaturateWheelSpeeds(true);
         });
-        // return applyRequest(() -> {
-        //     double x = -controllerOI.controller.getLeftY() * maxSpeed;
-        //     double y = -controllerOI.controller.getLeftX() * maxSpeed;
-
-        //     double rx = MathUtil.applyDeadband(-controllerOI.controller.getRightX(), 0.3);
-        //     double rotationRate = rx * maxAngularRate;
-
-        //     snapToHeading = snapToHeading.plus(new Rotation2d(rotationRate
-        //             * (Timer.getFPGATimestamp()
-        //                     - lastUpdate))); // TODO: change 0.02 constant timestep to calculate actual timestamp
-        //     lastUpdate = Timer.getFPGATimestamp();
-        //     Logger.recordOutput("Drivetrain/inRotateMode", rotationRate != 0);
-        //     var skewCompensation = currentChassisSpeeds.omegaRadiansPerSecond * -0.03;
-        //     snapToHeading = new Rotation2d(currentPose2D.getRotation().getMeasure());
-        //     return drive.withVelocityX(MathUtil.applyDeadband(x, 0.1))
-        //             .withVelocityY(MathUtil.applyDeadband(y, 0.1))
-        //             .withRotationalRate(rotationRate + skewCompensation);
-        //     // return driveAndPoint
-        //     //         .withVelocityX(MathUtil.applyDeadband(x, 0.1))
-        //     //         .withVelocityY(MathUtil.applyDeadband(y, 0.1))
-        //     //         .withTargetDirection(snapToHeading);
-        // });
     }
     // spotless: on
 
@@ -718,12 +684,15 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     @Override
     public void resetPose(final Pose2d newPose) {
         super.resetPose(newPose);
-        this.limelightLeft.setIMUMode(1);
-        this.limelightLeft.setRobotOrientation(newPose.getRotation().getMeasure());
+        for (var limelight : limelights) {
+            limelight.setIMUMode(Limelight.IMUMode.MODE_1_EXTERNAL_SEED);
+            limelight.setRobotOrientation(newPose.getRotation().getMeasure());
+        }
     }
 
+    @Deprecated
     public void setAngle(final Angle angle) {
-        super.resetPose(new Pose2d(mCurrentSwerveState.Pose.getTranslation(), new Rotation2d(angle)));
+        this.resetPose(new Pose2d(mCurrentSwerveState.Pose.getTranslation(), new Rotation2d(angle)));
     }
 
     /**
@@ -777,9 +746,23 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     public void disabledPeriodic() {
-        PoseEstimate mt1 = this.limelightLeft.getPoseMegatag1();
-        if (this.limelightLeft.hasValidTargets() && mt1 != null) {
-            this.resetRotation(mt1.pose.getRotation());
+        PoseEstimate mt1 = null;
+        PoseEstimate mostTrustedPose = null;
+        int highNumAprilTags = 0;
+        for (var limelight : limelights) {
+            mt1 = limelight.getPoseMegatag1();
+            if (limelight.hasValidTargets() && mt1 != null && limelight.getNumberOfAprilTags() > highNumAprilTags) {
+                mostTrustedPose = mt1;
+                highNumAprilTags = limelight.getNumberOfAprilTags();
+            }
+        }
+
+        if (mostTrustedPose != null) {
+            this.resetRotation(mostTrustedPose.pose.getRotation());
+            for (var limelight : limelights) {
+                limelight.setIMUMode(Limelight.IMUMode.MODE_1_EXTERNAL_SEED);
+                limelight.setRobotOrientation(mostTrustedPose.pose.getRotation().getMeasure());
+            }
         }
     }
 
@@ -787,8 +770,88 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         disabledPeriodic();
     }
 
+    @Deprecated
     public void setImuMode2() {
-        this.limelightLeft.setIMUMode(2);
+        setAllLimelightIMUModes(Limelight.IMUMode.MODE_2_INTERNAL_ONLY);
+    }
+
+    public void setAllLimelightThrottleRates(int throttleRate) {
+        for (var limelight : limelights) {
+            limelight.setThrottleRate(throttleRate);
+        }
+    }
+
+    public void setAllLimelightIMUModes(Limelight.IMUMode imuMode) {
+        for (var limelight : limelights) {
+            limelight.setIMUMode(imuMode);
+        }
+    }
+
+    /**
+     * Sets the desired IMU mode for all limelights. The mode will be applied
+     * in the next drivetrain periodic cycle.
+     */
+    public void setLimelightIMUModesIntent(Limelight.IMUMode mode) {
+        mDesiredLimelightIMUMode = mode;
+    }
+
+    /**
+     * Applies the current desired limelight IMU mode to all limelights.
+     * For MODE_1, also seeds the IMU from the best available MT1 pose estimate.
+     * For MODE_3, also sets the IMU assist alpha.
+     */
+    private void applyLimelightIMUMode() {
+        switch (mDesiredLimelightIMUMode) {
+            case MODE_1_EXTERNAL_SEED: {
+                Logger.recordOutput("UpdatedTrustedFromLeftLL", false);
+                // Seed the IMU from the best available MT1 pose estimate (same logic as disabledPeriodic)
+                PoseEstimate mostTrustedPose = null;
+                int highNumAprilTags = 0;
+                for (var limelight : limelights) {
+                    PoseEstimate mt1 = limelight.getPoseMegatag1();
+                    if (mt1 != null) {
+                        Logger.recordOutput("Drivetrain/LL_MT1_" + limelight.getLimelightName(), mt1.pose);
+                    }
+
+                    if (limelight.getLimelightName().equals("limelight-left")) {
+                        Logger.recordOutput("UpdatedTrustedFromLeftLL", true);
+                        mostTrustedPose = mt1;
+                    }
+                    // if (limelight.hasValidTargets() && mt1 != null && limelight.getNumberOfAprilTags() > highNumAprilTags) {
+                    //     mostTrustedPose = mt1;
+                    //     highNumAprilTags = limelight.getNumberOfAprilTags();
+                    // }
+                }
+                if (mostTrustedPose != null) {
+                    Logger.recordOutput("Drivetrain/MostTrustedPose", mostTrustedPose.pose);
+                    this.resetRotation(mostTrustedPose.pose.getRotation());
+                    for (var limelight : limelights) {
+                        limelight.setIMUMode(Limelight.IMUMode.MODE_1_EXTERNAL_SEED);
+                        limelight.setRobotOrientation(mostTrustedPose.pose.getRotation().getMeasure());
+                    }
+                } else {
+                    setAllLimelightIMUModes(Limelight.IMUMode.MODE_1_EXTERNAL_SEED);
+                }
+                break;
+            }
+            case MODE_3_INTERNAL_MT1_ASSIST: {
+                for (var limelight : limelights) {
+                    limelight.setIMUMode(Limelight.IMUMode.MODE_3_INTERNAL_MT1_ASSIST);
+                    LimelightHelpers.SetIMUAssistAlpha(limelight.getLimelightName(), 0.01);
+                }
+                break;
+            }
+            case MODE_4_INTERNAL_EXTERNAL_ASSIST: {
+                for (var limelight : limelights) {
+                    limelight.setIMUMode(Limelight.IMUMode.MODE_4_INTERNAL_EXTERNAL_ASSIST);
+                    LimelightHelpers.SetIMUAssistAlpha(limelight.getLimelightName(), 0.001);
+                    limelight.setRobotOrientation(mCurrentSwerveState.Pose.getRotation().getMeasure());
+                }
+            }
+            default:
+                setAllLimelightIMUModes(mDesiredLimelightIMUMode);
+                break;
+        }
     }
 
     // Halts the drive wheels and moves the modules in x formation for maximum traction
@@ -796,77 +859,124 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return applyRequest(() -> brake);
     }
 
+    public Angle applyAllianceRotation(Angle inputAngle) {
+        var alliance = DriverStation.getAlliance();
+        if (!alliance.isEmpty() && alliance.get() == Alliance.Red) {
+            return inputAngle;
+        } else {
+            return inputAngle.plus(Units.Radians.of(Math.PI));
+        }
+    }
+
+    // used only for rotate to hub error checking... update with math & justification/explanation
+    public Angle invertAllianceRotation(Angle inputAngle) {
+        var alliance = DriverStation.getAlliance();
+        if (!alliance.isEmpty() && alliance.get() == Alliance.Red) {
+            return inputAngle.plus(Units.Radians.of(Math.PI));
+        } else {
+            return inputAngle;
+        }
+    }
+
     public double getHubX() {
-        if (!DriverStation.getAlliance().isEmpty()
-                && DriverStation.getAlliance().get() == Alliance.Red) {
+        var alliance = DriverStation.getAlliance();
+        if (!alliance.isEmpty() && alliance.get() == Alliance.Red) {
             return hubXOffset + hubX;
         } else {
             return hubX;
         }
     }
 
+    public Distance getHomeX() {
+        var alliance = DriverStation.getAlliance();
+        if (!alliance.isEmpty() && alliance.get() == Alliance.Red) {
+            return homeXOffset.plus(homeX);
+        } else {
+            return homeX;
+        }
+    }
+
     // spotless: off
     // Command to aim at hub while moving with max translation speed scaler not deadband (Overrides Rotational aspect)
 
-    public Command aimAtHubAndMove(BaseOI controllerOI, double speedMultipliter) {
-        return new ParallelCommandGroup(
-                this.applyRequest(() -> driveAndPoint
-                        .withVelocityX(-controllerOI.controller.getLeftY()
-                                * maxSpeed
-                                * speedMultipliter) // Drive forward with negative Y (forward)
-                        .withVelocityY(
-                                -controllerOI.controller.getLeftX() * maxSpeed * speedMultipliter) // Drive left with negative X (left)
-                        .withTargetDirection(new Rotation2d(Math.atan2(
-                                                (hubY
-                                                        - mCurrentSwerveState
-                                                                .Pose
-                                                                .getMeasureY()
-                                                                .in(Units.Meters)),
-                                                (getHubX()
-                                                        - mCurrentSwerveState
-                                                                .Pose
-                                                                .getMeasureX()
-                                                                .in(Units.Meters)))
-                                        + (!DriverStation.getAlliance().isEmpty()
-                                                        && DriverStation.getAlliance()
-                                                                        .get()
-                                                                != Alliance.Red
-                                                ? 0
-                                                : 0))
-                                .plus(new Rotation2d(Math.PI / 2)))),
-                new RunCommand(() -> snapToHeading =
-                        new Rotation2d(mCurrentSwerveState.Pose.getRotation().getRadians())));
-    }
+    // public Command aimAtHubAndMove(BaseOI controllerOI, double speedMultipliter) {
+    //     return new ParallelCommandGroup(
+    //             this.applyRequest(() -> driveAndPoint
+    //                     .withVelocityX(-controllerOI.controller.getLeftY()
+    //                             * maxSpeed
+    //                             * speedMultipliter) // Drive forward with negative Y (forward)
+    //                     .withVelocityY(
+    //                             -controllerOI.controller.getLeftX() * maxSpeed * speedMultipliter) // Drive left with negative X (left)
+    //                     .withTargetDirection(new Rotation2d(Math.atan2(
+    //                                             (hubY
+    //                                                     - mCurrentSwerveState
+    //                                                             .Pose
+    //                                                             .getMeasureY()
+    //                                                             .in(Units.Meters)),
+    //                                             (getHubX()
+    //                                                     - mCurrentSwerveState
+    //                                                             .Pose
+    //                                                             .getMeasureX()
+    //                                                             .in(Units.Meters)))
+    //                                     + (!DriverStation.getAlliance().isEmpty()
+    //                                                     && DriverStation.getAlliance()
+    //                                                                     .get()
+    //                                                             != Alliance.Red
+    //                                             ? 0
+    //                                             : 0))
+    //                             .plus(new Rotation2d(Math.PI / 2)))),
+    //             new RunCommand(() -> snapToHeading =
+    //                     new Rotation2d(mCurrentSwerveState.Pose.getRotation().getRadians())));
+    // }
 
-    public Command aimAtHomeAndMove(BaseOI controllerOI, double speedMultipliter) {
-        return new ParallelCommandGroup(
-                this.applyRequest(() -> driveAndPoint
-                        .withVelocityX(-controllerOI.controller.getLeftY()
-                                * maxSpeed
-                                * speedMultipliter) // Drive forward with negative Y (forward)
-                        .withVelocityY(
-                                -controllerOI.controller.getLeftX() * maxSpeed * speedMultipliter) // Drive left with negative X (left)
-                        .withTargetDirection(new Rotation2d((DriverStation.getAlliance().get() == Alliance.Red)? Math.PI : 0))),
-                new RunCommand(() -> snapToHeading =
-                        new Rotation2d(mCurrentSwerveState.Pose.getRotation().getRadians())));
-    }
+    // public Command aimAtHomeAndMove(BaseOI controllerOI, double speedMultipliter) {
+    //     return new ParallelCommandGroup(
+    //             this.applyRequest(() -> driveAndPoint
+    //                     .withVelocityX(-controllerOI.controller.getLeftY()
+    //                             * maxSpeed
+    //                             * speedMultipliter) // Drive forward with negative Y (forward)
+    //                     .withVelocityY(
+    //                             -controllerOI.controller.getLeftX() * maxSpeed * speedMultipliter) // Drive left with negative X (left)
+    //                     .withTargetDirection(new Rotation2d((DriverStation.getAlliance().get() == Alliance.Red)? Math.PI : 0))),
+    //             new RunCommand(() -> snapToHeading =
+    //                     new Rotation2d(mCurrentSwerveState.Pose.getRotation().getRadians())));
+    // }
 
     public Rotation2d getRotationToHub() {
-        return new Rotation2d(getAngleToHub(Degrees.of(0)));
+        return new Rotation2d(getAngleToHub(Units.Radians.of(Math.PI/2)));
     }
 
     public Angle getAngleToHub(Angle offset) {
-        return Units.Radians.of(Math.atan2(
-                        (hubY - mCurrentSwerveState.Pose.getMeasureY().in(Units.Meters)),
-                        (getHubX() - mCurrentSwerveState.Pose.getMeasureX().in(Units.Meters))))
+        Distance kBackRightXPos = Inches.of(-9.73);
+        Distance kBackRightYPos = Inches.of(-11.73);
+        Logger.recordOutput("Drivetrain/AngleToHub/Pose", mCurrentSwerveState.Pose);
+        this.computedShooterPose = mCurrentSwerveState.Pose;
+        Transform2d shooterPoseTransform = new Transform2d(kBackRightXPos, kBackRightYPos, mCurrentSwerveState.Pose.getRotation());
+        this.computedShooterPose = computedShooterPose.plus(shooterPoseTransform);
+        Logger.recordOutput("Drivetrain/AngleToHub/ComputedShooterPose", computedShooterPose);
+        var angleToHub = Units.Radians.of(Math.atan2(
+                        (hubY - computedShooterPose.getMeasureY().in(Units.Meters)),
+                        (getHubX() - computedShooterPose.getMeasureX().in(Units.Meters))))
                 .plus(offset);
+        Logger.recordOutput("Drivetrain/AngleToHub/AngleToHub", angleToHub);
+        angleToHub = applyAllianceRotation(angleToHub);
+        Logger.recordOutput("Drivetrain/AngleToHub/AngleToHubAllianceApplied", angleToHub);
+        return angleToHub;
     }
 
     public Distance getDistanceFromHub() {
-
         return Units.Meters.of(Math.hypot(
-                (getHubX() - mCurrentSwerveState.Pose.getMeasureX().in(Units.Meters)),
-                (hubY - mCurrentSwerveState.Pose.getMeasureY().in(Units.Meters))));
+            (getHubX() - mCurrentSwerveState.Pose.getMeasureX().in(Units.Meters)),
+            (hubY - mCurrentSwerveState.Pose.getMeasureY().in(Units.Meters))));
+    }
+
+    public Distance getDistanceFromHome() {
+        return Units.Meters.of(
+            Math.abs(
+                getHomeX()
+                .minus(mCurrentSwerveState.Pose.getMeasureX()).in(Units.Meters)
+            )
+        );
     }
 
      public void intakeGround(double speedMultiplier) {
@@ -883,7 +993,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     public double calculateSpeedX() {
         double output = 0.5;
-        Logger.recordOutput("Drivetrain/auto/SpeedXIntakeGroun", output);
+        Logger.recordOutput("Drivetrain/auto/SpeedXIntakeGround", output);
         return output;
     }
 
@@ -972,9 +1082,19 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public Command targetLock() {
         return new FunctionalCommand(
             this::initTargetLock,
-            () -> {} /* empty execute block; already covered by subsystem periodic */,
+            this::initTargetLock /* empty execute block; already covered by subsystem periodic */,
             (interrupted) -> {} /* TODO: should probably set brake mode, or no-op depending on interrupt... */,
             this::isAtTargetHeading,
+            this
+        );
+    }
+
+    public Command targetLockEndlCommand() {
+        return new FunctionalCommand(
+            () -> {},
+            this::initTargetLock /* empty execute block; already covered by subsystem periodic */,
+            (interrupted) -> {} /* TODO: should probably set brake mode, or no-op depending on interrupt... */,
+            () -> false,
             this
         );
     }
@@ -983,7 +1103,19 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      * Helper for initializing rotation lock -- sets the desired target based on current pose
      */
     private void initTargetLock() {
-        snapToHeading = getRotationToHub();
+        if(isAtHome()){
+            snapToHeading = getRotationToHub();
+        }
+        else {
+            var alliance = DriverStation.getAlliance();
+            if (!alliance.isEmpty() && alliance.get() == Alliance.Red) {
+                snapToHeading = new Rotation2d(Units.Radians.of(Math.PI/2));
+            } else {
+                snapToHeading = new Rotation2d(Units.Radians.of((Math.PI)/2));
+            }  
+        }
+        // snapToHeading = getRotationToHub();
+        Logger.recordOutput("Drivetrain/snapToHeading", snapToHeading);
         setState(WantedState.ROTATION_LOCK);
     }
 
@@ -992,8 +1124,20 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      * @return Whether the current heading is within the tolerance of the target heading
      */
     private boolean isAtTargetHeading() {
-        Rotation2d rotationalError = mCurrentSwerveState.Pose.getRotation().minus(snapToHeading);
+        // Compute the shoter pose 
+        Distance kBackRightXPos = Inches.of(-9.73);
+        Distance kBackRightYPos = Inches.of(-11.73);
+        Logger.recordOutput("Drivetrain/AngleToHub/Pose", mCurrentSwerveState.Pose);
+        this.computedShooterPose = mCurrentSwerveState.Pose;
+        Transform2d shooterPoseTransform = new Transform2d(kBackRightXPos, kBackRightYPos, mCurrentSwerveState.Pose.getRotation());
+        this.computedShooterPose = computedShooterPose.plus(shooterPoseTransform);
+        Logger.recordOutput("Drivetrain/AngleToHub/ComputedShooterPose", computedShooterPose);
+
+        Rotation2d backToBlueOrigin = new Rotation2d(invertAllianceRotation(snapToHeading.getMeasure()));
+        // Rotation2d rotationalError = mCurrentSwerveState.Pose.getRotation().minus(snapToHeading);
+        Rotation2d rotationalError =  this.computedShooterPose.getRotation().minus(backToBlueOrigin);
         // TODO: determine appropriate thresholds
+        Logger.recordOutput("Drivetrain/AutoAim/RotationalErrorDegrees", rotationalError.getDegrees());
         var inRange = Degrees.of(rotationalError.getDegrees()).isNear(Degrees.zero(), Degrees.of(5));
         return inRange;
     }

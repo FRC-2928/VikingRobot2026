@@ -19,60 +19,18 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
-import frc.robot.commands.drivetrain.CenterLimelight;
-import frc.robot.commands.drivetrain.VoltageRampCommand;
 import frc.robot.lib.BLine.Path;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.Intake;
 
 public final class Autonomous {
-    public static SendableChooser<Command> createAutonomousChooser(RobotContainer cont) {
-        final SendableChooser<Command> chooser = new SendableChooser<>();
-        AutoFactory autoFactory = cont.drivetrain.getChoreoAutoFactory();
-
-        // Set global constraints before creating any paths
-        Path.setDefaultGlobalConstraints(new Path.DefaultGlobalConstraints(
-                Constants.Drivetrain.maxVelocity.in(Units.MetersPerSecond), // maxVelocityMetersPerSec
-                // TODO: Find actual values
-                12.0, // maxAccelerationMetersPerSec2
-                Constants.Drivetrain.maxAngularVelocity.in(Units.DegreesPerSecond), // maxVelocityDegPerSec
-                860, // maxAccelerationDegPerSec2
-                0.03, // endTranslationToleranceMeters
-                2.0, // endRotationToleranceDeg
-                0.2 // intermediateHandoffRadiusMeters
-                ));
-
-        chooser.addOption(
-                "[Bline] Forward Back",
-                Commands.sequence(cont.drivetrain.getPathBuilder().build(new Path("forwardBack"))));
-        chooser.addOption(
-                "[Test] Forward Back",
-                new SequentialCommandGroup(
-                        Autonomous.setInitialPose("forwardBack", cont.drivetrain), Autonomous.path("forwardBack")));
-        chooser.addOption(
-                "[Test] Forward Back Choreo",
-                new SequentialCommandGroup(
-                        Autonomous.setInitialPose("forwardBack", cont.drivetrain),
-                        autoFactory.trajectoryCmd("forwardBack")));
-
-        // Backs out 1 meter and shoots the balls
-        chooser.addOption(
-                "Auto0_goBackwardAndShoot",
-                new SequentialCommandGroup(
-                        // Go Backward for 10 sec
-                        cont.drivetrain.driveForDuration(new ChassisSpeeds(-2, 0, 0), Units.Seconds.of(1)),
-                        // Call shoot from superstructure
-                        cont.mSuperstructure.shootAutomated()));
-
-        chooser.addOption("[testing] voltage ramp", new VoltageRampCommand(cont.drivetrain));
-        return chooser;
-    }
-
     public static Command bLineForwardBack(CommandSwerveDrivetrain drivetrain) {
         return Commands.sequence(drivetrain.getPathBuilder().build(new Path("forwardBack")));
     }
@@ -92,6 +50,8 @@ public final class Autonomous {
                     cont.drivetrain.applyRequest(() -> idle));
         });
 
+        // Comented out because these dont use the intake and we dont want to accidently run them durring a match
+        /* 
         choreoChooser.addCmd("path1_shootPickShoot", () -> {
             final var idle = new SwerveRequest.Idle();
 
@@ -124,14 +84,47 @@ public final class Autonomous {
                     pathBuilder.build(path3_middlePickShoot),
                     cont.mSuperstructure.shootAutomated());
         });
+        */
 
         choreoChooser.addCmd(
-                "Auto0_goBackwardAndShoot",
+                "Auto0_shootMiddle",
                 () -> new SequentialCommandGroup(
+                        // Go Backward for 10 sec
+                        // cont.drivetrain.driveForDuration(new ChassisSpeeds(-2, 0, 0), Units.Seconds.of(1)),
+                        // Call shoot from superclass
+                        RobotContainer.getInstance().shooter.runFlywheelCommand().withTimeout(1),
+                        
+                        new ParallelCommandGroup(
+                        new RunCommand(() -> RobotContainer.getInstance().intake.setWantedState(Intake.WantedState.EXTEND_AND_RUN)),
+                        RobotContainer.getInstance().shooter.runShooterAuto(),
+                        RobotContainer.getInstance().indexer.runForwardCommand(),
+                        RobotContainer.getInstance().hopperFloor.runHopperCommand())
+                        .withTimeout(10)).andThen(new RunCommand(() -> {
+                            RobotContainer.getInstance().intake.setWantedState(Intake.WantedState.STOP);
+                        }))
+                    );
+
+        choreoChooser.addCmd("emptyPreLoad_rightPickShoot", () -> {
+            final var idle = new SwerveRequest.Idle();
+
+            var pathBuilder = cont.drivetrain.getPathBuilder();
+            Path rightPickShoot_part1 = new Path("rightPickShoot_part1");
+            Path rightPickShoot_part3 = new Path("rightPickShoot_part3");
+
+            Command shootPreLoad = new SequentialCommandGroup(
                         // Go Backward for 10 sec
                         cont.drivetrain.driveForDuration(new ChassisSpeeds(-2, 0, 0), Units.Seconds.of(1)),
                         // Call shoot from superclass
-                        cont.mSuperstructure.shootAutomated()));
+                        cont.mSuperstructure.shootAutomated()).withTimeout(5);
+
+            Command rightPickShoot =  Commands.sequence(
+                    pathBuilder.build(rightPickShoot_part1),
+                    cont.mSuperstructure.pathWhileIntaking("rightPickShoot_part2"),
+                    pathBuilder.build(rightPickShoot_part3),
+                    cont.mSuperstructure.shootAutomated());
+            
+            return new SequentialCommandGroup(shootPreLoad, rightPickShoot);
+        });
 
         choreoChooser.addCmd("middlePickShoot", () -> {
             final var idle = new SwerveRequest.Idle();
@@ -146,6 +139,22 @@ public final class Autonomous {
                     pathBuilder.build(middlePickShoot_part3),
                     cont.mSuperstructure.prepareShooter());
         });
+
+        choreoChooser.addCmd("bl_comp", () -> {
+            final var idle = new SwerveRequest.Idle();
+
+            var pathBuilder = cont.drivetrain.getPathBuilder();
+            Path bl_comp_part2 = new Path("bl_comp_part2");
+            return Commands.sequence(
+                    cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(Rotation2d.kZero)),
+                    cont.mSuperstructure.pathWhileIntaking("bl_comp_par1"),
+                    pathBuilder.build(bl_comp_part2),
+                    cont.mSuperstructure.prepareShooter().withTimeout(2),
+                    new InstantCommand(() -> cont.mSuperstructure.requestShootOverride()),
+                    new WaitCommand(10),
+                    new InstantCommand(() -> cont.mSuperstructure.clearOverrideCommand()));
+        });
+
 
         choreoChooser.addCmd("rightPickShoot", () -> {
             final var idle = new SwerveRequest.Idle();

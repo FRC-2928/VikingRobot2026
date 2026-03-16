@@ -1,5 +1,7 @@
 package frc.robot.oi;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Timer;
@@ -11,6 +13,7 @@ public abstract class BaseOI {
     public static final class Haptics {
         public Haptics(final XboxController hid) {
             this.hid = hid;
+            this.rumbleState = false;
         }
 
         private final XboxController hid;
@@ -20,6 +23,7 @@ public abstract class BaseOI {
         public double dutyCycle;
         public double powerTrue;
         public double powerFalse;
+        private boolean rumbleState;
 
         public void update() {
             if (DriverStation.isAutonomous()) return;
@@ -33,6 +37,12 @@ public abstract class BaseOI {
 
         public void stop() {
             this.hid.setRumble(RumbleType.kBothRumble, 0);
+        }
+
+        public void toggleRumble() {
+            rumbleState = !rumbleState;
+            this.hid.setRumble(this.type, rumbleState ? 1 : 0);
+            Logger.recordOutput("Haptics/Rumble", rumbleState);
         }
     }
 

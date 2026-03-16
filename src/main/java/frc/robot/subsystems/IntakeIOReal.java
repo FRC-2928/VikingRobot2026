@@ -11,10 +11,13 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.ForwardLimitTypeValue;
+import com.ctre.phoenix6.signals.ForwardLimitValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.ReverseLimitTypeValue;
+import com.ctre.phoenix6.signals.ReverseLimitValue;
 import com.ctre.phoenix6.sim.ChassisReference;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
@@ -23,41 +26,55 @@ import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.Constants;
-import frc.robot.Constants.Intake.IntakeStates;
 
 public class IntakeIOReal implements IntakeIO {
-    // private TalonFX intakeRollerMotor;
+    // --------------------- Hardware Interfaces ---------------------
+    private TalonFX intakeRollerMotor;
     private TalonFX intakeExpansionMotor;
-    // public StatusSignal<AngularVelocity> intakeAngularVelocity;
-    public StatusSignal<AngularVelocity> expansionAngularVelocity;
-    public StatusSignal<Angle> expansionMotorAngle;
+
+    /// Status Signals -- values from the motor(s) to monitor and log
+    // Intake rack signals
+    private final StatusSignal<Angle>             intakePosition;
+    private final StatusSignal<AngularVelocity>   intakeAngularVelocity;
+    private final StatusSignal<ReverseLimitValue> intakeReverseLimitSignal;
+    private final StatusSignal<ForwardLimitValue> intakeForwardLimitSignal;
+    private final StatusSignal<Current>           intakeStatorCurrent;
+    private final StatusSignal<Current>           intakeSupplyCurrent;
+
+    // Intake roller signals
+    private final StatusSignal<AngularVelocity> intakeRollerAngularVelocity;
+    private final StatusSignal<Current>         intakeRollerStatorCurrent;
+    private final StatusSignal<Current>         intakeRollerSupplyCurrent;
+
+    /// Control Request types
     private PositionVoltage retractPositionControl;
     private final MotionMagicVoltage motionMagicVoltage;
     private PositionVoltage expansionPositionVoltage;
+
+    // FIXME: probably not needed here... should likely live in Intake subsystem...
     private final Angle closedAngle = Units.Rotations.of(0);
     private final Angle openAngle = Units.Rotations.of(11.75);
+    private Distance intakeTargetPosition;  // Represents final pos system is trying to reach
 
-    // For Simualtion
+    // For Simulation
     private DCMotorSim expansionDCMotorSim = new DCMotorSim(
             LinearSystemId.createDCMotorSystem(
-                    DCMotor.getKrakenX60(1), 0.001, Constants.Intake.expensionMotorGearRatio),
+                    DCMotor.getKrakenX60(1), 0.001, Constants.Intake.DISTANCE_CONVERSION_RATIO),
             DCMotor.getKrakenX60(1));
 
     private DCMotorSim rollerDCMotorSim = new DCMotorSim(
-            LinearSystemId.createDCMotorSystem(DCMotor.getKrakenX60(1), 0.001, Constants.Intake.rollerMotorGearRatio),
+            LinearSystemId.createDCMotorSystem(DCMotor.getKrakenX60(1), 0.001, Constants.Intake.INTAKE_ROLLER_GEARING),
             DCMotor.getKrakenX60(1));
-
-    // Data goten at 02/11/26 Wednesday
-    // Hopper extemsion: 11 iches and 3 quarters
-    // Gear ratio: 3 to 1
 
     public IntakeIOReal() {
         // The Intake Roller motor
-        // this.intakeRollerMotor = new TalonFX(Constants.CAN.RIO.intakeRoller, Constants.CAN.RIO.bus);
+        this.intakeRollerMotor = new TalonFX(Constants.CAN.RIO.intakeRoller, Constants.CAN.RIO.bus);
 
         final TalonFXConfiguration intakeRollerConfig = new TalonFXConfiguration();
         CurrentLimitsConfigs intakeRollerCurrentLimitsConfigs = new CurrentLimitsConfigs()
@@ -66,12 +83,13 @@ public class IntakeIOReal implements IntakeIO {
                 .withStatorCurrentLimitEnable(true)
                 .withSupplyCurrentLimitEnable(true);
 
-        MotorOutputConfigs intakeRollerOutputConfigs =
-                new MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive);
+        MotorOutputConfigs intakeRollerOutputConfigs = new MotorOutputConfigs()
+            .withInverted(InvertedValue.Clockwise_Positive);
+
         intakeRollerConfig
-                .withMotorOutput(intakeRollerOutputConfigs)
-                .withCurrentLimits(intakeRollerCurrentLimitsConfigs);
-        // intakeRollerMotor.getConfigurator().apply(intakeRollerConfig); // apply the config settings
+            .withMotorOutput(intakeRollerOutputConfigs)
+            .withCurrentLimits(intakeRollerCurrentLimitsConfigs);
+        intakeRollerMotor.getConfigurator().apply(intakeRollerConfig); // apply the config settings
 
         // The Intake Expansion motor
         this.intakeExpansionMotor = new TalonFX(Constants.CAN.CTRE.intakeExpansion, Constants.CAN.CTRE.bus);
@@ -79,42 +97,45 @@ public class IntakeIOReal implements IntakeIO {
         final Slot0Configs retractSlot0Configs = new Slot0Configs();
         retractSlot0Configs.kS = 0.2; // Add 0.2 V output to overcome static friction
         retractSlot0Configs.kV = 0.12; // A velocity target of 1 rps results in 0.12 V output
-        retractSlot0Configs.kP = 4.8; // A position error of 2.5 rotations results in 12 V output
-        retractSlot0Configs.kI = 0; // no output for integrated error
+        retractSlot0Configs.kP = 6; // A position error of 2.5 rotations results in 12 V output
+        retractSlot0Configs.kI = 0; // no output for accumulated error
         retractSlot0Configs.kD = 0.1; // A velocity error of 1 rps results in 0.1 V output
-        final Slot1Configs extendSlot1Configs =
-                new Slot1Configs().withKP(60).withKI(0).withKD(3);
+
+        final Slot1Configs extendSlot1Configs = new Slot1Configs()
+            .withKP(60)
+            .withKI(0)
+            .withKD(3);
 
         final TalonFXConfiguration intakeExpansionConfig = new TalonFXConfiguration();
         CurrentLimitsConfigs intakeExpansionCurrentLimitsConfigs = new CurrentLimitsConfigs()
-                .withStatorCurrentLimit(Units.Amps.of(80))
+                .withStatorCurrentLimit(Units.Amps.of(100))
                 .withSupplyCurrentLimit(Units.Amps.of(60))
                 .withStatorCurrentLimitEnable(true)
                 .withSupplyCurrentLimitEnable(true);
-        // TODO determine correct currect limit switch values
+
+        // TODO determine correct limit switch values
         HardwareLimitSwitchConfigs hardwareLimitSwitchConfigs = new HardwareLimitSwitchConfigs()
-                // Forward Limits
-                .withForwardLimitRemoteCANdiS1(Constants.CAN.INTAKE_CANDI.getInstance())
-                .withForwardLimitEnable(true)
-                .withForwardLimitAutosetPositionEnable(true)
-                .withForwardLimitAutosetPositionValue(Units.Degrees.of(0))
-                .withForwardLimitType(ForwardLimitTypeValue.NormallyOpen)
-                // Reverse Limits
-                .withReverseLimitRemoteCANdiS1(Constants.CAN.INTAKE_CANDI.getInstance())
-                .withReverseLimitEnable(true)
-                .withReverseLimitAutosetPositionEnable(true)
-                .withReverseLimitAutosetPositionValue(Units.Rotations.of(0))
-                .withReverseLimitType(ReverseLimitTypeValue.NormallyOpen);
+            // Forward Limits
+            .withForwardLimitRemoteCANdiS1(Constants.CAN.INTAKE_CANDI.getInstance())
+            .withForwardLimitEnable(false)
+            .withForwardLimitAutosetPositionEnable(true)
+            .withForwardLimitAutosetPositionValue(Constants.Intake.INTAKE_FORWARD_HARD_LIMIT)
+            .withForwardLimitType(ForwardLimitTypeValue.NormallyOpen)
+            // Reverse Limits
+            .withReverseLimitRemoteCANdiS1(Constants.CAN.INTAKE_CANDI.getInstance())
+            .withReverseLimitEnable(false)
+            .withReverseLimitAutosetPositionEnable(true)
+            .withReverseLimitAutosetPositionValue(Units.Rotations.of(0))
+            .withReverseLimitType(ReverseLimitTypeValue.NormallyOpen);
 
         intakeExpansionConfig
-                .SoftwareLimitSwitch
-                .withForwardSoftLimitEnable(true)
-                .withForwardSoftLimitThreshold(openAngle) // Chnage this software limit to fit later
-                .withReverseSoftLimitEnable(true)
-                .withReverseSoftLimitThreshold(closedAngle); // Chnage this software limit to fit later
+            .SoftwareLimitSwitch
+            .withForwardSoftLimitEnable(true)
+            .withForwardSoftLimitThreshold(Constants.Intake.INTAKE_FORWARD_SOFT_LIMIT)  // safety mechanism, in case switches fail
+            .withReverseSoftLimitEnable(false);  // no reverse limit since there's a physical hard stop
 
-        intakeExpansionConfig.Feedback.withSensorToMechanismRatio(
-                Constants.Intake.expensionMotorGearRatio); // May change later reduction gear ratio
+        intakeExpansionConfig.Feedback.
+            withSensorToMechanismRatio(Constants.Intake.DISTANCE_CONVERSION_RATIO);
 
         // Motion Magic Configs
         var motionMagicConfigs = intakeExpansionConfig.MotionMagic;
@@ -122,8 +143,9 @@ public class IntakeIOReal implements IntakeIO {
         motionMagicConfigs.MotionMagicAcceleration = 160; // Target acceleration of 160 rps/s (0.5 seconds)
         motionMagicConfigs.MotionMagicJerk = 1600; // Target jerk of 1600 rps/s/s (0.1 seconds)
 
-        MotorOutputConfigs intakeExpansionOutputConfigs =
-                new MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive);
+        MotorOutputConfigs intakeExpansionOutputConfigs = new MotorOutputConfigs()
+             .withInverted(InvertedValue.Clockwise_Positive);
+
         intakeExpansionConfig
                 .withMotorOutput(intakeExpansionOutputConfigs)
                 .withCurrentLimits(intakeExpansionCurrentLimitsConfigs)
@@ -134,17 +156,33 @@ public class IntakeIOReal implements IntakeIO {
         intakeExpansionMotor.getConfigurator().apply(intakeExpansionConfig); // apply the config settings
 
         // Status Signals
-        // this.intakeAngularVelocity = this.intakeRollerMotor.getRotorVelocity();
-        this.expansionMotorAngle = this.intakeExpansionMotor.getPosition();
-        this.expansionAngularVelocity = this.intakeExpansionMotor.getRotorVelocity();
-        BaseStatusSignal.setUpdateFrequencyForAll(
-                Units.Hertz.of(100),/* intakeAngularVelocity, */expansionMotorAngle, expansionAngularVelocity);
+        this.intakePosition = this.intakeExpansionMotor.getPosition();
+        this.intakeAngularVelocity = this.intakeExpansionMotor.getRotorVelocity();
+        this.intakeReverseLimitSignal = this.intakeExpansionMotor.getReverseLimit();
+        this.intakeForwardLimitSignal = this.intakeExpansionMotor.getForwardLimit();
+        this.intakeStatorCurrent = this.intakeExpansionMotor.getStatorCurrent();
+        this.intakeSupplyCurrent = this.intakeExpansionMotor.getSupplyCurrent();
+
+        this.intakeRollerAngularVelocity = this.intakeRollerMotor.getRotorVelocity();
+        this.intakeRollerStatorCurrent = this.intakeRollerMotor.getStatorCurrent();
+        this.intakeRollerSupplyCurrent = this.intakeRollerMotor.getSupplyCurrent();
+
+        BaseStatusSignal.setUpdateFrequencyForAll(Units.Hertz.of(100),
+            intakePosition,
+            intakeAngularVelocity,
+            intakeReverseLimitSignal,
+            intakeForwardLimitSignal,
+            intakeStatorCurrent,
+            intakeSupplyCurrent,
+            intakeRollerAngularVelocity,
+            intakeRollerStatorCurrent,
+            intakeRollerSupplyCurrent);
 
         // Retract Position voltage control
         this.retractPositionControl = new PositionVoltage(Units.Rotations.zero()).withSlot(0);
 
         // Create a Motion Magic request, voltage output
-        this.motionMagicVoltage = new MotionMagicVoltage(0);
+        this.motionMagicVoltage = new MotionMagicVoltage(0).withFeedForward(4);
 
         // Expansion Position voltage control
         this.expansionPositionVoltage = new PositionVoltage(openAngle).withSlot(1);
@@ -156,48 +194,83 @@ public class IntakeIOReal implements IntakeIO {
         }
     }
 
-    private boolean checkExtended() {
-        // Rotations value is actually inches because of configured gear ratio
-        Boolean isExtended = (Units.Inches.of(expansionMotorAngle.getValue().in(Units.Rotations))
-                .gte(Constants.Intake.expansionMotorMaxDistance));
-        return isExtended;
-    }
+    // private boolean checkExtended() {
+    //     // Rotations value is actually inches because of configured gear ratio
+    //     Boolean isExtended = (Units.Inches.of(expansionMotorAngle.getValue().in(Units.Rotations))
+    //             .gte(Constants.Intake.expansionMotorMaxDistance));
+    //     return isExtended;
+    // }
 
-    private boolean checkRetracted() {
-        // Rotations value is actually inches because of configured gear ratio
-        // TODO: Find acutal retracted value
-        Boolean isRetracted = (Units.Inches.of(expansionMotorAngle.getValue().in(Units.Rotations))
-                .lte(Units.Inches.of(0)));
-        return isRetracted;
-    }
+    // private boolean checkRetracted() {
+    //     // Rotations value is actually inches because of configured gear ratio
+    //     // TODO: Find acutal retracted value
+    //     Boolean isRetracted = (Units.Inches.of(expansionMotorAngle.getValue().in(Units.Rotations))
+    //             .lte(Units.Inches.of(0)));
+    //     return isRetracted;
+    // }
 
     @Override
     public void setState(Constants.Intake.IntakeStates state) {
         // Do a feed forward later
-        // intakeRollerMotor.setControl(new DutyCycleOut(state.getSpeed()));
+        intakeRollerMotor.setControl(new DutyCycleOut(state.getSpeed()));
     }
 
     @Override
-    public void extend() {
-        intakeExpansionMotor.setControl(expansionPositionVoltage.withPosition(openAngle));
+    public void moveToPosition(final Distance position) {
+        intakeExpansionMotor.setControl(this.motionMagicVoltage.withPosition(position.in(Units.Inches)));
     }
 
     @Override
-    public void retract() {
-        intakeExpansionMotor.setControl(motionMagicVoltage.withPosition(closedAngle));
-        /*
-        intakeExpansionMotor.setControl(
-                retractPositionTorqueCurrentFOC.withPosition(closedAngle).withFeedForward(0)); */
+    public void extendForward(){
+        intakeExpansionMotor.setControl(new VoltageOut(Units.Volts.of(12)));
     }
 
     @Override
-    public void updateInputs(IntakeInputs intakeInputs) {
-        BaseStatusSignal.refreshAll(/*intakeAngularVelocity,*/ expansionMotorAngle, expansionAngularVelocity);
-        // intakeInputs.angularVelocity = intakeAngularVelocity.getValue();
-        intakeInputs.expansionMotorAngle =
-                Units.Inches.of(expansionMotorAngle.getValue().in(Units.Rotations));
-        intakeInputs.expansionAngularVelocity =
-                Units.InchesPerSecond.of(expansionAngularVelocity.getValue().in(Units.RotationsPerSecond));
+    public void stopMotion() {
+        intakeExpansionMotor.setControl(new VoltageOut(Units.Volts.zero()));
+    }
+
+    // @Override
+    // public void extend() {
+    //     intakeExpansionMotor.setControl(expansionPositionVoltage.withPosition(openAngle));
+    // }
+
+    // @Override
+    // public void retract() {
+    //     intakeExpansionMotor.setControl(motionMagicVoltage.withPosition(closedAngle));
+    //     /*
+    //     intakeExpansionMotor.setControl(
+    //             retractPositionTorqueCurrentFOC.withPosition(closedAngle).withFeedForward(0)); */
+    // }
+
+    @Override
+    public void updateInputs(IntakeInputs inputs) {
+        // Refresh all signals from the CANivore
+        BaseStatusSignal.refreshAll(
+            this.intakePosition,
+            this.intakeAngularVelocity,
+            this.intakeReverseLimitSignal,
+            this.intakeForwardLimitSignal,
+            this.intakeStatorCurrent,
+            this.intakeSupplyCurrent);
+
+        // Second refresh for RIO CAN bus
+        BaseStatusSignal.refreshAll(
+            this.intakeRollerAngularVelocity,
+            this.intakeRollerStatorCurrent,
+            this.intakeRollerSupplyCurrent);
+
+        inputs.intakePosition = Units.Inches.of(intakePosition.getValue().in(Units.Rotations));
+        inputs.intakeAngularVelocity = intakeAngularVelocity.getValue();
+        inputs.intakeRackSpeed = Units.InchesPerSecond.of(intakeAngularVelocity.getValue().in(Units.RotationsPerSecond));
+        inputs.isIntakeHomed = (intakeReverseLimitSignal.getValue() == ReverseLimitValue.ClosedToGround);
+        inputs.isIntakeMaxed = (intakeForwardLimitSignal.getValue() == ForwardLimitValue.ClosedToGround);
+        inputs.intakeStatorCurrent = intakeStatorCurrent.getValue();
+        inputs.intakeSupplyCurrent = intakeSupplyCurrent.getValue();
+
+        inputs.intakeRollerAngularVelocity = intakeRollerAngularVelocity.getValue();
+        inputs.intakeRollerStatorCurrent = intakeRollerStatorCurrent.getValue();
+        inputs.intakeRollerSupplyCurrent = intakeRollerSupplyCurrent.getValue();
     }
 
     @Override
@@ -225,9 +298,9 @@ public class IntakeIOReal implements IntakeIO {
 
         // 5) Feed DC motor sim position and velocity back to the motor controller sim state to complete the sim loop
         expansionMotorSimState.setRawRotorPosition(
-                expansionDCMotorSim.getAngularPosition().times(Constants.Intake.expensionMotorGearRatio));
+                expansionDCMotorSim.getAngularPosition().times(Constants.Intake.DISTANCE_CONVERSION_RATIO));
         expansionMotorSimState.setRotorVelocity(
-                expansionDCMotorSim.getAngularVelocity().times(Constants.Intake.expensionMotorGearRatio));
+                expansionDCMotorSim.getAngularVelocity().times(Constants.Intake.DISTANCE_CONVERSION_RATIO));
 
         // rollerMotorSimState.setRawRotorPosition(
         //         rollerDCMotorSim.getAngularPosition().times(Constants.Intake.rollerMotorGearRatio));

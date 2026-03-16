@@ -24,14 +24,13 @@ public class ClimberIOReal implements ClimberIO {
         // motors configs
         final TalonFXConfiguration climberConfig =
                 new TalonFXConfiguration(); // creates a new configuration for the climber motor
-        climberConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive; // inverts the climber motor
+        climberConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive; // inverts the climber motor
         climberConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake; // sets the climber motor to brake mode
         climberConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = MAXheight;
         // enable rotation limits so the motor never pulls the climber into itself
         climberConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
         climberConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = MINheight;
         climberConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
-
 
         // set the gear ratio for the climber motor
         climberConfig.Feedback.SensorToMechanismRatio = 25;
@@ -94,8 +93,6 @@ public class ClimberIOReal implements ClimberIO {
     public void updateInputs(final ClimberIOInputs inputs) {
         // BaseStatusSignal.refreshAll(ClimberIO.height, climber.home); // updates the position of the climber.
         inputs.height = this.climber.getPosition().getValueAsDouble();
-        inputs.forwardLimitSwitch = this.forwardLimit.get();
-        inputs.reverseLimitSwitch = this.reverseLimit.get();
     }
 }
 

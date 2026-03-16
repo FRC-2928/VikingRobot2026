@@ -21,16 +21,14 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.interpolation.InverseInterpolator;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
-import frc.robot.subsystems.CommandSwerveDrivetrain;
 
 public class Constants {
     private static Mode currentMode() {
@@ -120,8 +118,7 @@ public class Constants {
 
         public static final class RIO {
 			public static final CANBus bus = new CANBus("rio");
-			/// CAN ID of the Kraken x44 controlling the Intake Roller
-			public static final int intakeRoller = 33;
+            public static final int intakeRoller = 0;
 		}
 
         public static final class CTRE {
@@ -137,7 +134,9 @@ public class Constants {
 
             public static final int hopper = 23;
             public static final int indexer = 31;
+
             public static final int intakeExpansion = 30;
+            
 
             public static final int candle = 99;
         }
@@ -255,30 +254,6 @@ public class Constants {
         public static final Distance halfRobotWidth = Units.Inches.of(27.0 / 2);
         public static final Distance halfRobotWidthBumpersOn = Units.Inches.of(27.0 / 2 + 3);
 
-        // public static final Angle swerveFrontLeftOffset = Units.Rotations.of(0.227783);
-        // public static final Angle swerveFrontLeftOffset = Units.Rotations.of(0.349609375);
-        public static final Angle swerveFrontLeftOffset = Units.Rotations.of(-0.385009765625);
-        public static final Translation2d swerveFrontLeftTranslation =
-                new Translation2d(Constants.Drivetrain.wheelBase, Constants.Drivetrain.trackWidth);
-        // public static final Angle swerveFrontRightOffset = Units.Rotations.of(-0.150146484375);
-        public static final Angle swerveFrontRightOffset = Units.Rotations.of(-0.38671875);
-        public static final Translation2d swerveFrontRightTranslation =
-                new Translation2d(Constants.Drivetrain.wheelBase, Constants.Drivetrain.trackWidth.unaryMinus());
-        // public static final Angle swerveBackLeftOffset = Units.Rotations.of(-0.136474609375);
-        public static final Angle swerveBackLeftOffset = Units.Rotations.of(-0.19384765625);
-        public static final Translation2d swerveBackLeftTranslation =
-                new Translation2d(Constants.Drivetrain.wheelBase.unaryMinus(), Constants.Drivetrain.trackWidth);
-        // public static final Angle swerveBackRightOffset = Units.Rotations.of(-0.4404296875);
-        public static final Angle swerveBackRightOffset = Units.Rotations.of(-0.404296875);
-        public static final Translation2d swerveBackRightTranslation = new Translation2d(
-                Constants.Drivetrain.wheelBase.unaryMinus(), Constants.Drivetrain.trackWidth.unaryMinus());
-
-        public static final SwerveDriveKinematics kinematics = new SwerveDriveKinematics(
-                Constants.Drivetrain.swerveFrontLeftTranslation,
-                Constants.Drivetrain.swerveFrontRightTranslation,
-                Constants.Drivetrain.swerveBackLeftTranslation,
-                Constants.Drivetrain.swerveBackRightTranslation);
-
         // Gear ratios for SDS MK4i L2, adjust as necessary
         // public static final double driveGearRatio = (50.0 / 14.0) * (17.0 / 27.0) * (45.0 / 15.0); // ~= 6.746
         public static final double driveGearRatio = (50.0 / 14) * (16.0 / 28) * (45.0 / 15); // ~= 6.746
@@ -306,8 +281,6 @@ public class Constants {
         }
 
         public static final Angle shooterAngleOffsetFromFront = Units.Degrees.of(90);
-        //hoodAngle, velocity, distance
-        public static final double[][] temporaryLookupTable = {{75, 240, 60}, {70, 245, 72}, {68, 245, 84}, {61, 258, 108}, {57, 270, 132}, {54, 282, 156}, {54, 302, 180}, {53, 317, 204}, {53, 328, 228}, {52, 243, 252}};
 
         // Gear Ratios
         public static final double flywheelGearRatio = 1.0;
@@ -317,24 +290,34 @@ public class Constants {
         public static final Angle hoodAngle = Units.Degrees.of(0);
         public static final LinearVelocity releaseVelocity = Units.FeetPerSecond.of(0);
         public static final Angle toleranceFromHub = Units.Degrees.of(10);
-        public static final AngularVelocity shooterVelocityTolerance = Units.RotationsPerSecond.of(10);
+        public static final AngularVelocity shooterVelocityTolerance = Units.RotationsPerSecond.of(5);
         public static final Angle hoodAngleTolerance = Units.Degrees.of(3);
         public static final double pivotCurrentLimit = 40;
         public static final AngularVelocity pivotMaxVelocityShoot = Units.DegreesPerSecond.of(2);
-        public static final InterpolatingTreeMap<Double, AimValues> lookUpTable =
-                new InterpolatingTreeMap<Double, AimValues>(null, null);
-
-        static {
-            // Add temperory values to the tree
-            // Shooter.lookUpTable.put(5.0, new AimValues(Units.Degrees.of(20), Units.RotationsPerSecond.of(50)));
-
-            for(double[] point: temporaryLookupTable ){
-                Shooter.lookUpTable.put(Units.Inches.of(point[2]).in(Units.Meters), new AimValues(Units.Degrees.of(point[0]), Units.RotationsPerSecond.of(point[1]/8)));
-            }
-        }
+        public static InterpolatingTreeMap<Double, AimValues> lookUpTable =
+                new InterpolatingTreeMap<Double, AimValues>(
+                    InverseInterpolator.forDouble(),
+                    (start, end, t) -> {
+                        // Lerp each field: result = start + (end - start) * t
+                        Angle dTheta = (end.hoodAngle.minus(start.hoodAngle)).times(t);
+                        Angle interpolatedHoodAngle = start.hoodAngle.plus(dTheta);
+                        AngularVelocity dOmega = (end.shooterVelocity.minus(start.shooterVelocity)).times(t);
+                        AngularVelocity interpolatedFlywheelVelocity = start.shooterVelocity.plus(dOmega);
+                        return new AimValues(interpolatedHoodAngle, interpolatedFlywheelVelocity);
+                    });
+        public static InterpolatingTreeMap<Double, AimValues> lookUpTableShootHome =
+                new InterpolatingTreeMap<Double, AimValues>(
+                    InverseInterpolator.forDouble(),
+                    (start, end, t) -> {
+                        // Lerp each field: result = start + (end - start) * t
+                        Angle dTheta = (end.hoodAngle.minus(start.hoodAngle)).times(t);
+                        Angle interpolatedHoodAngle = start.hoodAngle.plus(dTheta);
+                        AngularVelocity dOmega = (end.shooterVelocity.minus(start.shooterVelocity)).times(t);
+                        AngularVelocity interpolatedFlywheelVelocity = start.shooterVelocity.plus(dOmega);
+                        return new AimValues(interpolatedHoodAngle, interpolatedFlywheelVelocity);
+                    });
 
         public static class AimValues {
-
             public final Angle hoodAngle;
             public final AngularVelocity shooterVelocity;
 
@@ -370,12 +353,17 @@ public class Constants {
             throw new IllegalCallerException("Dont Call this (Constants.Intake)");
         }
 
-        public static final Distance expansionMotorMaxDistance = Units.Inches.of(11.75 - 0.5);
-        public static final double expensionMotorGearRatio = 3.0 * 4.5;
-        public static final double rollerMotorGearRatio = 1.0;
+        public static final Angle INTAKE_FORWARD_SOFT_LIMIT = Units.Rotations.of(2.20);
+        public static final Angle INTAKE_FORWARD_HARD_LIMIT = Units.Rotations.of(2.35);
+        public static final Distance INTAKE_FORWARD_DISTANCE_LIMIT = Units.Inches.of(2.20);
+        public static final Distance INTAKE_RETRACTION_LIMIT = Units.Inches.of(0.818);  // TODO: figure out this value
+        private static final Distance GEAR_DIAMETER = Units.Inches.of(1.5);
+        private static final double INTAKE_RACK_GEARING = 2.5;
+        public static final double DISTANCE_CONVERSION_RATIO = (Math.PI * GEAR_DIAMETER.in(Units.Inches)) / INTAKE_RACK_GEARING;
+        public static final double INTAKE_ROLLER_GEARING = 1.0;
         public enum IntakeStates {
-            FORWARD(1.0),
-            REVERSE(-1.0),
+            FORWARD(0.4),
+            REVERSE(-0.4),
             OFF(0);
 
             private double mSpeed;
