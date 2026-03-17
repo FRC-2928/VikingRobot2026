@@ -25,6 +25,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.commands.Intake.ExtendAndRunIntake;
+import frc.robot.subsystems.Intake.WantedState;
 
 public class Superstructure extends SubsystemBase {
 
@@ -344,7 +345,7 @@ public class Superstructure extends SubsystemBase {
     }
 
     private Command prepareShootHome() {
-        return mRobotContainer.shooter.aimAtHome();
+        return mRobotContainer.shooter.aimAtHomeCommand();
     }
 
     private Command shootTowardsHome() {
@@ -428,7 +429,7 @@ public class Superstructure extends SubsystemBase {
     public Command pathWhileIntaking(String pathFileName) {
         return new ParallelDeadlineGroup(mRobotContainer.drivetrain.runPath(pathFileName), this.extendAndIntake())
                 .finallyDo(() -> {
-                    mRobotContainer.intake.retract();
+                    mRobotContainer.intake.setWantedState(WantedState.STOP);
                 });
     }
 

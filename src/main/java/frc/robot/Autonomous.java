@@ -115,7 +115,7 @@ public final class Autonomous {
                         // Go Backward for 10 sec
                         cont.drivetrain.driveForDuration(new ChassisSpeeds(-2, 0, 0), Units.Seconds.of(1)),
                         // Call shoot from superclass
-                        cont.mSuperstructure.shootAutomated()).withTimeout(5);
+                        cont.mSuperstructure.prepareShooter()).withTimeout(5);
 
             Command rightPickShoot =  Commands.sequence(
                     pathBuilder.build(rightPickShoot_part1),
@@ -153,6 +153,88 @@ public final class Autonomous {
                     new InstantCommand(() -> cont.mSuperstructure.requestShootOverride()),
                     new WaitCommand(10),
                     new InstantCommand(() -> cont.mSuperstructure.clearOverrideCommand()));
+        });
+
+        choreoChooser.addCmd("uTurn_right", () -> {
+            final var idle = new SwerveRequest.Idle();
+
+            return Commands.sequence(
+                    cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(Rotation2d.kZero)),
+                    cont.mSuperstructure.shootAutomated().withTimeout(3),
+                    cont.mSuperstructure.pathWhileIntaking("uTurn_right_part1"),
+                    cont.mSuperstructure.shootAutomated().withTimeout(3),
+                    cont.mSuperstructure.pathWhileIntaking("uTurn_right_part2"),
+                    cont.mSuperstructure.shootAutomated().withTimeout(3)
+            );
+        });
+
+        choreoChooser.addCmd("uTurn_left", () -> {
+            final var idle = new SwerveRequest.Idle();
+
+            return Commands.sequence(
+                    cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(Rotation2d.kZero)),
+                    cont.mSuperstructure.shootAutomated().withTimeout(3),
+                    cont.mSuperstructure.pathWhileIntaking("uTurn_left_part1"),
+                    cont.mSuperstructure.shootAutomated().withTimeout(3)
+            );
+        });
+
+        choreoChooser.addCmd("right_pick_shoot_improved", () -> {
+            final var idle = new SwerveRequest.Idle();
+
+            var pathBuilder = cont.drivetrain.getPathBuilder();
+            Path right_pick_shoot_improved_part1 = new Path("right_pick_shoot_improved_part1");
+            return Commands.sequence(
+                    cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(Rotation2d.kZero)),
+                    cont.mSuperstructure.shootAutomated().withTimeout(2),
+                    pathBuilder.build(right_pick_shoot_improved_part1),
+                    cont.mSuperstructure.pathWhileIntaking("right_pick_shoot_improved_part2"),
+                    cont.mSuperstructure.shootAutomated().withTimeout(2)
+                    //new InstantCommand(() -> cont.mSuperstructure.requestShootOverride()),
+                    //new WaitCommand(10),
+                    //new InstantCommand(() -> cont.mSuperstructure.clearOverrideCommand())
+                    );
+        });
+
+        choreoChooser.addCmd("left_pick_shoot_improved", () -> {
+            final var idle = new SwerveRequest.Idle();
+
+            var pathBuilder = cont.drivetrain.getPathBuilder();
+            Path left_pick_shoot_improved_part1 = new Path("left_pick_shoot_improved_part1");
+            return Commands.sequence(
+                    cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(Rotation2d.kZero)),
+                    cont.mSuperstructure.shootAutomated().withTimeout(2),
+                    pathBuilder.build(left_pick_shoot_improved_part1),
+                    cont.mSuperstructure.pathWhileIntaking("left_pick_shoot_improved_part2"),
+                    cont.mSuperstructure.shootAutomated().withTimeout(2)
+                    //new InstantCommand(() -> cont.mSuperstructure.requestShootOverride()),
+                    //new WaitCommand(10),
+                    //new InstantCommand(() -> cont.mSuperstructure.clearOverrideCommand())
+                    );
+        });
+
+        choreoChooser.addCmd("right_pick_shoot_improved_2x", () -> {
+            final var idle = new SwerveRequest.Idle();
+
+            var pathBuilder = cont.drivetrain.getPathBuilder();
+            Path right_pick_shoot_improved_part1 = new Path("right_pick_shoot_improved_part1");
+            Path right_pick_shoot_improved_part4 = new Path("right_pick_shoot_improved_part4");
+            return Commands.sequence(
+                    cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(Rotation2d.kZero)),
+                    cont.mSuperstructure.shootAutomated().withTimeout(2),
+                    pathBuilder.build(right_pick_shoot_improved_part1),
+                    cont.mSuperstructure.pathWhileIntaking("right_pick_shoot_improved_part2"),
+                    cont.mSuperstructure.shootAutomated().withTimeout(2),
+                    //new InstantCommand(() -> cont.mSuperstructure.requestShootOverride()),
+                    //new WaitCommand(4),
+                    //new InstantCommand(() -> cont.mSuperstructure.clearOverrideCommand()),
+                    cont.mSuperstructure.pathWhileIntaking("right_pick_shoot_improved_part3"),
+                    pathBuilder.build(right_pick_shoot_improved_part4),
+                    cont.mSuperstructure.shootAutomated().withTimeout(2)
+                    //new InstantCommand(() -> cont.mSuperstructure.requestShootOverride()),
+                    //new WaitCommand(4),
+                    //new InstantCommand(() -> cont.mSuperstructure.clearOverrideCommand())
+                    );
         });
 
 
