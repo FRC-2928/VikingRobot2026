@@ -6,11 +6,7 @@ package frc.robot.subsystems;
 
 import org.littletonrobotics.junction.Logger;
 
-import com.ctre.phoenix6.StatusSignal;
-import com.ctre.phoenix6.signals.ReverseLimitValue;
-
 import edu.wpi.first.units.Units;
-import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -52,8 +48,6 @@ public class Climber extends SubsystemBase {
         FAILED;
     }
 
-    public StatusSignal<Angle> height; // status signal for the postion of the climber based on the angle
-    public StatusSignal<ReverseLimitValue> home;
 
     private boolean engaged = false; // if the climber is hooked on
 
@@ -65,7 +59,7 @@ public class Climber extends SubsystemBase {
 
     // changes the target heights based on the current height
     public void ascend() {
-        if (height.getValueAsDouble() == ClimberHeight.HOMEPOS.height && DriverStation.isTeleopEnabled()) {
+        if (inputs.height == ClimberHeight.HOMEPOS.height && DriverStation.isTeleopEnabled()) {
             // when the robot is in teleop
             this.targetHeight = ClimberHeight.L1;
             this.currentState = ClimberState.TELEOP_ASCENDING;
@@ -91,7 +85,9 @@ public class Climber extends SubsystemBase {
     }
 
     public void initDefaultCommand() {
-        setDefaultCommand(reset()); // sets the default command to go home
+        setDefaultCommand(new RunCommand(() -> {
+            this.currentState = ClimberState.IDLE;
+        }, this));
     }
 
     private boolean isEngaged() {
@@ -113,7 +109,7 @@ public class Climber extends SubsystemBase {
 
     //command to handle setting the state and target for climbing down
     public Command reset() {
-        return new InstantCommand(() -> {
+        return new RunCommand(() -> {
             this.currentState = ClimberState.FAILED;
         });
     }
@@ -121,7 +117,11 @@ public class Climber extends SubsystemBase {
     public void climberIdle(){
         currentState = ClimberState.IDLE;
     }
-    
+
+    @Override
+    public void simulationPeriodic() {
+        io.simPeriodic();
+    }
     
     @Override
     public void periodic() {
@@ -129,37 +129,41 @@ public class Climber extends SubsystemBase {
 
         Logger.recordOutput("Climber/State", this.currentState); //records the current state of the robot
         Logger.recordOutput("Climber/TargetHeight", targetHeight.height); //records the target height of the climber
-        Logger.recordOutput(
-                "Climber/CurrentHeight", height.getValueAsDouble()); //records the current height of the climber
+        Logger.recordOutput("Climber/Height", inputs.height); //records the target height of the climber
+
+        //for the current of the climber:
+        Logger.recordOutput("Climber/statorCurrent", inputs.statorCurrent);
+        Logger.recordOutput("Climber/supplyCurrent", inputs.supplyCurrent);
+
 
         switch (currentState) {
             case TELEOP_ASCENDING: {
-                if (this.height.getValueAsDouble() == targetHeight.height) {
+                if (inputs.height == targetHeight.height) {
                     this.engaged = isEngaged();
                 } else if (this.engaged) {
                     Distance distance = Units.Inches.of(ClimberHeight.HOMEPOS.height);
                     this.io.climb(distance);
-                } else if (this.height.getValueAsDouble() == 0 && this.engaged == true) {
+                } else if (inputs.height == 0 && this.engaged == true) {
                     currentState = ClimberState.IDLE;
                 }
                 break;
             }
 
             case AUTO_ASCENDING: {
-                if (this.height.getValueAsDouble() == targetHeight.height) {
+                if (inputs.height == targetHeight.height) {
                     this.engaged = isEngaged();
                 } else if (this.engaged) {
                     Distance distance = Units.Inches.of(
                                 Math.abs(targetHeight.height - 5)); // the robot goes 5 inches off the ground
                     this.io.climb(distance); // set the position
-                } else if (this.height.getValueAsDouble() == 0 && this.engaged == true) {
+                } else if (inputs.height == 0 && this.engaged == true) {
                     currentState = ClimberState.IDLE;
                 }
                 break;
             }
 
             case DESCENDING: {
-                if (this.height.getValueAsDouble() != ClimberHeight.HOMEPOS.height) {
+                if (inputs.height != ClimberHeight.HOMEPOS.height) {
                     this.io.goHome(); // makes the climber go home
                     this.engaged = false;
                 } else {
@@ -174,7 +178,7 @@ public class Climber extends SubsystemBase {
             }
 
             case FAILED: {
-                if (this.height.getValueAsDouble() != ClimberHeight.HOMEPOS.height) {
+                if (inputs.height != ClimberHeight.HOMEPOS.height) {
                     this.io.goHome(); // makes the climber go home
                 } else {
                     this.currentState = ClimberState.IDLE;
@@ -190,4 +194,5 @@ public class Climber extends SubsystemBase {
         });
     }
 }
+
 
