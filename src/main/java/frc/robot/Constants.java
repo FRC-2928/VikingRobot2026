@@ -134,6 +134,7 @@ public class Constants {
 
             public static final int hopper = 23;
             public static final int indexer = 31;
+            public static final int starWheels = 46;
 
             public static final int intakeExpansion = 30;
             

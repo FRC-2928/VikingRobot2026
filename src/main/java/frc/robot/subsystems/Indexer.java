@@ -20,7 +20,12 @@ public class Indexer extends SubsystemBase {
     }
 
     public Command runIndexerCommand() {
-        return new RunCommand(() -> io.runIndexer(), this).finallyDo(() -> io.halt());
+        return new RunCommand(() -> {
+            io.runIndexer();
+            io.runStarWheels();
+        }, this)
+            .finallyDo(() -> io.halt()
+        );
     }
 
     @Override
@@ -29,21 +34,25 @@ public class Indexer extends SubsystemBase {
     }
 
     public Command runForwardCommand() {
-        return new InstantCommand(() -> this.io.runIndexer());
+        return new InstantCommand(() -> {
+            this.io.runIndexer();
+            this.io.runStarWheels();
+        });
     }
 
     public Command runSlowerCommand() {
         return new InstantCommand(() -> {
-            this.io.setSpeed(0.5);
+            this.io.setSpeedIndexer(0.5);
+            this.io.setSpeedStarWheels(0.5);
         }, this).andThen(stopCommand());
     }
 
     public Command stopCommand() {
-        return new InstantCommand(() -> this.io.setSpeed(0));
+        return new InstantCommand(() -> this.io.setSpeedIndexer(0));
     }
 
     public void halt() {
-        this.io.setSpeed(0);
+        this.io.halt();
     }
 
     @Override
