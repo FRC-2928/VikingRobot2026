@@ -2,13 +2,16 @@ package frc.robot.subsystems;
 
 import org.littletonrobotics.junction.AutoLog;
 
+import edu.wpi.first.units.Units;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
 
 public interface ClimberIO {
     @AutoLog
     public static class ClimberIOInputs {
         public double height; // may not need to maintain the postion
-        public boolean home; // boolean for the home postion of the motor
+        public Current statorCurrent = Units.Amps.zero();
+        public Current supplyCurrent = Units.Amps.zero();
     }
 
     public default void updateInputs(ClimberIOInputs climberIOInputs) {}
@@ -23,8 +26,11 @@ public interface ClimberIO {
 
     public default void climb(Distance distance) {}
 
+    public default void simPeriodic() {}
+
     public default boolean isEngaged() {
         return false;
     } // checks for current spikes to see if the climber has hooked on
 }
+
 
