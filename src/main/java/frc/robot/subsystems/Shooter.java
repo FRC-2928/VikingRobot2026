@@ -3,7 +3,6 @@ package frc.robot.subsystems;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -198,10 +197,10 @@ public class Shooter extends SubsystemBase {
         );
     }
 
-    public Command aimAtHome() {
+    public Command aimAtHomeCommand() {
         return new FunctionalCommand(
-            this::aimAtHome,
-            () -> {},
+            this::aimHome,
+            this::aimHome,
             (interrupted) -> {
                 if (interrupted) {
                     home();  // TODO: probably don't want to do this, because interrupt could come from override
