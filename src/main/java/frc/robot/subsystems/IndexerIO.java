@@ -13,9 +13,15 @@ public interface IndexerIO {
         public AngularVelocity indexerAngularVelocity = Units.RotationsPerSecond.zero();
         public Current         indexerStatorCurrent = Units.Amps.zero();
         public Current         indexerSupplyCurrent = Units.Amps.zero();
+        public AngularVelocity starWheelsAngularVelocity = Units.RotationsPerSecond.zero();
+        public Current         starWheelsStatorCurrent = Units.Amps.zero();
+        public Current         starWheelsSupplyCurrent = Units.Amps.zero();
+
     }
 
-    public default void setSpeed(double angularVelocity) {}
+    public default void setSpeedIndexer(double angularVelocity) {}
+
+    public default void setSpeedStarWheels(double dutyCycle) {}
 
     public default void updateInputs(IndexerIOInputs indexerIOInputs) {}
 
@@ -24,4 +30,6 @@ public interface IndexerIO {
     public default void simPeriodic() {}
 
     public default void runIndexer() {}
+
+    public default void runStarWheels() {}
 }
