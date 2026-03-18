@@ -267,11 +267,6 @@ public class Superstructure extends SubsystemBase {
                 // Add OVERRIDE_SHOOTING to the set of active overrides
                 mActiveOverrides.add(StateOverrides.OVERRIDE_SHOOTING);  // Internally: 01 (bit 0 is now 1)
                 currentState = RobotState.SHOOTING; // transition directly into shooting mode
-                // if (mRobotContainer.drivetrain.isAtHome()) {
-                //     currentState = RobotState.SHOOTING; // transition directly into shooting mode
-                // } else {
-                //     currentState = RobotState.SHOOT_HOME; // transition directly into shooting towards home
-                // }
                 Logger.recordOutput("Superstructure/OverrideState", "SHOOTING");
                 break;
             }
@@ -282,6 +277,7 @@ public class Superstructure extends SubsystemBase {
                 /*if () {
                     
                 }*/
+                break;
             }
             // ... other overrides here
             case OVERRIDE_NONE:

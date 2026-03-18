@@ -88,7 +88,9 @@ public class Shooter extends SubsystemBase {
     }
 
     public void aimHome() { // TODO: Find actual values for these
-        AimValues val = new AimValues(Units.Degrees.of(40), Units.RotationsPerSecond.of(40));
+        var metersToHome = RobotContainer.getInstance().drivetrain.getDistanceFromHome().in(Units.Meters);
+        AimValues val = Constants.Shooter.lookUpTableShootHome.get(metersToHome);
+        Logger.recordOutput("Shooter/AimValueMetersToHub", metersToHome);
         Logger.recordOutput("Shooter/AimValueHoodAngleDegrees", val.hoodAngle.in(Units.Degrees));
         Logger.recordOutput("Shooter/AimValueFlywheelSpeedsRPS", val.shooterVelocity.in(Units.RotationsPerSecond));
         this.io.runFlywheelsVelocity(val.shooterVelocity);
