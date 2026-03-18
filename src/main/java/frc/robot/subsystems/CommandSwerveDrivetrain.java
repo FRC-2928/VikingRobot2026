@@ -208,9 +208,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private final PIDController choreoYController = new PIDController(5, 0, 0);
     private final PIDController choreoHeadingController = new PIDController(5, 0, 0.2);
 
-    // Shooter pose
-    private Pose2d computedShooterPose = mCurrentSwerveState.Pose;
-
     private Rotation2d snapToHeading = (!DriverStation.getAlliance().isEmpty()
                     && DriverStation.getAlliance().get() == Alliance.Red)
             ? new Rotation2d(Math.PI)
@@ -950,9 +947,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         Distance kBackRightXPos = Inches.of(-9.73);
         Distance kBackRightYPos = Inches.of(-11.73);
         Logger.recordOutput("Drivetrain/AngleToHub/Pose", mCurrentSwerveState.Pose);
-        this.computedShooterPose = mCurrentSwerveState.Pose;
+        var computedShooterPose = mCurrentSwerveState.Pose;
         Transform2d shooterPoseTransform = new Transform2d(kBackRightXPos, kBackRightYPos, mCurrentSwerveState.Pose.getRotation());
-        this.computedShooterPose = computedShooterPose.plus(shooterPoseTransform);
+        computedShooterPose = computedShooterPose.plus(shooterPoseTransform);
         Logger.recordOutput("Drivetrain/AngleToHub/ComputedShooterPose", computedShooterPose);
         var angleToHub = Units.Radians.of(Math.atan2(
                         (hubY - computedShooterPose.getMeasureY().in(Units.Meters)),
@@ -1103,18 +1100,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      * Helper for initializing rotation lock -- sets the desired target based on current pose
      */
     private void initTargetLock() {
-        if(isAtHome()){
-            snapToHeading = getRotationToHub();
-        }
-        else {
-            var alliance = DriverStation.getAlliance();
-            if (!alliance.isEmpty() && alliance.get() == Alliance.Red) {
-                snapToHeading = new Rotation2d(Units.Radians.of(Math.PI/2));
-            } else {
-                snapToHeading = new Rotation2d(Units.Radians.of((Math.PI)/2));
-            }  
-        }
-        // snapToHeading = getRotationToHub();
+        snapToHeading = getRotationToHub();
         Logger.recordOutput("Drivetrain/snapToHeading", snapToHeading);
         setState(WantedState.ROTATION_LOCK);
     }
@@ -1124,18 +1110,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      * @return Whether the current heading is within the tolerance of the target heading
      */
     private boolean isAtTargetHeading() {
-        // Compute the shoter pose 
-        Distance kBackRightXPos = Inches.of(-9.73);
-        Distance kBackRightYPos = Inches.of(-11.73);
-        Logger.recordOutput("Drivetrain/AngleToHub/Pose", mCurrentSwerveState.Pose);
-        this.computedShooterPose = mCurrentSwerveState.Pose;
-        Transform2d shooterPoseTransform = new Transform2d(kBackRightXPos, kBackRightYPos, mCurrentSwerveState.Pose.getRotation());
-        this.computedShooterPose = computedShooterPose.plus(shooterPoseTransform);
-        Logger.recordOutput("Drivetrain/AngleToHub/ComputedShooterPose", computedShooterPose);
-
         Rotation2d backToBlueOrigin = new Rotation2d(invertAllianceRotation(snapToHeading.getMeasure()));
         // Rotation2d rotationalError = mCurrentSwerveState.Pose.getRotation().minus(snapToHeading);
-        Rotation2d rotationalError =  this.computedShooterPose.getRotation().minus(backToBlueOrigin);
+        Rotation2d rotationalError = mCurrentSwerveState.Pose.getRotation().minus(backToBlueOrigin);
         // TODO: determine appropriate thresholds
         Logger.recordOutput("Drivetrain/AutoAim/RotationalErrorDegrees", rotationalError.getDegrees());
         var inRange = Degrees.of(rotationalError.getDegrees()).isNear(Degrees.zero(), Degrees.of(5));
