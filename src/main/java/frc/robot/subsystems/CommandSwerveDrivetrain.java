@@ -951,9 +951,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         Transform2d shooterPoseTransform = new Transform2d(kBackRightXPos, kBackRightYPos, mCurrentSwerveState.Pose.getRotation());
         computedShooterPose = computedShooterPose.plus(shooterPoseTransform);
         Logger.recordOutput("Drivetrain/AngleToHub/ComputedShooterPose", computedShooterPose);
+        // var angleToHub = Units.Radians.of(Math.atan2(
+        //                 (hubY - computedShooterPose.getMeasureY().in(Units.Meters)),
+        //                 (getHubX() - computedShooterPose.getMeasureX().in(Units.Meters))))
         var angleToHub = Units.Radians.of(Math.atan2(
-                        (hubY - computedShooterPose.getMeasureY().in(Units.Meters)),
-                        (getHubX() - computedShooterPose.getMeasureX().in(Units.Meters))))
+                        (hubY - mCurrentSwerveState.Pose.getMeasureY().in(Units.Meters)),
+                        (getHubX() - mCurrentSwerveState.Pose.getMeasureX().in(Units.Meters))))
                 .plus(offset);
         Logger.recordOutput("Drivetrain/AngleToHub/AngleToHub", angleToHub);
         angleToHub = applyAllianceRotation(angleToHub);
