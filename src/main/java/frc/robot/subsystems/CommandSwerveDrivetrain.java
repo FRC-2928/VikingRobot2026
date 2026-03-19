@@ -1118,7 +1118,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         Rotation2d rotationalError = mCurrentSwerveState.Pose.getRotation().minus(backToBlueOrigin);
         // TODO: determine appropriate thresholds
         Logger.recordOutput("Drivetrain/AutoAim/RotationalErrorDegrees", rotationalError.getDegrees());
-        var inRange = Degrees.of(rotationalError.getDegrees()).isNear(Degrees.zero(), Degrees.of(5));
+        boolean inRange = Degrees.of(rotationalError.getDegrees()).isNear(Degrees.zero(), Degrees.of(5));
+        Logger.recordOutput("Drivetrain/AutoAim/IsRotationInTolerance", inRange);
         return inRange;
     }
 }
