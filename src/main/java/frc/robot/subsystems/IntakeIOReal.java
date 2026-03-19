@@ -144,7 +144,7 @@ public class IntakeIOReal implements IntakeIO {
         motionMagicConfigs.MotionMagicJerk = 1600; // Target jerk of 1600 rps/s/s (0.1 seconds)
 
         MotorOutputConfigs intakeExpansionOutputConfigs = new MotorOutputConfigs()
-             .withInverted(InvertedValue.Clockwise_Positive);
+             .withInverted(InvertedValue.CounterClockwise_Positive);
 
         intakeExpansionConfig
                 .withMotorOutput(intakeExpansionOutputConfigs)

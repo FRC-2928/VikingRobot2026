@@ -147,6 +147,26 @@ public class Limelight {
     public void setRobotOrientation(Angle yaw) {
         LimelightHelpers.SetRobotOrientation(limelightName, yaw.in(Units.Degrees), 0, 0, 0, 0, 0);
     }
+    public boolean poseEstimatorReadymt1() {
+        LimelightHelpers.PoseEstimate mt1 = LimelightHelpers.getBotPoseEstimate_wpiBlue("limelight");
+        boolean doRejectUpdate = false;
+        if(mt1.tagCount == 1 && mt1.rawFiducials.length == 1)
+        {
+            if(mt1.rawFiducials[0].ambiguity > .7)
+            {
+            doRejectUpdate = true;
+            }
+            if(mt1.rawFiducials[0].distToCamera > 3)
+            {
+            doRejectUpdate = true;
+            }
+        }
+        if(mt1.tagCount == 0)
+        {
+            doRejectUpdate = true;
+        }
+        return !doRejectUpdate;
+    }
 
     public void setIMUMode(IMUMode mode) {
         LimelightHelpers.SetIMUMode(limelightName, mode.getImuMode());

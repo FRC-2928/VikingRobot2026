@@ -164,13 +164,13 @@ public final class Autonomous {
 
             return Commands.sequence(
                     cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(Rotation2d.kZero)),
-                    cont.mSuperstructure.shootAutomated().withTimeout(3),
+                    //cont.mSuperstructure.shootAutomated().withTimeout(3),
                     pathBuilder.build(uTurn_right_part1),
                     //cont.mSuperstructure.pathWhileIntaking("uTurn_right_part1"),
-                    cont.mSuperstructure.shootAutomated().withTimeout(3),
+                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(3),
                     pathBuilder.build(uTurn_right_part2),
                     //cont.mSuperstructure.pathWhileIntaking("uTurn_right_part2"),
-                    cont.mSuperstructure.shootAutomated().withTimeout(3)
+                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(10)
             );
         });
 
@@ -180,11 +180,11 @@ public final class Autonomous {
             Path uTurn_left_part1 = new Path("uTurn_left_part1");
 
             return Commands.sequence(
-                    cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(Rotation2d.kZero)),
-                    cont.mSuperstructure.shootAutomated().withTimeout(3),
+                    cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(new Rotation2d(-Math.PI/2))),
+                    //cont.mSuperstructure.shootAutomated().withTimeout(3),
                     //cont.mSuperstructure.pathWhileIntaking("uTurn_left_part1"),
                     pathBuilder.build(uTurn_left_part1),
-                    cont.mSuperstructure.shootAutomated().withTimeout(3)
+                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(10)
             );
         });
 
@@ -211,12 +211,12 @@ public final class Autonomous {
             Path left_pick_shoot_improved_part1 = new Path("left_pick_shoot_improved_part1");
             Path left_pick_shoot_improved_part2 = new Path("left_pick_shoot_improved_part2");
             return Commands.sequence(
-                    cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(Rotation2d.kZero)),
-                    cont.mSuperstructure.shootAutomated().withTimeout(2),
-                    pathBuilder.build(left_pick_shoot_improved_part1),
-                    //cont.mSuperstructure.pathWhileIntaking("left_pick_shoot_improved_part2"),
+                    cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(new Rotation2d(-Math.PI/2))),
+                    //cont.mSuperstructure.shootAutomated().withTimeout(2),
                     pathBuilder.build(left_pick_shoot_improved_part2),
-                    cont.mSuperstructure.shootAutomated().withTimeout(2)
+                    //cont.mSuperstructure.pathWhileIntaking("left_pick_shoot_improved_part2"),
+                    //pathBuilder.build(left_pick_shoot_improved_part2),
+                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(10)
                     );
         });
 

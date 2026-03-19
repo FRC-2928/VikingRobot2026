@@ -345,7 +345,9 @@ public class Superstructure extends SubsystemBase {
     }
 
     private Command prepareShootHome() {
-        return mRobotContainer.shooter.aimAtHomeCommand();
+        // TODO: put back aim at home logic if needed
+        return new InstantCommand();
+        // return mRobotContainer.shooter.aimAtHomeCommand();
     }
 
     private Command shootTowardsHome() {
@@ -363,6 +365,14 @@ public class Superstructure extends SubsystemBase {
                 mRobotContainer.drivetrain.targetLock(),
                 prepareShooter())
             .andThen(startShooting());
+    }
+
+    // TODO: this seems to go against the intention of the state machine
+    // since now an external client can change the running command...
+    // we do this only for auto currently but we should look at cleaning this up
+    // in the future
+    public Command driveTargetLockAutonomous() {
+        return driveTargetLock();
     }
 
     // TODO: this doesn't need to be in superstructure since it's independent of other states
