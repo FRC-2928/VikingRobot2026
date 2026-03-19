@@ -113,15 +113,15 @@ public final class Autonomous {
 
             Command shootPreLoad = new SequentialCommandGroup(
                         // Go Backward for 10 sec
-                        cont.drivetrain.driveForDuration(new ChassisSpeeds(-2, 0, 0), Units.Seconds.of(1)),
+                        //cont.drivetrain.driveForDuration(new ChassisSpeeds(-2, 0, 0), Units.Seconds.of(1)),
                         // Call shoot from superclass
-                        cont.mSuperstructure.prepareShooter()).withTimeout(5);
+                        cont.mSuperstructure.driveTargetLockAutonomous()).withTimeout(5);
 
             Command rightPickShoot =  Commands.sequence(
                     pathBuilder.build(rightPickShoot_part1),
                     cont.mSuperstructure.pathWhileIntaking("rightPickShoot_part2"),
                     pathBuilder.build(rightPickShoot_part3),
-                    cont.mSuperstructure.shootAutomated());
+                    cont.mSuperstructure.driveTargetLockAutonomous());
             
             return new SequentialCommandGroup(shootPreLoad, rightPickShoot);
         });
@@ -137,7 +137,7 @@ public final class Autonomous {
                     pathBuilder.build(middlePickShoot_part1),
                     cont.mSuperstructure.pathWhileIntaking("middlePickShoot_part2"),
                     pathBuilder.build(middlePickShoot_part3),
-                    cont.mSuperstructure.prepareShooter());
+                    cont.mSuperstructure.driveTargetLockAutonomous());
         });
 
         choreoChooser.addCmd("bl_comp", () -> {
@@ -164,12 +164,12 @@ public final class Autonomous {
 
             return Commands.sequence(
                     cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(Rotation2d.kZero)),
-                    //cont.mSuperstructure.shootAutomated().withTimeout(3),
-                    pathBuilder.build(uTurn_right_part1),
-                    //cont.mSuperstructure.pathWhileIntaking("uTurn_right_part1"),
+                    //cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(3),
+                    //pathBuilder.build(uTurn_right_part1),
+                    cont.mSuperstructure.pathWhileIntaking("uTurn_right_part1"),
                     cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(3),
-                    pathBuilder.build(uTurn_right_part2),
-                    //cont.mSuperstructure.pathWhileIntaking("uTurn_right_part2"),
+                    //pathBuilder.build(uTurn_right_part2),
+                    cont.mSuperstructure.pathWhileIntaking("uTurn_right_part2"),
                     cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(10)
             );
         });
@@ -181,9 +181,9 @@ public final class Autonomous {
 
             return Commands.sequence(
                     cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(new Rotation2d(-Math.PI/2))),
-                    //cont.mSuperstructure.shootAutomated().withTimeout(3),
-                    //cont.mSuperstructure.pathWhileIntaking("uTurn_left_part1"),
-                    pathBuilder.build(uTurn_left_part1),
+                    //cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(3),
+                    cont.mSuperstructure.pathWhileIntaking("uTurn_left_part1"),
+                    //pathBuilder.build(uTurn_left_part1),
                     cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(10)
             );
         });
@@ -194,13 +194,15 @@ public final class Autonomous {
             var pathBuilder = cont.drivetrain.getPathBuilder();
             Path right_pick_shoot_improved_part1 = new Path("right_pick_shoot_improved_part1");
             Path right_pick_shoot_improved_part2 = new Path("right_pick_shoot_improved_part2");
+            Path right_pick_shoot_improved_part11 = new Path("right_pick_shoot_improved_par11");
             return Commands.sequence(
                     cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(Rotation2d.kZero)),
-                    cont.mSuperstructure.shootAutomated().withTimeout(2),
-                    pathBuilder.build(right_pick_shoot_improved_part1),
-                    pathBuilder.build(right_pick_shoot_improved_part2),
+                    //pathBuilder.build(right_pick_shoot_improved_part1),
+                    //cont.mSuperstructure.pathWhileIntaking("right_pick_shoot_improved_part1"),
+                    cont.mSuperstructure.pathWhileIntaking("right_pick_shoot_improved_part11"),
+                    //pathBuilder.build(right_pick_shoot_improved_part2),
                     //cont.mSuperstructure.pathWhileIntaking("right_pick_shoot_improved_part2"),
-                    cont.mSuperstructure.shootAutomated().withTimeout(2)
+                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(5)
                     );
         });
 
@@ -209,14 +211,28 @@ public final class Autonomous {
 
             var pathBuilder = cont.drivetrain.getPathBuilder();
             Path left_pick_shoot_improved_part1 = new Path("left_pick_shoot_improved_part1");
-            Path left_pick_shoot_improved_part2 = new Path("left_pick_shoot_improved_part2");
             return Commands.sequence(
                     cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(new Rotation2d(-Math.PI/2))),
-                    //cont.mSuperstructure.shootAutomated().withTimeout(2),
-                    pathBuilder.build(left_pick_shoot_improved_part2),
-                    //cont.mSuperstructure.pathWhileIntaking("left_pick_shoot_improved_part2"),
-                    //pathBuilder.build(left_pick_shoot_improved_part2),
+                    //cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(2),
+                    pathBuilder.build(left_pick_shoot_improved_part1),
+                    //pathBuilder.build(left_pick_shoot_improved_part1),
                     cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(10)
+                    );
+        });
+
+        choreoChooser.addCmd("left_pick_shoot_improved_2xMiddle", () -> {
+            final var idle = new SwerveRequest.Idle();
+
+            var pathBuilder = cont.drivetrain.getPathBuilder();
+            Path left_pick_shoot_improved_part1 = new Path("left_pick_shoot_improved_part1");
+            return Commands.sequence(
+                    cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(new Rotation2d(-Math.PI/2))),
+                    //cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(2),
+                    pathBuilder.build(left_pick_shoot_improved_part1),
+                    //pathBuilder.build(left_pick_shoot_improved_part1),
+                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(5),
+                    cont.mSuperstructure.pathWhileIntaking("uTurn_right_part2"),
+                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(5)
                     );
         });
 
@@ -227,23 +243,25 @@ public final class Autonomous {
             Path right_pick_shoot_improved_part1 = new Path("right_pick_shoot_improved_part1");
             Path right_pick_shoot_improved_part2 = new Path("right_pick_shoot_improved_part2");
             Path right_pick_shoot_improved_part3 = new Path("right_pick_shoot_improved_part3");
-            Path right_pick_shoot_improved_part4 = new Path("right_pick_shoot_improved_part4");
+            Path right_pick_shoot_improved_part11 = new Path("right_pick_shoot_improved_part11");
             return Commands.sequence(
                     cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(Rotation2d.kZero)),
-                    cont.mSuperstructure.shootAutomated().withTimeout(2),
-                    pathBuilder.build(right_pick_shoot_improved_part1),
-                    pathBuilder.build(right_pick_shoot_improved_part2),
+                    //cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(2),
+                    //pathBuilder.build(right_pick_shoot_improved_part1),
+                    //pathBuilder.build(right_pick_shoot_improved_part2),
+                    //pathBuilder.build(right_pick_shoot_improved_part11),
+                    cont.mSuperstructure.pathWhileIntaking("right_pick_shoot_improved_part11"),
                     //cont.mSuperstructure.pathWhileIntaking("right_pick_shoot_improved_part2"),
-                    cont.mSuperstructure.shootAutomated().withTimeout(2),
-                    pathBuilder.build(right_pick_shoot_improved_part3),
-                    //cont.mSuperstructure.pathWhileIntaking("right_pick_shoot_improved_part3"),
-                    pathBuilder.build(right_pick_shoot_improved_part4),
-                    cont.mSuperstructure.shootAutomated().withTimeout(2)
+                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(5),
+                    //pathBuilder.build(right_pick_shoot_improved_part3),
+                    cont.mSuperstructure.pathWhileIntaking("right_pick_shoot_improved_part3"),
+                    //pathBuilder.build(right_pick_shoot_improved_part4),
+                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(5)
                     
                     );
         });
 
-
+        /* 
         choreoChooser.addCmd("rightPickShoot", () -> {
             final var idle = new SwerveRequest.Idle();
 
@@ -255,7 +273,7 @@ public final class Autonomous {
                     pathBuilder.build(rightPickShoot_part1),
                     cont.mSuperstructure.pathWhileIntaking("rightPickShoot_part2"),
                     pathBuilder.build(rightPickShoot_part3),
-                    cont.mSuperstructure.shootAutomated());
+                    cont.mSuperstructure.driveTargetLockAutonomous());
         });
 
         choreoChooser.addCmd("leftPickShoot", () -> {
@@ -269,8 +287,9 @@ public final class Autonomous {
                     pathBuilder.build(leftPickShoot_part1),
                     cont.mSuperstructure.pathWhileIntaking("leftPickShoot_part2"),
                     pathBuilder.build(leftPickShoot_part3),
-                    cont.mSuperstructure.shootAutomated());
-        });
+                    cont.mSuperstructure.driveTargetLockAutonomous());
+        }); 
+        */
 
         return choreoChooser;
     }
