@@ -1131,7 +1131,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      * Helper for initializing rotation lock -- sets the desired target based on current pose
      */
     private void initTargetLock() {
-        snapToHeading = getRotationToHub();
+        boolean isAtHome = isAtHome();
+        snapToHeading = isAtHome ? getRotationToHub() : new Rotation2d(Math.PI/2);
         Logger.recordOutput("Drivetrain/snapToHeading", snapToHeading);
         setState(WantedState.ROTATION_LOCK);
     }

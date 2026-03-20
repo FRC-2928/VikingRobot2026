@@ -70,10 +70,13 @@ public class Shooter extends SubsystemBase {
     }
 
     public void aim() {
-        var metersToHub = RobotContainer.getInstance().drivetrain.getDistanceFromHub().in(Units.Meters);
-        lastMetersToHub = metersToHub;
-        AimValues val = Constants.Shooter.lookUpTable.get(metersToHub);
-        Logger.recordOutput("Shooter/AimValueMetersToHub", metersToHub);
+        var drivetrain = RobotContainer.getInstance().drivetrain;
+        boolean isAtHome = drivetrain.isAtHome();
+        var metersToTarget = isAtHome ? drivetrain.getDistanceFromHub().in(Units.Meters) : drivetrain.getDistanceFromHome().in(Units.Meters);
+        lastMetersToHub = metersToTarget;  // TODO: lastMetersToHub is likely unused, remove
+        AimValues val = isAtHome ?
+             Constants.Shooter.lookUpTable.get(metersToTarget) : Constants.Shooter.lookUpTableShootHome.get(metersToTarget);
+        Logger.recordOutput("Shooter/AimValueMetersToTarget", metersToTarget);
         if (val != null) {
             Logger.recordOutput("Shooter/AimValueHoodAngleDegrees", val.hoodAngle.in(Units.Degrees));
             Logger.recordOutput("Shooter/AimValueFlywheelSpeedsRPS", val.shooterVelocity.in(Units.RotationsPerSecond));
