@@ -3,7 +3,6 @@ package frc.robot.subsystems;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
-import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.HardwareLimitSwitchConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
@@ -14,7 +13,6 @@ import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.ForwardLimitTypeValue;
 import com.ctre.phoenix6.signals.ForwardLimitValue;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -154,11 +152,6 @@ public class IntakeIOReal implements IntakeIO {
                 .withHardwareLimitSwitch(hardwareLimitSwitchConfigs)
                 .withSlot0(retractSlot0Configs)
                 .withSlot1(extendSlot1Configs);
-
-        intakeExpansionConfig.withFeedback(new FeedbackConfigs()
-            .withFeedbackRemoteSensorID(0)
-            .withFeedbackSensorSource(FeedbackSensorSourceValue.RemoteCANcoder)
-            .withSensorToMechanismRatio(Constants.Intake.INTAKE_RACK_GEARING));  
 
         intakeExpansionMotor.getConfigurator().apply(intakeExpansionConfig); // apply the config settings
 
