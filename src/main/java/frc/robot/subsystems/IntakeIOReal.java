@@ -229,7 +229,7 @@ public class IntakeIOReal implements IntakeIO {
 
     @Override
     public void extendForward(){
-        intakeExpansionMotor.setControl(new VoltageOut(Units.Volts.of(12)));
+        intakeExpansionMotor.setControl(new VoltageOut(Units.Volts.of(4)));
     }
 
     @Override
