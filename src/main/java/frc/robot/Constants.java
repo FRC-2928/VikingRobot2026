@@ -359,7 +359,7 @@ public class Constants {
         public static final Distance INTAKE_FORWARD_DISTANCE_LIMIT = Units.Inches.of(2.20);
         public static final Distance INTAKE_RETRACTION_LIMIT = Units.Inches.of(0.818);  // TODO: figure out this value
         private static final Distance GEAR_DIAMETER = Units.Inches.of(1.5);
-        private static final double INTAKE_RACK_GEARING = 2.5;
+        public static final double INTAKE_RACK_GEARING = 2.5;
         public static final double DISTANCE_CONVERSION_RATIO = (Math.PI * GEAR_DIAMETER.in(Units.Inches)) / INTAKE_RACK_GEARING;
         public static final double INTAKE_ROLLER_GEARING = 1.0;
         public enum IntakeStates {
