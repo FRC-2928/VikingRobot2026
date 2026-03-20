@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
@@ -122,9 +123,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public Field2d fieldLog = new Field2d();
 
     // TODO: move this to constants
-    private final double hubX = 4.625594;
-    private final double hubY = 8.07 / 2;
-    private final double hubXOffset = 7.2898;
+    private final Distance hubX = Meters.of(4.625594);
+    private final Distance hubY = Meters.of(8.07 / 2);
+    private final Distance hubXOffset = Meters.of(7.2898);
+    private final Distance hubYWidth = Inches.of(58.41);
 
     private final Distance homeX = Units.Inches.of(182.11/2);
     private final Distance homeXOffset = Units.Inches.of(651.22-182.11);
@@ -398,6 +400,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         Logger.recordOutput("Drivetrain/LimelightLeftHasTags",  limelightLeft.hasValidTargets());
         Logger.recordOutput("Drivetrain/distanceFromHome", getDistanceFromHome());
 
+        Logger.recordOutput("Drivetrain/isAtOtherAlliance", isAtOtherAllianceHome());
+        Logger.recordOutput("Drivetrain/isInlineWithHub", isInlineWithHubY());
+
         /*
          * Periodically try to apply the operator perspective.S
          * If we haven't applied the operator perspective before, then we should apply it regardless of DS state.
@@ -540,6 +545,29 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 return false;
         }
     }
+
+    public boolean isAtOtherAllianceHome() {
+        double xCoordinateInInches = mCurrentSwerveState.Pose.getMeasureX().in(Units.Inches);
+        Optional<Alliance> alliance = DriverStation.getAlliance();
+        if(alliance.isEmpty()){
+            return false;
+        }
+        switch (alliance.get()) {
+            case Blue:
+                return xCoordinateInInches > (651.22 - 183);
+            case Red:
+                return xCoordinateInInches < 183.0;
+            default:
+                return false;
+        }
+    }
+
+    public boolean isInlineWithHubY(){
+        if(mCurrentSwerveState.Pose.getMeasureY().gte(hubY.minus(hubYWidth.div(2)))){
+            return mCurrentSwerveState.Pose.getMeasureY().minus(hubY).lte(hubYWidth.div(2));
+        } 
+        return false;
+    }   
 
     public ChassisSpeeds centerLimelight(Pose2d targetPose) {
         Pose2d robotPose = this.getCurrentPose2D();
@@ -875,10 +903,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         }
     }
 
-    public double getHubX() {
+    public Distance getHubX() {
         var alliance = DriverStation.getAlliance();
         if (!alliance.isEmpty() && alliance.get() == Alliance.Red) {
-            return hubXOffset + hubX;
+            return hubXOffset.plus(hubX);
         } else {
             return hubX;
         }
@@ -955,8 +983,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         //                 (hubY - computedShooterPose.getMeasureY().in(Units.Meters)),
         //                 (getHubX() - computedShooterPose.getMeasureX().in(Units.Meters))))
         var angleToHub = Units.Radians.of(Math.atan2(
-                        (hubY - mCurrentSwerveState.Pose.getMeasureY().in(Units.Meters)),
-                        (getHubX() - mCurrentSwerveState.Pose.getMeasureX().in(Units.Meters))))
+                        (hubY.in(Units.Meters) - mCurrentSwerveState.Pose.getMeasureY().in(Units.Meters)),
+                        (getHubX().in(Units.Meters) - mCurrentSwerveState.Pose.getMeasureX().in(Units.Meters))))
                 .plus(offset);
         Logger.recordOutput("Drivetrain/AngleToHub/AngleToHub", angleToHub);
         angleToHub = applyAllianceRotation(angleToHub);
@@ -966,8 +994,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     public Distance getDistanceFromHub() {
         return Units.Meters.of(Math.hypot(
-            (getHubX() - mCurrentSwerveState.Pose.getMeasureX().in(Units.Meters)),
-            (hubY - mCurrentSwerveState.Pose.getMeasureY().in(Units.Meters))));
+            (getHubX().in(Units.Meters) - mCurrentSwerveState.Pose.getMeasureX().in(Units.Meters)),
+            (hubY.in(Units.Meters) - mCurrentSwerveState.Pose.getMeasureY().in(Units.Meters))));
     }
 
     public Distance getDistanceFromHome() {
@@ -1114,6 +1142,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      */
     private boolean isAtTargetHeading() {
         Rotation2d backToBlueOrigin = new Rotation2d(invertAllianceRotation(snapToHeading.getMeasure()));
+        if(isAtOtherAllianceHome() && isInlineWithHubY()){
+            return false;
+        }
         // Rotation2d rotationalError = mCurrentSwerveState.Pose.getRotation().minus(snapToHeading);
         Rotation2d rotationalError = mCurrentSwerveState.Pose.getRotation().minus(backToBlueOrigin);
         // TODO: determine appropriate thresholds
