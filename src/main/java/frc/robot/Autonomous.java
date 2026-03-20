@@ -103,7 +103,7 @@ public final class Autonomous {
                             RobotContainer.getInstance().intake.setWantedState(Intake.WantedState.STOP);
                         }))
                     );
-
+        /* 
         choreoChooser.addCmd("emptyPreLoad_rightPickShoot", () -> {
             final var idle = new SwerveRequest.Idle();
 
@@ -125,6 +125,7 @@ public final class Autonomous {
             
             return new SequentialCommandGroup(shootPreLoad, rightPickShoot);
         });
+        */
 
         choreoChooser.addCmd("middlePickShoot", () -> {
             final var idle = new SwerveRequest.Idle();
@@ -149,10 +150,8 @@ public final class Autonomous {
                     cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(Rotation2d.kZero)),
                     cont.mSuperstructure.pathWhileIntaking("bl_comp_par1"),
                     pathBuilder.build(bl_comp_part2),
-                    cont.mSuperstructure.prepareShooter().withTimeout(2),
-                    new InstantCommand(() -> cont.mSuperstructure.requestShootOverride()),
-                    new WaitCommand(10),
-                    new InstantCommand(() -> cont.mSuperstructure.clearOverrideCommand()));
+                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(8)
+            );
         });
 
         choreoChooser.addCmd("uTurn_right", () -> {
@@ -214,7 +213,8 @@ public final class Autonomous {
             return Commands.sequence(
                     cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(new Rotation2d(-Math.PI/2))),
                     //cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(2),
-                    pathBuilder.build(left_pick_shoot_improved_part1),
+                    //pathBuilder.build(left_pick_shoot_improved_part1),
+                    cont.mSuperstructure.pathWhileIntaking("left_pick_shoot_improved_part1"),
                     //pathBuilder.build(left_pick_shoot_improved_part1),
                     cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(10)
                     );
@@ -228,8 +228,8 @@ public final class Autonomous {
             return Commands.sequence(
                     cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(new Rotation2d(-Math.PI/2))),
                     //cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(2),
-                    pathBuilder.build(left_pick_shoot_improved_part1),
                     //pathBuilder.build(left_pick_shoot_improved_part1),
+                    cont.mSuperstructure.pathWhileIntaking("left_pick_shoot_improved_part1"),
                     cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(5),
                     cont.mSuperstructure.pathWhileIntaking("uTurn_right_part2"),
                     cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(5)
