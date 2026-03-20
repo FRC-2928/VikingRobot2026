@@ -104,7 +104,7 @@ public class ShooterIOReal implements ShooterIO {
                     .withKV(0.122);
         final Slot0Configs hoodSlot0Config =
                 new Slot0Configs()
-                    .withKP(50)
+                    .withKP(100)
                     .withKI(10)
                     .withKS(0.3)
                     .withKV(0.25);
