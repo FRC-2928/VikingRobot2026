@@ -362,7 +362,7 @@ public class Superstructure extends SubsystemBase {
     
     private Command driveTargetLock() {
         return new ParallelCommandGroup(
-                mRobotContainer.drivetrain.targetLock(),
+                mRobotContainer.drivetrain.targetLock(false /* runEndlessly */),
                 prepareShooter())
             .andThen(startShooting());
     }
@@ -391,7 +391,7 @@ public class Superstructure extends SubsystemBase {
                     mRobotContainer.shooter.shoot();
                 },
                 mRobotContainer.shooter)
-            .alongWith(mRobotContainer.drivetrain.brake())
+            .alongWith(mRobotContainer.drivetrain.targetLock(true /* runEndlessly */))
             .alongWith(mRobotContainer.hopperFloor.runHopperCommand())
             .alongWith(mRobotContainer.indexer.runIndexerCommand());
     }

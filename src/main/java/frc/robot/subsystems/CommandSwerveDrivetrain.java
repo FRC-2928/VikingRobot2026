@@ -33,7 +33,6 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.units.Unit;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
@@ -1107,17 +1106,17 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      *
      * @return A command to operate the drivetrain in target lock mode
      */
-    public Command targetLock() {
+    public Command targetLock(boolean runEndlessly) {
         return new FunctionalCommand(
             this::initTargetLock,
             this::initTargetLock /* empty execute block; already covered by subsystem periodic */,
             (interrupted) -> {} /* TODO: should probably set brake mode, or no-op depending on interrupt... */,
-            this::isAtTargetHeading,
+            () -> { return runEndlessly ? false : isAtTargetHeading(); },
             this
         );
     }
 
-    public Command targetLockEndlCommand() {
+    public Command targetLockEndlessCommand() {
         return new FunctionalCommand(
             () -> {},
             this::initTargetLock /* empty execute block; already covered by subsystem periodic */,
