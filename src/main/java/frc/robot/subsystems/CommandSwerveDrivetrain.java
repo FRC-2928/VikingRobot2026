@@ -86,6 +86,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         ROTATION_LOCK,
         DRIVE_TO_POINT,
         INTAKE_GROUND,
+        INTAKE_DRIVE,
         IDLE,
         BRAKE
     }
@@ -97,6 +98,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         ROTATION_LOCK,
         DRIVE_TO_POINT,
         INTAKE_GROUND,
+        INTAKE_DRIVE,
         IDLE,
         BRAKE
     }
@@ -485,6 +487,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             case DRIVE_TO_POINT -> SystemState.DRIVE_TO_POINT;
             case BRAKE -> SystemState.BRAKE;
             case INTAKE_GROUND -> SystemState.INTAKE_GROUND;
+            case INTAKE_DRIVE -> SystemState.INTAKE_DRIVE;
             default -> SystemState.IDLE;
         };
     }
@@ -518,6 +521,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 break;
             case INTAKE_GROUND:
                 intakeGround(1);
+                break;
+            case INTAKE_DRIVE:
+                applyIntakeDrive();
                 break;
             case BRAKE:
                 this.setControl(brake);
@@ -1029,6 +1035,34 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 this.limelightLeft.getTargetHorizontalOffset().in(Units.Degrees), 0);
         Logger.recordOutput("Drivetrain/auto/SpeedYIntakeGround", output);
         return output;
+    }
+
+    /**
+     * Applies the intake drive mode: translates freely based on driver joystick input while
+     * automatically rotating the robot to face the direction of travel.
+     * When there is no translation input, the robot holds its current heading.
+     */
+    private void applyIntakeDrive() {
+        ChassisSpeeds speeds = calculateSpeedsBasedOnJoystickInputs(RobotContainer.getInstance().driverOI);
+
+        double vx = speeds.vxMetersPerSecond;
+        double vy = speeds.vyMetersPerSecond;
+        double translationMagnitude = Math.hypot(vx, vy);
+
+        // Only update the snap heading when the driver is actually commanding translation.
+        // This prevents the robot from spinning when the stick is released.
+        if (translationMagnitude > maxSpeed * TRANSLATION_DEADBAND) {
+            // atan2 gives the field-relative angle of the velocity vector.
+            // The intake faces forward on the robot, so we point the robot in the direction of travel.
+            snapToHeading = new Rotation2d(Math.atan2(vy, vx));
+            Logger.recordOutput("Drivetrain/IntakeDrive/SnapToHeading", snapToHeading);
+        }
+
+        Logger.recordOutput("Drivetrain/IntakeDrive/TranslationMagnitude", translationMagnitude);
+        this.setControl(driveAndPoint
+                .withVelocityX(vx)
+                .withVelocityY(vy)
+                .withTargetDirection(snapToHeading));
     }
     // spotless: on
 
