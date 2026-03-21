@@ -31,7 +31,7 @@ public final class Tuning {
     /// Tune empirically: drive straight forward, observe drift direction, negate the sign.
     /// Typical range: 0.001 to 0.005 rad/s per m/s
     public static final LoggedNetworkNumber translationalRotationCoupling =
-            new LoggedNetworkNumber("Tuning/TranslationalRotationCoupling", 0.0);
+            new LoggedNetworkNumber("Tuning/TranslationalRotationCoupling", 0.003);
     public static final LoggedNetworkNumber shootSpeakerPivotThreshold =
             new LoggedNetworkNumber("Tuning/ShootSpeakerPivotThreshold", 1.25);
     public static final LoggedNetworkNumber shootSpeakerExponent =
