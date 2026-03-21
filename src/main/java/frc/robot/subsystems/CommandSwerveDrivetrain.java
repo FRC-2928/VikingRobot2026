@@ -623,16 +623,30 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         double yVelocity = (isRedAlliance ? -yMagnitude * maxSpeed : yMagnitude * maxSpeed);
         double angularVelocity = angularMagnitude * maxAngularRate;
 
+        Rotation2d currentRotation = mCurrentSwerveState.Pose.getRotation();
+
         // Feedforward correction for translational-rotational coupling drift.
-        // The robot drifts rotationally when translating due to CoM offset or module asymmetry.
-        // This applies a small counter-rotation proportional to forward velocity to cancel it.
-        // Tune Tuning/TranslationalRotationCoupling: positive if robot drifts CCW when driving forward, negative if CW.
-        angularVelocity += -xVelocity * frc.robot.Tuning.translationalRotationCoupling.get();
+        //
+        // The robot has a semi-stable axis at -45 degrees in robot frame: when the direction of
+        // travel aligns with this axis, drift is near zero. This indicates the CoM is offset along
+        // that diagonal, so the torque-generating velocity component is the one *perpendicular* to
+        // the stable axis.
+        //
+        // For a stable axis at -45 deg, the perpendicular component is:
+        //   v_perp = -(vx_robot + vy_robot) * sin(45°) = -(vx_robot + vy_robot) * (√2/2)
+        //
+        // We convert field-relative velocities back to robot-relative to compute this correctly,
+        // then scale by the tunable coupling constant.
+        //
+        // Tune Tuning/TranslationalRotationCoupling: start at 0, drive forward, adjust sign/magnitude
+        // until drift is neutral. Typical range: 0.001–0.005 rad/s per m/s.
+        ChassisSpeeds fieldSpeeds = new ChassisSpeeds(xVelocity, yVelocity, 0);
+        ChassisSpeeds robotSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, currentRotation);
+        double vPerpToStableAxis = -(robotSpeeds.vxMetersPerSecond + robotSpeeds.vyMetersPerSecond) * (Math.sqrt(2.0) / 2.0);
+        angularVelocity += vPerpToStableAxis * frc.robot.Tuning.translationalRotationCoupling.get();
 
         Rotation2d skewCompensationFactor =
                 Rotation2d.fromRadians(mCurrentSwerveState.Speeds.omegaRadiansPerSecond * SKEW_COMPENSATION_SCALAR);
-
-        Rotation2d currentRotation = mCurrentSwerveState.Pose.getRotation();
         // TODO: do this in a helper
         return ChassisSpeeds.fromRobotRelativeSpeeds(
                 ChassisSpeeds.fromFieldRelativeSpeeds(
