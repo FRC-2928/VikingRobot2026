@@ -108,8 +108,8 @@ public class IntakeIOReal implements IntakeIO {
 
         final TalonFXConfiguration intakeExpansionConfig = new TalonFXConfiguration();
         CurrentLimitsConfigs intakeExpansionCurrentLimitsConfigs = new CurrentLimitsConfigs()
-                .withStatorCurrentLimit(Units.Amps.of(100))
-                .withSupplyCurrentLimit(Units.Amps.of(60))
+                .withStatorCurrentLimit(Units.Amps.of(60))
+                .withSupplyCurrentLimit(Units.Amps.of(30))
                 .withStatorCurrentLimitEnable(true)
                 .withSupplyCurrentLimitEnable(true);
 
@@ -132,7 +132,8 @@ public class IntakeIOReal implements IntakeIO {
             .SoftwareLimitSwitch
             .withForwardSoftLimitEnable(true)
             .withForwardSoftLimitThreshold(Constants.Intake.INTAKE_FORWARD_SOFT_LIMIT)  // safety mechanism, in case switches fail
-            .withReverseSoftLimitEnable(false);  // no reverse limit since there's a physical hard stop
+            .withReverseSoftLimitEnable(true) // no reverse limit since there's a physical hard stop
+            .withReverseSoftLimitThreshold(Constants.Intake.INTAKE_RETRACTION_SOFT_LIMIT);
 
         intakeExpansionConfig.Feedback.
             withSensorToMechanismRatio(Constants.Intake.DISTANCE_CONVERSION_RATIO);
@@ -223,6 +224,11 @@ public class IntakeIOReal implements IntakeIO {
     @Override
     public void extendForward(){
         intakeExpansionMotor.setControl(new VoltageOut(Units.Volts.of(4)));
+    }
+
+    @Override
+    public void retract() {
+        intakeExpansionMotor.setControl(new VoltageOut(Units.Volts.of(-4)));
     }
 
     @Override

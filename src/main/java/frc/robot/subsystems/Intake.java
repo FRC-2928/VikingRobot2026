@@ -19,7 +19,8 @@ public class Intake extends SubsystemBase {
         EXTEND,
         EXTEND_AND_RUN,
         RETRACT,
-        REVERSE_ROLLER
+        REVERSE_ROLLER,
+        RETRACT_AND_STOP
     }
 
     public enum SystemState {
@@ -28,7 +29,8 @@ public class Intake extends SubsystemBase {
         EXTEND,
         EXTEND_AND_RUN,
         RETRACT,
-        REVERSE_ROLLER
+        REVERSE_ROLLER,
+        RETRACT_AND_STOP
     }
 
     public Intake() {
@@ -38,8 +40,8 @@ public class Intake extends SubsystemBase {
 
     public void retract() {
         // TODO: use this when the intake is fixed to be able to retract fully
-        // intakeIO.retract();
-        intakeIO.moveToPosition(Constants.Intake.INTAKE_RETRACTION_LIMIT);
+        intakeIO.retract();
+        // intakeIO.moveToPosition(Constants.Intake.INTAKE_RETRACTION_LIMIT);
     }
 
     public void extend() {
@@ -75,9 +77,7 @@ public class Intake extends SubsystemBase {
     private boolean checkRetracted() {
         // Rotations value is actually inches because of configured gear ratio
         // TODO: Find acutal retracted value
-        // boolean isRetracted = intakeInputs.expansionMotorAngle.lte(Units.Inches.of(0));
-        // return isRetracted;
-        return false;
+        return intakeInputs.isIntakeHomed;
     }
 
     public void setWantedState(WantedState state) {
@@ -105,6 +105,13 @@ public class Intake extends SubsystemBase {
                 yield SystemState.EXTEND_AND_RUN;
             }
             case RETRACT -> {
+                yield SystemState.RETRACT;
+            }
+            case RETRACT_AND_STOP -> {
+                if(intakeInputs.isIntakeHomed){
+                    yield SystemState.STOP;
+                }
+
                 yield SystemState.RETRACT;
             }
             case REVERSE_ROLLER -> {
@@ -147,6 +154,7 @@ public class Intake extends SubsystemBase {
         Logger.recordOutput("Intake/Intakevelocity", this.intakeInputs.intakeAngularVelocity);
         Logger.recordOutput("Intake/position", this.intakeInputs.intakePosition);
         Logger.recordOutput("Intake/RackVelocity", this.intakeInputs.intakeRackSpeed);
+        Logger.recordOutput("Intake/isIntakeHomedSwitch", intakeInputs.isIntakeHomed);
         this.intakeIO.updateInputs(this.intakeInputs);
         Logger.processInputs("Intake", this.intakeInputs);
 

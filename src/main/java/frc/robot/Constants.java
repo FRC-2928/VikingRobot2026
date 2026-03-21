@@ -354,10 +354,11 @@ public class Constants {
             throw new IllegalCallerException("Dont Call this (Constants.Intake)");
         }
 
-        public static final Angle INTAKE_FORWARD_SOFT_LIMIT = Units.Rotations.of(19.00);
+        public static final Angle INTAKE_FORWARD_SOFT_LIMIT = Units.Rotations.of(20.00);
         public static final Angle INTAKE_FORWARD_HARD_LIMIT = Units.Rotations.of(2.35);
         public static final Distance INTAKE_FORWARD_DISTANCE_LIMIT = Units.Inches.of(2.20);
         public static final Distance INTAKE_RETRACTION_LIMIT = Units.Inches.of(0.818);  // TODO: figure out this value
+        public static final Angle INTAKE_RETRACTION_SOFT_LIMIT = Units.Rotations.of(0.25);
         private static final Distance GEAR_DIAMETER = Units.Inches.of(2.0);
         private static final double INTAKE_RACK_GEARING = 25/3.0;
         public static final double DISTANCE_CONVERSION_RATIO = (Math.PI * GEAR_DIAMETER.in(Units.Inches)) / INTAKE_RACK_GEARING;
