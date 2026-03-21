@@ -378,22 +378,22 @@ public class ShooterIOReal implements ShooterIO {
 
     @Override
     public void nudgeAngleUp() {
-        this.angleNudgeDegrees += 2.0; // Degrees
+        this.angleNudgeDegrees += 0.5; // Degrees
     }
 
     @Override
     public void nudgeAngleDown() {
-        this.angleNudgeDegrees -= 2.0; // Degrees
+        this.angleNudgeDegrees -= 0.5; // Degrees
     }
 
     @Override
     public void nudgeSpeedUp() {
-        this.speedNudgeRPS += 2.0;
+        this.speedNudgeRPS += 0.5;
     }
 
     @Override
     public void nudgeSpeedDown() {
-        this.speedNudgeRPS -= 2.0;
+        this.speedNudgeRPS -= 0.5;
     }
 
     @Override
