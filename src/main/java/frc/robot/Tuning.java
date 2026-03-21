@@ -35,7 +35,7 @@ public final class Tuning {
     public static final LoggedNetworkNumber shootSpeakerPivotThreshold =
             new LoggedNetworkNumber("Tuning/ShootSpeakerPivotThreshold", 1.25);
     public static final LoggedNetworkNumber shootSpeakerExponent =
-            new LoggedNetworkNumber("Tuning/ShootSpeakerExponent", 1);
+            new LoggedNetworkNumber("Tuning/ShootSpeakerExponent", 1);  
 
     public static final LoggedNetworkNumber releaseVelocity = new LoggedNetworkNumber(
             "Tuning/releaseVelocity", Constants.Shooter.releaseVelocity.in(Units.InchesPerSecond));
