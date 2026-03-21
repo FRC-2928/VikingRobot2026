@@ -1,5 +1,7 @@
 package frc.robot.oi;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
@@ -76,7 +78,8 @@ public class DriverOI extends BaseOI {
         // normally this would be a deadlock... we should seek to avoid such patterns...
         // this comes from a circular chain of getInstance -> init -> configureControls() -> getInstance()...
         var cont = RobotContainer.getInstance();
-        this.resetFOD.onTrue(new InstantCommand(cont.drivetrain::zeroAngle));
+        // this.resetFOD.onTrue(new InstantCommand(cont.drivetrain::zeroAngle));
+        this.resetFOD.onTrue(new InstantCommand(() -> Logger.recordOutput("DriverOI/ResetFodPressed", true)));
         // this.resetAngle.onTrue(cont.drivetrain.runOnce(cont.drivetrain::zeroAngle));
         this.reseedLimeLights
             .onTrue(new InstantCommand(
