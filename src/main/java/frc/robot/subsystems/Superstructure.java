@@ -54,6 +54,7 @@ public class Superstructure extends SubsystemBase {
 
     public enum OverrideIntent {
         OVERRIDE_SHOOT_MODE,
+        OVERRIDE_SHOOT_AT_POSITION,
         OVERRIDE_INTAKE_MODE,
         OVERRIDE_INTAKE_SHOOT_MODE,
         OVERRIDE_NONE
@@ -72,7 +73,8 @@ public class Superstructure extends SubsystemBase {
         MID_FIELD,
         GET_READY_CLIMB,
         UNJAM,
-        SHOOT_HOME
+        SHOOT_HOME,
+        SHOOT_AT_POSITION
     }
 
     // --------------------- Class Members ---------------------
@@ -104,7 +106,8 @@ public class Superstructure extends SubsystemBase {
     private enum StateOverrides {
         OVERRIDE_SHOOTING,    // bit 0
         OVERRIDE_INTAKING,    // bit 1
-        OVERRIDE_INTAKE_SHOOT // bit 2 
+        OVERRIDE_INTAKE_SHOOT, // bit 2 
+        OVERRIDE_SHOOT_AT_POSITION // bit 3
         // ... future overrides would be bit 2, 3, etc.
     }
 
@@ -166,6 +169,7 @@ public class Superstructure extends SubsystemBase {
         initState(RobotState.INTAKE_DRIVE, intakeDrive());
         initState(RobotState.RETRACT_INTAKE, retractIntake());
         initState(RobotState.SHOOTING, startShootingOverride());
+        initState(RobotState.SHOOT_AT_POSITION, fixedPositionShootingOverride());
         initState(RobotState.SHOOT_HOME, shootTowardsHome());
 
         transitionFunctions = new HashMap<>();
@@ -179,6 +183,7 @@ public class Superstructure extends SubsystemBase {
         transitionFunctions.put(RobotState.FREE_DRIVE, this::checkTransitionFromFreeDrive);
         transitionFunctions.put(RobotState.DRIVE_TARGET_LOCK, this::checkTransitionFromTargetLock);
         transitionFunctions.put(RobotState.SHOOTING, this::checkTransitionFromShooting);
+        transitionFunctions.put(RobotState.SHOOT_HOME, this::checkTransitionFromShootingAtPosition);
         transitionFunctions.put(RobotState.MANUAL_INTAKE, this::checkManualIntakeTransition);
         transitionFunctions.put(RobotState.AUTO_INTAKE, this::checkTransitionFromAutoIntake);
         transitionFunctions.put(RobotState.INTAKE_DRIVE, this::checkTransitionFromIntakeDrive);
@@ -218,6 +223,10 @@ public class Superstructure extends SubsystemBase {
      */
     public Command requestShootOverride() {
         return new InstantCommand(() -> requestOverride(OverrideIntent.OVERRIDE_SHOOT_MODE), this);
+    }
+
+    public Command requestShootAtPosition() {
+        return new InstantCommand(() -> requestOverride(OverrideIntent.OVERRIDE_SHOOT_AT_POSITION), this);
     }
 
     /**
@@ -272,6 +281,10 @@ public class Superstructure extends SubsystemBase {
                 currentState = RobotState.SHOOTING; // transition directly into shooting mode
                 Logger.recordOutput("Superstructure/OverrideState", "SHOOTING");
                 break;
+            }
+            case OVERRIDE_SHOOT_AT_POSITION: {
+                mActiveOverrides.add(StateOverrides.OVERRIDE_SHOOTING);
+                currentState = RobotState.SHOOT_AT_POSITION;
             }
             case OVERRIDE_INTAKE_MODE:
                 break;
@@ -395,10 +408,16 @@ public class Superstructure extends SubsystemBase {
                 mRobotContainer.shooter)
             .alongWith(mRobotContainer.drivetrain.targetLock(true /* runEndlessly */))
             .alongWith(mRobotContainer.hopperFloor.runHopperCommand())
-            .alongWith(mRobotContainer.indexer.runIndexerCommand());
+            .alongWith(mRobotContainer.indexer.runIndexerCommand())
+            .finallyDo(() -> {mRobotContainer.shooter.home();});
     }
 
     public Command startShootingOverride() {
+        // TODO: also retract when shooting
+        return startShooting();
+    }
+
+    public Command fixedPositionShootingOverride() {
         // TODO: also retract when shooting
         return mRobotContainer.shooter.shootOverrideCommand()
             .alongWith(mRobotContainer.drivetrain.brake())
@@ -518,6 +537,12 @@ public class Superstructure extends SubsystemBase {
     }
 
     private void checkTransitionFromShooting() {
+        // Override has been cleared - state already restored by requestOverride()
+        // This function handles any other transitions out of shooting if needed
+        // For now, shooting state is only exited via override cancellation
+    }
+
+    private void checkTransitionFromShootingAtPosition() {
         // Override has been cleared - state already restored by requestOverride()
         // This function handles any other transitions out of shooting if needed
         // For now, shooting state is only exited via override cancellation

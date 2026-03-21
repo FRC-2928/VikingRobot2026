@@ -20,6 +20,7 @@ public class DriverOI extends BaseOI {
     private final Trigger toggleRotationLockedMode;
     /// Trigger to handle shoot override
     private final Trigger shootOverride;
+    private final Trigger shootAtPosition;
 
     public final Trigger shoot;
 
@@ -49,6 +50,7 @@ public class DriverOI extends BaseOI {
 
         this.mSuperstructure = superstructure;
         this.shootOverride = this.controller.rightTrigger();
+        this.shootAtPosition = this.controller.povDown();
         this.shoot = this.controller.b();
         // left bumper toggles into/out of rotation locked mode
         this.toggleRotationLockedMode = this.controller.leftBumper();
@@ -88,6 +90,9 @@ public class DriverOI extends BaseOI {
                         new PrintCommand("Target Lock Trigger")
             ));
         this.shootOverride
+            .onTrue(mSuperstructure.requestShootOverride())
+            .onFalse(mSuperstructure.clearOverrideCommand());
+        this.shootAtPosition
             .onTrue(mSuperstructure.requestShootOverride())
             .onFalse(mSuperstructure.clearOverrideCommand());
         this.manualIntake
