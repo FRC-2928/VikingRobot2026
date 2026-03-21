@@ -1068,7 +1068,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         if (translationMagnitude > maxSpeed * TRANSLATION_DEADBAND) {
             // atan2 gives the field-relative angle of the velocity vector.
             // The intake faces forward on the robot, so we point the robot in the direction of travel.
-            snapToHeading = new Rotation2d(Math.atan2(vy, vx));
+            snapToHeading = new Rotation2d(Math.atan2(vx, vy));
             Logger.recordOutput("Drivetrain/IntakeDrive/SnapToHeading", snapToHeading);
         }
 
