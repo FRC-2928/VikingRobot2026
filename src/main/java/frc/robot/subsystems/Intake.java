@@ -56,7 +56,7 @@ public class Intake extends SubsystemBase {
     }
 
     public void run() {
-        intakeIO.setState(IntakeStates.FORWARD);
+        intakeIO.setState(IntakeStates.FORWARD_PID);
     }
 
     // public Command extendAndRun() {

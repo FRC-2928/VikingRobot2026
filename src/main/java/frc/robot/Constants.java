@@ -366,7 +366,9 @@ public class Constants {
         public enum IntakeStates {
             FORWARD(0.4),
             REVERSE(-0.4),
-            OFF(0);
+            OFF(0),
+            FORWARD_PID(40);
+            //RPS
 
             private double mSpeed;
             private IntakeStates(double speed) {
