@@ -181,11 +181,44 @@ public final class Autonomous {
                     cont.mSuperstructure.pathWhileIntaking("uTurn_right_part1"),
                     new InstantCommand(() -> cont.intake.setWantedState(WantedState.STOP)),
                     cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(3),
+                    new InstantCommand(() -> cont.intake.setWantedState(WantedState.RETRACT)),
+                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(3),
                     //pathBuilder.build(uTurn_right_part2),
+                    new InstantCommand(() -> cont.intake.setWantedState(WantedState.EXTEND_AND_RUN)),
                     cont.mSuperstructure.pathWhileIntaking("uTurn_right_part2"),
+                    new InstantCommand(() -> cont.intake.setWantedState(WantedState.STOP)),
                     cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(3),
                     new InstantCommand(() -> cont.intake.setWantedState(WantedState.RETRACT)),
                     cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(5)
+
+            );
+        });
+
+        choreoChooser.addCmd("uTurn_right_2X_noMiddle", () -> {
+            final var idle = new SwerveRequest.Idle();
+            var pathBuilder = cont.drivetrain.getPathBuilder();
+            Path uTurn_right_part1 = new Path("uTurn_right_part1");
+            Path uTurn_right_part2 = new Path("uTurn_right_part2");
+
+
+            return Commands.sequence(
+                    cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(Rotation2d.kZero)),
+                    new InstantCommand(() -> cont.intake.setWantedState(WantedState.EXTEND_AND_RUN)),
+                    //cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(3),
+                    //pathBuilder.build(uTurn_right_part1),
+                    cont.mSuperstructure.pathWhileIntaking("uTurn_right_part1"),
+                    new InstantCommand(() -> cont.intake.setWantedState(WantedState.STOP)),
+                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(3),
+                    new InstantCommand(() -> cont.intake.setWantedState(WantedState.RETRACT)),
+                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(3),
+                    //pathBuilder.build(uTurn_right_part2),
+                    new InstantCommand(() -> cont.intake.setWantedState(WantedState.EXTEND_AND_RUN)),
+                    cont.mSuperstructure.pathWhileIntaking("left_pick_shoot_improved_part2"),
+                    new InstantCommand(() -> cont.intake.setWantedState(WantedState.STOP)),
+                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(3),
+                    new InstantCommand(() -> cont.intake.setWantedState(WantedState.RETRACT)),
+                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(5)
+
             );
         });
 
@@ -200,6 +233,30 @@ public final class Autonomous {
                     //cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(3),
                     cont.mSuperstructure.pathWhileIntaking("uTurn_left_part1"),
                     //pathBuilder.build(uTurn_left_part1),
+                    new InstantCommand(() -> cont.intake.setWantedState(WantedState.STOP)),
+                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(3),
+                    new InstantCommand(() -> cont.intake.setWantedState(WantedState.RETRACT)),
+                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(5)
+
+            );
+        });
+
+        choreoChooser.addCmd("uTurn_left_2X", () -> {
+            final var idle = new SwerveRequest.Idle();
+            var pathBuilder = cont.drivetrain.getPathBuilder();
+            Path uTurn_left_part1 = new Path("uTurn_left_part1");
+
+            return Commands.sequence(
+                    cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(new Rotation2d(-Math.PI/2))),
+                    new InstantCommand(() -> cont.intake.setWantedState(WantedState.EXTEND_AND_RUN)),
+                    //cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(3),
+                    cont.mSuperstructure.pathWhileIntaking("uTurn_left_part1"),
+                    //pathBuilder.build(uTurn_left_part1),
+                    new InstantCommand(() -> cont.intake.setWantedState(WantedState.STOP)),
+                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(3),
+                    new InstantCommand(() -> cont.intake.setWantedState(WantedState.RETRACT)),
+                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(5),
+                    cont.mSuperstructure.pathWhileIntaking("right_pick_shoot_improved_part3"),
                     new InstantCommand(() -> cont.intake.setWantedState(WantedState.STOP)),
                     cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(3),
                     new InstantCommand(() -> cont.intake.setWantedState(WantedState.RETRACT)),
@@ -249,6 +306,30 @@ public final class Autonomous {
                     );
         });
 
+        choreoChooser.addCmd("left_pick_shoot_improved_2x_noMiddle", () -> {
+            final var idle = new SwerveRequest.Idle();
+
+            var pathBuilder = cont.drivetrain.getPathBuilder();
+            Path left_pick_shoot_improved_part1 = new Path("left_pick_shoot_improved_part1");
+            return Commands.sequence(
+                    cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(new Rotation2d(-Math.PI/2))),
+                    new InstantCommand(() -> cont.intake.setWantedState(WantedState.EXTEND_AND_RUN)),
+                    //cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(2),
+                    //pathBuilder.build(left_pick_shoot_improved_part1),
+                    cont.mSuperstructure.pathWhileIntaking("left_pick_shoot_improved_part1"),
+                    new InstantCommand(() -> cont.intake.setWantedState(WantedState.STOP)),
+                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(3),
+                    new InstantCommand(() -> cont.intake.setWantedState(WantedState.RETRACT)),
+                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(3),
+                    new InstantCommand(() -> cont.intake.setWantedState(WantedState.EXTEND_AND_RUN)),
+                    cont.mSuperstructure.pathWhileIntaking("left_pick_shoot_improved_part2"),
+                    new InstantCommand(() -> cont.intake.setWantedState(WantedState.STOP)),
+                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(3),
+                    new InstantCommand(() -> cont.intake.setWantedState(WantedState.RETRACT)),
+                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(5)
+                    );
+        });
+
         choreoChooser.addCmd("left_pick_shoot_improved_2xMiddle", () -> {
             final var idle = new SwerveRequest.Idle();
 
@@ -261,9 +342,14 @@ public final class Autonomous {
                     //pathBuilder.build(left_pick_shoot_improved_part1),
                     cont.mSuperstructure.pathWhileIntaking("left_pick_shoot_improved_part1"),
                     new InstantCommand(() -> cont.intake.setWantedState(WantedState.STOP)),
-                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(5),
+                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(3),
                     new InstantCommand(() -> cont.intake.setWantedState(WantedState.RETRACT)),
+                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(3),
+                    new InstantCommand(() -> cont.intake.setWantedState(WantedState.EXTEND_AND_RUN)),
                     cont.mSuperstructure.pathWhileIntaking("uTurn_right_part2"),
+                    new InstantCommand(() -> cont.intake.setWantedState(WantedState.STOP)),
+                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(3),
+                    new InstantCommand(() -> cont.intake.setWantedState(WantedState.RETRACT)),
                     cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(5)
                     );
         });
@@ -286,13 +372,17 @@ public final class Autonomous {
                     cont.mSuperstructure.pathWhileIntaking("right_pick_shoot_improved_part11"),
                     //cont.mSuperstructure.pathWhileIntaking("right_pick_shoot_improved_part2"),
                     new InstantCommand(() -> cont.intake.setWantedState(WantedState.STOP)),
-                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(5),
+                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(3),
+                    new InstantCommand(() -> cont.intake.setWantedState(WantedState.RETRACT)),
+                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(3),
                     //pathBuilder.build(right_pick_shoot_improved_part3),
+                    new InstantCommand(() -> cont.intake.setWantedState(WantedState.EXTEND_AND_RUN)),
                     cont.mSuperstructure.pathWhileIntaking("right_pick_shoot_improved_part3"),
                     //pathBuilder.build(right_pick_shoot_improved_part4),
+                    new InstantCommand(() -> cont.intake.setWantedState(WantedState.STOP)),
+                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(3),
                     new InstantCommand(() -> cont.intake.setWantedState(WantedState.RETRACT)),
                     cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(5)
-                    
                     );
         });
 
