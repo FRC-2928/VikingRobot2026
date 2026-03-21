@@ -1057,25 +1057,35 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      * When there is no translation input, the robot holds its current heading.
      */
     private void applyIntakeDrive() {
-        ChassisSpeeds speeds = calculateSpeedsBasedOnJoystickInputs(RobotContainer.getInstance().driverOI);
+        if (DriverStation.getAlliance().isEmpty()) {
+            return;
+        }
 
+        ChassisSpeeds speeds = calculateSpeedsBasedOnJoystickInputs(RobotContainer.getInstance().driverOI);
         double vx = speeds.vxMetersPerSecond;
         double vy = speeds.vyMetersPerSecond;
         double translationMagnitude = Math.hypot(vx, vy);
 
+        // calculateSpeedsBasedOnJoystickInputs alliance-flips vx/vy (negates on red).
+        // FieldCentricFacingAngle applies the operator perspective (180° on red) to both
+        // withVelocityX/Y and withTargetDirection, so passing the already-flipped values
+        // would double-flip translation on red. Un-flip back to blue-origin so the operator
+        // perspective handles the alliance correction consistently for both.
+        boolean isRed = DriverStation.getAlliance().get() == Alliance.Red;
+        double blueVx = isRed ? -vx : vx;
+        double blueVy = isRed ? -vy : vy;
+
         // Only update the snap heading when the driver is actually commanding translation.
         // This prevents the robot from spinning when the stick is released.
         if (translationMagnitude > maxSpeed * TRANSLATION_DEADBAND) {
-            // atan2 gives the field-relative angle of the velocity vector.
-            // The intake faces forward on the robot, so we point the robot in the direction of travel.
-            snapToHeading = new Rotation2d(Math.atan2(vx, vy));
+            snapToHeading = new Rotation2d(Math.atan2(blueVy, blueVx));
             Logger.recordOutput("Drivetrain/IntakeDrive/SnapToHeading", snapToHeading);
         }
 
         Logger.recordOutput("Drivetrain/IntakeDrive/TranslationMagnitude", translationMagnitude);
         this.setControl(driveAndPoint
-                .withVelocityX(vx)
-                .withVelocityY(vy)
+                .withVelocityX(blueVx)
+                .withVelocityY(blueVy)
                 .withTargetDirection(snapToHeading));
     }
     // spotless: on
