@@ -22,9 +22,7 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.Constants;
 import frc.robot.RobotContainer;
-import frc.robot.commands.Intake.ExtendAndRunIntake;
 import frc.robot.subsystems.Intake.WantedState;
 
 public class Superstructure extends SubsystemBase {
@@ -34,6 +32,7 @@ public class Superstructure extends SubsystemBase {
         ACTION_SHOOT_OVERRIDE,
         ACTION_INTAKE_MANUAL,
         ACTION_INTAKE_AUTO,
+        ACTION_INTAKE_DRIVE,
         ACTION_SHOOT_HOME,
         ACTION_SHOOT_HUB,
         ACTION_INTAKE_RETRACT,
@@ -68,6 +67,7 @@ public class Superstructure extends SubsystemBase {
         SHOOTING,
         MANUAL_INTAKE,
         AUTO_INTAKE,
+        INTAKE_DRIVE,
         RETRACT_INTAKE,
         MID_FIELD,
         GET_READY_CLIMB,
@@ -163,6 +163,7 @@ public class Superstructure extends SubsystemBase {
         initState(RobotState.DRIVE_TARGET_LOCK, driveTargetLock());
         initState(RobotState.MANUAL_INTAKE, extendAndIntake());
         initState(RobotState.AUTO_INTAKE, autoIntake());
+        initState(RobotState.INTAKE_DRIVE, intakeDrive());
         initState(RobotState.RETRACT_INTAKE, retractIntake());
         initState(RobotState.SHOOTING, startShootingOverride());
         initState(RobotState.SHOOT_HOME, shootTowardsHome());
@@ -180,6 +181,7 @@ public class Superstructure extends SubsystemBase {
         transitionFunctions.put(RobotState.SHOOTING, this::checkTransitionFromShooting);
         transitionFunctions.put(RobotState.MANUAL_INTAKE, this::checkManualIntakeTransition);
         transitionFunctions.put(RobotState.AUTO_INTAKE, this::checkTransitionFromAutoIntake);
+        transitionFunctions.put(RobotState.INTAKE_DRIVE, this::checkTransitionFromIntakeDrive);
         transitionFunctions.put(RobotState.RETRACT_INTAKE, this::checkTransitionFromRetractIntake);
         transitionFunctions.put(RobotState.GET_READY_CLIMB, this::checkTransitionFromClimber);
     }
@@ -436,6 +438,18 @@ public class Superstructure extends SubsystemBase {
         }, mRobotContainer.drivetrain);
     }
 
+    /**
+     * Intake drive: runs the intake while pointing the robot in the direction the driver is
+     * commanding. The drivetrain INTAKE_DRIVE mode owns snapToHeading for the duration of this
+     * state, so we must not enter DRIVE_TARGET_LOCK simultaneously (guarded by transition logic).
+     */
+    public Command intakeDrive() {
+        return new RunCommand(() -> {
+            mRobotContainer.drivetrain.setState(CommandSwerveDrivetrain.WantedState.INTAKE_DRIVE);
+            mRobotContainer.intake.setWantedState(Intake.WantedState.EXTEND_AND_RUN);
+        }, mRobotContainer.drivetrain, mRobotContainer.intake);
+    }
+
     public Command pathWhileIntaking(String pathFileName) {
         return new ParallelDeadlineGroup(mRobotContainer.drivetrain.runPath(pathFileName), this.extendAndIntake())
                 .finallyDo(() -> {
@@ -475,6 +489,8 @@ public class Superstructure extends SubsystemBase {
     private void checkTransitionFromFreeDrive() {
         if (mTargetLockRequested) {
             currentState = RobotState.DRIVE_TARGET_LOCK;
+        } else if (StateIntent.ACTION_INTAKE_DRIVE.getIsInteded()) {
+            currentState = RobotState.INTAKE_DRIVE;
         } else if (StateIntent.ACTION_INTAKE_AUTO.getIsInteded()) {
             currentState = RobotState.AUTO_INTAKE;
         }
@@ -519,6 +535,23 @@ public class Superstructure extends SubsystemBase {
 
     private void checkTransitionFromAutoIntake() {
         if (!StateIntent.ACTION_INTAKE_AUTO.getIsInteded()) {
+            currentState = RobotState.FREE_DRIVE;
+        }
+    }
+
+    private void checkTransitionFromIntakeDrive() {
+        // INTAKE_DRIVE and DRIVE_TARGET_LOCK both use snapToHeading via driveAndPoint.
+        // If target lock is requested while intaking, we exit intake drive first so that
+        // initTargetLock() can safely re-initialize snapToHeading without a stale value.
+        if (mTargetLockRequested) {
+            StateIntent.ACTION_INTAKE_DRIVE.setIsIntended(false);
+            mRobotContainer.drivetrain.setState(CommandSwerveDrivetrain.WantedState.TELEOP_DRIVE);
+            currentState = RobotState.DRIVE_TARGET_LOCK;
+            return;
+        }
+        if (!StateIntent.ACTION_INTAKE_DRIVE.getIsInteded()) {
+            mRobotContainer.intake.setWantedState(Intake.WantedState.STOP);
+            mRobotContainer.drivetrain.setState(CommandSwerveDrivetrain.WantedState.TELEOP_DRIVE);
             currentState = RobotState.FREE_DRIVE;
         }
     }
