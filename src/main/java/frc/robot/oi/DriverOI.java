@@ -108,7 +108,7 @@ public class DriverOI extends BaseOI {
 
         this.retractIntake
             .onTrue(
-                new InstantCommand(() -> cont.intake.setWantedState(Intake.WantedState.RETRACT), cont.intake))
+                new InstantCommand(() -> cont.intake.setWantedState(Intake.WantedState.RETRACT_AND_RUN_ROLLER), cont.intake))
             .onFalse(
                 new InstantCommand(() -> cont.intake.setWantedState(Intake.WantedState.STOP))
             );
