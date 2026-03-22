@@ -33,9 +33,9 @@ public interface IntakeIO {
 
     public default void stopMotion() {}
 
-    public default void extendForward() {}
+    public default void extendForward(boolean ignoreSoftLimits) {}
 
-    public default void retract() {}
+    public default void retract(boolean ignoreSoftLimits) {}
 
     public default void updateInputs(IntakeInputs intakeInputs) {}
 

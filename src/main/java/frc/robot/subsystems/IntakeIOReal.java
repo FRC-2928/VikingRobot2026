@@ -237,13 +237,13 @@ public class IntakeIOReal implements IntakeIO {
     }
 
     @Override
-    public void extendForward(){
-        intakeExpansionMotor.setControl(new VoltageOut(Units.Volts.of(4)));
+    public void extendForward(boolean ignoreSoftLimits){
+        intakeExpansionMotor.setControl(new VoltageOut(Units.Volts.of(4)).withIgnoreSoftwareLimits(ignoreSoftLimits));
     }
 
     @Override
-    public void retract() {
-        intakeExpansionMotor.setControl(new VoltageOut(Units.Volts.of(-4)));
+    public void retract(boolean ignoreSoftLimits) {
+        intakeExpansionMotor.setControl(new VoltageOut(Units.Volts.of(-4)).withIgnoreSoftwareLimits(ignoreSoftLimits));
     }
 
     @Override

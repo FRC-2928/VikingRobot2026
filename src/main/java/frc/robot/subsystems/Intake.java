@@ -21,7 +21,9 @@ public class Intake extends SubsystemBase {
         RETRACT,
         RETRACT_AND_RUN_ROLLER,
         REVERSE_ROLLER,
-        RETRACT_AND_STOP
+        RETRACT_AND_STOP,
+        EXTEND_IGNORE_LIMITS,
+        RETRACT_IGNORE_LIMITS
     }
 
     public enum SystemState {
@@ -32,7 +34,9 @@ public class Intake extends SubsystemBase {
         RETRACT,
         REVERSE_ROLLER,
         RETRACT_AND_RUN_ROLLER,
-        RETRACT_AND_STOP
+        RETRACT_AND_STOP,
+        EXTEND_IGNORE_LIMITS,
+        RETRACT_IGNORE_LIMITS
     }
 
     public Intake() {
@@ -42,15 +46,28 @@ public class Intake extends SubsystemBase {
 
     public void retract() {
         // TODO: use this when the intake is fixed to be able to retract fully
-        intakeIO.retract();
+        intakeIO.retract(false);
         // intakeIO.moveToPosition(Constants.Intake.INTAKE_RETRACTION_LIMIT);
     }
 
     public void extend() {
         // intakeIO.moveToPosition(Constants.Intake.INTAKE_FORWARD_DISTANCE_LIMIT);
-        intakeIO.extendForward();
+        intakeIO.extendForward(false);
         // return new InstantCommand(() -> intakeIO.moveToPosition(Constants.Intake.INTAKE_FORWARD_DISTANCE_LIMIT), this);
     }
+
+    public void retractIgnoreLimit() {
+        // TODO: use this when the intake is fixed to be able to retract fully
+        intakeIO.retract(true);
+        // intakeIO.moveToPosition(Constants.Intake.INTAKE_RETRACTION_LIMIT);
+    }
+
+    public void extendIgnoreLimit() {
+        // intakeIO.moveToPosition(Constants.Intake.INTAKE_FORWARD_DISTANCE_LIMIT);
+        intakeIO.extendForward(true);
+        // return new InstantCommand(() -> intakeIO.moveToPosition(Constants.Intake.INTAKE_FORWARD_DISTANCE_LIMIT), this);
+    }
+
 
     public void extendAndRun() {
         extend();
@@ -120,6 +137,8 @@ public class Intake extends SubsystemBase {
                 yield SystemState.REVERSE_ROLLER;
             }
             case RETRACT_AND_RUN_ROLLER -> SystemState.RETRACT_AND_RUN_ROLLER;
+            case EXTEND_IGNORE_LIMITS -> SystemState.EXTEND_IGNORE_LIMITS;
+            case RETRACT_IGNORE_LIMITS -> SystemState.RETRACT_IGNORE_LIMITS;
             default -> SystemState.STOP;
         };
     }
@@ -150,6 +169,12 @@ public class Intake extends SubsystemBase {
             case RETRACT_AND_RUN_ROLLER:
                 retract();
                 run();
+                break;
+            case EXTEND_IGNORE_LIMITS:
+                extendIgnoreLimit();
+                break;
+            case RETRACT_IGNORE_LIMITS:
+                retractIgnoreLimit();
                 break;
         }
     }
