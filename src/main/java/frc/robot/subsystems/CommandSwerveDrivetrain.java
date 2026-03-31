@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
@@ -32,7 +33,6 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.units.Unit;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
@@ -86,6 +86,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         ROTATION_LOCK,
         DRIVE_TO_POINT,
         INTAKE_GROUND,
+        INTAKE_DRIVE,
         IDLE,
         BRAKE
     }
@@ -97,6 +98,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         ROTATION_LOCK,
         DRIVE_TO_POINT,
         INTAKE_GROUND,
+        INTAKE_DRIVE,
         IDLE,
         BRAKE
     }
@@ -122,9 +124,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public Field2d fieldLog = new Field2d();
 
     // TODO: move this to constants
-    private final double hubX = 4.625594;
-    private final double hubY = 8.07 / 2;
-    private final double hubXOffset = 7.2898;
+    private final Distance hubX = Meters.of(4.625594);
+    private final Distance hubY = Meters.of(8.07 / 2);
+    private final Distance hubXOffset = Meters.of(7.2898);
+    private final Distance hubYWidth = Inches.of(58.41);
 
     private final Distance homeX = Units.Inches.of(182.11/2);
     private final Distance homeXOffset = Units.Inches.of(651.22-182.11);
@@ -398,6 +401,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         Logger.recordOutput("Drivetrain/LimelightLeftHasTags",  limelightLeft.hasValidTargets());
         Logger.recordOutput("Drivetrain/distanceFromHome", getDistanceFromHome());
 
+        Logger.recordOutput("Drivetrain/isAtOtherAlliance", isAtOtherAllianceHome());
+        Logger.recordOutput("Drivetrain/isInlineWithHub", isInlineWithHubY());
+
         /*
          * Periodically try to apply the operator perspective.S
          * If we haven't applied the operator perspective before, then we should apply it regardless of DS state.
@@ -481,6 +487,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             case DRIVE_TO_POINT -> SystemState.DRIVE_TO_POINT;
             case BRAKE -> SystemState.BRAKE;
             case INTAKE_GROUND -> SystemState.INTAKE_GROUND;
+            case INTAKE_DRIVE -> SystemState.INTAKE_DRIVE;
             default -> SystemState.IDLE;
         };
     }
@@ -515,6 +522,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             case INTAKE_GROUND:
                 intakeGround(1);
                 break;
+            case INTAKE_DRIVE:
+                applyIntakeDrive();
+                break;
             case BRAKE:
                 this.setControl(brake);
                 break;
@@ -540,6 +550,29 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 return false;
         }
     }
+
+    public boolean isAtOtherAllianceHome() {
+        double xCoordinateInInches = mCurrentSwerveState.Pose.getMeasureX().in(Units.Inches);
+        Optional<Alliance> alliance = DriverStation.getAlliance();
+        if(alliance.isEmpty()){
+            return false;
+        }
+        switch (alliance.get()) {
+            case Blue:
+                return xCoordinateInInches > (651.22 - 183);
+            case Red:
+                return xCoordinateInInches < 183.0;
+            default:
+                return false;
+        }
+    }
+
+    public boolean isInlineWithHubY(){
+        if(mCurrentSwerveState.Pose.getMeasureY().gte(hubY.minus(hubYWidth.div(2)))){
+            return mCurrentSwerveState.Pose.getMeasureY().minus(hubY).lte(hubYWidth.div(2));
+        } 
+        return false;
+    }   
 
     public ChassisSpeeds centerLimelight(Pose2d targetPose) {
         Pose2d robotPose = this.getCurrentPose2D();
@@ -590,16 +623,30 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         double yVelocity = (isRedAlliance ? -yMagnitude * maxSpeed : yMagnitude * maxSpeed);
         double angularVelocity = angularMagnitude * maxAngularRate;
 
+        Rotation2d currentRotation = mCurrentSwerveState.Pose.getRotation();
+
         // Feedforward correction for translational-rotational coupling drift.
-        // The robot drifts rotationally when translating due to CoM offset or module asymmetry.
-        // This applies a small counter-rotation proportional to forward velocity to cancel it.
-        // Tune Tuning/TranslationalRotationCoupling: positive if robot drifts CCW when driving forward, negative if CW.
-        angularVelocity += -xVelocity * frc.robot.Tuning.translationalRotationCoupling.get();
+        //
+        // The robot has a semi-stable axis at -45 degrees in robot frame: when the direction of
+        // travel aligns with this axis, drift is near zero. This indicates the CoM is offset along
+        // that diagonal, so the torque-generating velocity component is the one *perpendicular* to
+        // the stable axis.
+        //
+        // For a stable axis at -45 deg, the perpendicular component is:
+        //   v_perp = -(vx_robot + vy_robot) * sin(45°) = -(vx_robot + vy_robot) * (√2/2)
+        //
+        // We convert field-relative velocities back to robot-relative to compute this correctly,
+        // then scale by the tunable coupling constant.
+        //
+        // Tune Tuning/TranslationalRotationCoupling: start at 0, drive forward, adjust sign/magnitude
+        // until drift is neutral. Typical range: 0.001–0.005 rad/s per m/s.
+        ChassisSpeeds fieldSpeeds = new ChassisSpeeds(xVelocity, yVelocity, 0);
+        ChassisSpeeds robotSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, currentRotation);
+        double vPerpToStableAxis = -(robotSpeeds.vxMetersPerSecond + robotSpeeds.vyMetersPerSecond) * (Math.sqrt(2.0) / 2.0);
+        angularVelocity += vPerpToStableAxis * frc.robot.Tuning.translationalRotationCoupling.get();
 
         Rotation2d skewCompensationFactor =
                 Rotation2d.fromRadians(mCurrentSwerveState.Speeds.omegaRadiansPerSecond * SKEW_COMPENSATION_SCALAR);
-
-        Rotation2d currentRotation = mCurrentSwerveState.Pose.getRotation();
         // TODO: do this in a helper
         return ChassisSpeeds.fromRobotRelativeSpeeds(
                 ChassisSpeeds.fromFieldRelativeSpeeds(
@@ -875,10 +922,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         }
     }
 
-    public double getHubX() {
+    public Distance getHubX() {
         var alliance = DriverStation.getAlliance();
         if (!alliance.isEmpty() && alliance.get() == Alliance.Red) {
-            return hubXOffset + hubX;
+            return hubXOffset.plus(hubX);
         } else {
             return hubX;
         }
@@ -955,8 +1002,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         //                 (hubY - computedShooterPose.getMeasureY().in(Units.Meters)),
         //                 (getHubX() - computedShooterPose.getMeasureX().in(Units.Meters))))
         var angleToHub = Units.Radians.of(Math.atan2(
-                        (hubY - mCurrentSwerveState.Pose.getMeasureY().in(Units.Meters)),
-                        (getHubX() - mCurrentSwerveState.Pose.getMeasureX().in(Units.Meters))))
+                        (hubY.in(Units.Meters) - mCurrentSwerveState.Pose.getMeasureY().in(Units.Meters)),
+                        (getHubX().in(Units.Meters) - mCurrentSwerveState.Pose.getMeasureX().in(Units.Meters))))
                 .plus(offset);
         Logger.recordOutput("Drivetrain/AngleToHub/AngleToHub", angleToHub);
         angleToHub = applyAllianceRotation(angleToHub);
@@ -966,8 +1013,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     public Distance getDistanceFromHub() {
         return Units.Meters.of(Math.hypot(
-            (getHubX() - mCurrentSwerveState.Pose.getMeasureX().in(Units.Meters)),
-            (hubY - mCurrentSwerveState.Pose.getMeasureY().in(Units.Meters))));
+            (getHubX().in(Units.Meters) - mCurrentSwerveState.Pose.getMeasureX().in(Units.Meters)),
+            (hubY.in(Units.Meters) - mCurrentSwerveState.Pose.getMeasureY().in(Units.Meters))));
     }
 
     public Distance getDistanceFromHome() {
@@ -1002,6 +1049,44 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 this.limelightLeft.getTargetHorizontalOffset().in(Units.Degrees), 0);
         Logger.recordOutput("Drivetrain/auto/SpeedYIntakeGround", output);
         return output;
+    }
+
+    /**
+     * Applies the intake drive mode: translates freely based on driver joystick input while
+     * automatically rotating the robot to face the direction of travel.
+     * When there is no translation input, the robot holds its current heading.
+     */
+    private void applyIntakeDrive() {
+        if (DriverStation.getAlliance().isEmpty()) {
+            return;
+        }
+
+        ChassisSpeeds speeds = calculateSpeedsBasedOnJoystickInputs(RobotContainer.getInstance().driverOI);
+        double vx = speeds.vxMetersPerSecond;
+        double vy = speeds.vyMetersPerSecond;
+        double translationMagnitude = Math.hypot(vx, vy);
+
+        // calculateSpeedsBasedOnJoystickInputs alliance-flips vx/vy (negates on red).
+        // FieldCentricFacingAngle applies the operator perspective (180° on red) to both
+        // withVelocityX/Y and withTargetDirection, so passing the already-flipped values
+        // would double-flip translation on red. Un-flip back to blue-origin so the operator
+        // perspective handles the alliance correction consistently for both.
+        boolean isRed = DriverStation.getAlliance().get() == Alliance.Red;
+        double blueVx = isRed ? -vx : vx;
+        double blueVy = isRed ? -vy : vy;
+
+        // Only update the snap heading when the driver is actually commanding translation.
+        // This prevents the robot from spinning when the stick is released.
+        if (translationMagnitude > maxSpeed * TRANSLATION_DEADBAND) {
+            snapToHeading = new Rotation2d(Math.atan2(blueVy, blueVx));
+            Logger.recordOutput("Drivetrain/IntakeDrive/SnapToHeading", snapToHeading);
+        }
+
+        Logger.recordOutput("Drivetrain/IntakeDrive/TranslationMagnitude", translationMagnitude);
+        this.setControl(driveAndPoint
+                .withVelocityX(blueVx)
+                .withVelocityY(blueVy)
+                .withTargetDirection(snapToHeading));
     }
     // spotless: on
 
@@ -1079,17 +1164,17 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      *
      * @return A command to operate the drivetrain in target lock mode
      */
-    public Command targetLock() {
+    public Command targetLock(boolean runEndlessly) {
         return new FunctionalCommand(
             this::initTargetLock,
             this::initTargetLock /* empty execute block; already covered by subsystem periodic */,
             (interrupted) -> {} /* TODO: should probably set brake mode, or no-op depending on interrupt... */,
-            this::isAtTargetHeading,
+            () -> { return runEndlessly ? false : isAtTargetHeading(); },
             this
         );
     }
 
-    public Command targetLockEndlCommand() {
+    public Command targetLockEndlessCommand() {
         return new FunctionalCommand(
             () -> {},
             this::initTargetLock /* empty execute block; already covered by subsystem periodic */,
@@ -1103,7 +1188,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      * Helper for initializing rotation lock -- sets the desired target based on current pose
      */
     private void initTargetLock() {
-        snapToHeading = getRotationToHub();
+        boolean isAtHome = isAtHome();
+        snapToHeading = isAtHome ? getRotationToHub() : new Rotation2d(Math.PI/2);
         Logger.recordOutput("Drivetrain/snapToHeading", snapToHeading);
         setState(WantedState.ROTATION_LOCK);
     }
@@ -1114,6 +1200,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      */
     private boolean isAtTargetHeading() {
         Rotation2d backToBlueOrigin = new Rotation2d(invertAllianceRotation(snapToHeading.getMeasure()));
+        if(isAtOtherAllianceHome() && isInlineWithHubY()){
+            return false;
+        }
         // Rotation2d rotationalError = mCurrentSwerveState.Pose.getRotation().minus(snapToHeading);
         Rotation2d rotationalError = mCurrentSwerveState.Pose.getRotation().minus(backToBlueOrigin);
         // TODO: determine appropriate thresholds

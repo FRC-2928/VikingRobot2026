@@ -3,7 +3,6 @@ package frc.robot.subsystems;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -71,10 +70,13 @@ public class Shooter extends SubsystemBase {
     }
 
     public void aim() {
-        var metersToHub = RobotContainer.getInstance().drivetrain.getDistanceFromHub().in(Units.Meters);
-        lastMetersToHub = metersToHub;
-        AimValues val = Constants.Shooter.lookUpTable.get(metersToHub);
-        Logger.recordOutput("Shooter/AimValueMetersToHub", metersToHub);
+        var drivetrain = RobotContainer.getInstance().drivetrain;
+        boolean isAtHome = drivetrain.isAtHome();
+        var metersToTarget = isAtHome ? drivetrain.getDistanceFromHub().in(Units.Meters) : drivetrain.getDistanceFromHome().in(Units.Meters);
+        lastMetersToHub = metersToTarget;  // TODO: lastMetersToHub is likely unused, remove
+        AimValues val = isAtHome ?
+             Constants.Shooter.lookUpTable.get(metersToTarget) : Constants.Shooter.lookUpTableShootHome.get(metersToTarget);
+        Logger.recordOutput("Shooter/AimValueMetersToTarget", metersToTarget);
         if (val != null) {
             Logger.recordOutput("Shooter/AimValueHoodAngleDegrees", val.hoodAngle.in(Units.Degrees));
             Logger.recordOutput("Shooter/AimValueFlywheelSpeedsRPS", val.shooterVelocity.in(Units.RotationsPerSecond));
@@ -200,10 +202,10 @@ public class Shooter extends SubsystemBase {
         );
     }
 
-    public Command aimAtHome() {
+    public Command aimAtHomeCommand() {
         return new FunctionalCommand(
-            this::aimAtHome,
-            () -> {},
+            this::aimHome,
+            this::aimHome,
             (interrupted) -> {
                 if (interrupted) {
                     home();  // TODO: probably don't want to do this, because interrupt could come from override

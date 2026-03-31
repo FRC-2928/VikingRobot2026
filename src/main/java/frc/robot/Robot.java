@@ -118,6 +118,7 @@ public class Robot extends LoggedRobot {
             CommandScheduler.getInstance().cancel(mAutonomousCommand);
         }
 
+        mRobotContainer.drivetrain.setState(CommandSwerveDrivetrain.WantedState.TELEOP_DRIVE);
         mRobotContainer.setTeleopStartTime();
         matchRecorder.teleopInit();
     }

@@ -1,5 +1,7 @@
 package frc.robot.oi;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
@@ -20,6 +22,7 @@ public class DriverOI extends BaseOI {
     private final Trigger toggleRotationLockedMode;
     /// Trigger to handle shoot override
     private final Trigger shootOverride;
+    private final Trigger shootAtPosition;
 
     public final Trigger shoot;
 
@@ -33,7 +36,7 @@ public class DriverOI extends BaseOI {
     public final Trigger lockWheels;
 
     public final Trigger resetFOD;
-    public final Trigger resetAngle;
+    public final Trigger reseedLimeLights;
 
     // public final Trigger autoIntake;
     public final Trigger manualIntake;
@@ -49,6 +52,7 @@ public class DriverOI extends BaseOI {
 
         this.mSuperstructure = superstructure;
         this.shootOverride = this.controller.rightTrigger();
+        this.shootAtPosition = this.controller.povDown();
         this.shoot = this.controller.b();
         // left bumper toggles into/out of rotation locked mode
         this.toggleRotationLockedMode = this.controller.leftBumper();
@@ -59,7 +63,7 @@ public class DriverOI extends BaseOI {
         this.retractIntake = this.controller.povRight();
 
         this.resetFOD = this.controller.y();
-        this.resetAngle = this.controller.a();
+        this.reseedLimeLights = this.controller.a();
         this.lockWheels = this.controller.x();
         this.unjam = this.controller.povLeft();
         this.climbTrigger = this.controller.povUp();
@@ -74,9 +78,10 @@ public class DriverOI extends BaseOI {
         // normally this would be a deadlock... we should seek to avoid such patterns...
         // this comes from a circular chain of getInstance -> init -> configureControls() -> getInstance()...
         var cont = RobotContainer.getInstance();
-        this.resetFOD.onTrue(new InstantCommand(cont.drivetrain::resetAngle));
+        // this.resetFOD.onTrue(new InstantCommand(cont.drivetrain::zeroAngle));
+        this.resetFOD.onTrue(new InstantCommand(() -> Logger.recordOutput("DriverOI/ResetFodPressed", true)));
         // this.resetAngle.onTrue(cont.drivetrain.runOnce(cont.drivetrain::zeroAngle));
-        this.resetAngle
+        this.reseedLimeLights
             .onTrue(new InstantCommand(
                 () -> cont.drivetrain.setLimelightIMUModesIntent(Limelight.IMUMode.MODE_1_EXTERNAL_SEED)))
             .onFalse(new InstantCommand(
@@ -90,23 +95,20 @@ public class DriverOI extends BaseOI {
         this.shootOverride
             .onTrue(mSuperstructure.requestShootOverride())
             .onFalse(mSuperstructure.clearOverrideCommand());
+        this.shootAtPosition
+            .onTrue(mSuperstructure.requestShootOverride())
+            .onFalse(mSuperstructure.clearOverrideCommand());
         this.manualIntake
             .onTrue(
-                new InstantCommand(() -> {
-                    cont.intake.setWantedState(Intake.WantedState.EXTEND_AND_RUN);
-                    /*cont.hopperFloor.runReverseHopperCommand();*/
-                }, cont.intake, cont.hopperFloor)
+                mSuperstructure.setIntent(Superstructure.StateIntent.ACTION_INTAKE_DRIVE, true)
             )
             .onFalse(
-                new InstantCommand(() -> {
-                    cont.intake.setWantedState(Intake.WantedState.STOP);
-                    /*cont.hopperFloor.halt();*/
-                }, cont.intake, cont.hopperFloor)
+                mSuperstructure.setIntent(Superstructure.StateIntent.ACTION_INTAKE_DRIVE, false)
             );
 
         this.retractIntake
             .onTrue(
-                new InstantCommand(() -> cont.intake.setWantedState(Intake.WantedState.RETRACT), cont.intake))
+                new InstantCommand(() -> cont.intake.setWantedState(Intake.WantedState.RETRACT_AND_RUN_ROLLER), cont.intake))
             .onFalse(
                 new InstantCommand(() -> cont.intake.setWantedState(Intake.WantedState.STOP))
             );
