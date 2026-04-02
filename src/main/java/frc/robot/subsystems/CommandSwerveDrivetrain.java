@@ -113,6 +113,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private static final double kSimLoopPeriod = 0.004; // 4 ms
     private Notifier m_simNotifier = null;
     private double m_lastSimTime;
+    private double startTime = 0.0;
 
     /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
     private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;
@@ -388,11 +389,16 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     @Override
     public void periodic() {
         // handle state transitions as applicable
+        startTime = Timer.getFPGATimestamp();
         mCurrentState = handleStateTransition();
+        applyStates();
+        Logger.recordOutput("Drivetrain/StateApplicationTime", Timer.getFPGATimestamp() - startTime);
+
         fieldLog.setRobotPose(mCurrentSwerveState.Pose);
         // apply the latest state
-        applyStates();
+        
         mCurrentSwerveState = this.getStateCopy();
+        startTime = Timer.getFPGATimestamp();
         Logger.recordOutput("Drivetrain/currentPose", mCurrentSwerveState.Pose);
         Logger.recordOutput("Drivetrain/currentState", mCurrentState);
         Logger.recordOutput("Drivetrain/DesiredLimelightIMUMode", mDesiredLimelightIMUMode);
@@ -403,6 +409,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
         Logger.recordOutput("Drivetrain/isAtOtherAlliance", isAtOtherAllianceHome());
         Logger.recordOutput("Drivetrain/isInlineWithHub", isInlineWithHubY());
+        
+        Logger.recordOutput("Drivetrain/LoggingTime", Timer.getFPGATimestamp() - startTime);
 
         /*
          * Periodically try to apply the operator perspective.S
@@ -420,7 +428,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 m_hasAppliedOperatorPerspective = true;
             });
         }
-
+        startTime = Timer.getFPGATimestamp();
         applyLimelightIMUMode();
 
         for (Limelight limelight : limelights) {
@@ -439,6 +447,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 }
             }
         }
+        Logger.recordOutput("Drivetrain/LimelightUpdates", Timer.getFPGATimestamp() - startTime);
     }
 
     public boolean isUpdateable(PoseEstimate posEst) {
