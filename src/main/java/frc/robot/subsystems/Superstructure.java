@@ -413,8 +413,14 @@ public class Superstructure extends SubsystemBase {
     }
 
     public Command startShootingOverride() {
-        // TODO: also retract when shooting
-        return startShooting();
+        return new RunCommand(
+                () -> {
+                    mRobotContainer.shooter.shoot();
+                },
+                mRobotContainer.shooter)
+            .alongWith(mRobotContainer.hopperFloor.runHopperCommand())
+            .alongWith(mRobotContainer.indexer.runIndexerCommand())
+            .finallyDo(() -> {mRobotContainer.shooter.home();});
     }
 
     public Command fixedPositionShootingOverride() {
