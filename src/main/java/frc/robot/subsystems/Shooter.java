@@ -257,4 +257,17 @@ public class Shooter extends SubsystemBase {
             this
         );
     }
+
+    //
+    // SHOOT WHILE MOVING
+    //
+    // Get distance vector to hub DV
+    // Loop:
+    //   Calculate time of flight (ToF). DV / (f(RPM) * cos(THETA)) --- RPM and THETA from lookup table based on DV
+    //     |-> Last can be calculated in Lookup bc it uses value from the table. Saves comp power
+    //   ToF can be used to find pos of ROB after ToF. velocity of ROB * ToF
+    //   Subtract ROB pos vector from DV to find correction distance vector CDV
+    //   Use CDV to find new ToF through Lookup -- repeat
+    // Repeat some amount of time - converges to a number
+    // OR -- Repeat until change in CDV is negligable
 }
