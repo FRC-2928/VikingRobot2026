@@ -182,7 +182,7 @@ public final class Autonomous {
                     new InstantCommand(() -> cont.intake.setWantedState(WantedState.STOP)),
                     cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(5),
                     new InstantCommand(() -> cont.intake.setWantedState(WantedState.RETRACT)),
-                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(7),
+                    cont.mSuperstructure.driveTargetLockAutonomous().withTimeout(4),
                     //pathBuilder.build(uTurn_right_part2),
                     new InstantCommand(() -> cont.intake.setWantedState(WantedState.EXTEND_AND_RUN)),
                     cont.mSuperstructure.pathWhileIntaking("uTurn_right_part2"),

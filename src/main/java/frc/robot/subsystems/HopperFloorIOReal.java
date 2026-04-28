@@ -53,10 +53,6 @@ public class HopperFloorIOReal implements HopperFloorIO {
         this.hopper = new TalonFX(Constants.CAN.CTRE.hopper, Constants.CAN.CTRE.bus);
 
         TalonFXConfiguration hopperConfig = new TalonFXConfiguration();
-        CurrentLimitsConfigs currentLimitsConfigs = new CurrentLimitsConfigs();
-        hopperConfig.CurrentLimits = currentLimitsConfigs;
-
-        currentLimitsConfigs.StatorCurrentLimit = 40; // the peak current, in amps
 
         //TODO: actually tune these PID's
         Slot0Configs hopperFloorSlot0Configs = new Slot0Configs();
@@ -73,8 +69,8 @@ public class HopperFloorIOReal implements HopperFloorIO {
         hopperConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         hopperConfig.CurrentLimits.StatorCurrentLimitEnable = true;
 
-        hopperConfig.CurrentLimits.SupplyCurrentLimit = 55.0;
-        hopperConfig.CurrentLimits.StatorCurrentLimit = 120.0;
+        hopperConfig.CurrentLimits.SupplyCurrentLimit = 60.0;
+        hopperConfig.CurrentLimits.StatorCurrentLimit = 100.0;
 
         hopper.getConfigurator().apply(hopperConfig);
 

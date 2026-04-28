@@ -7,16 +7,21 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import org.littletonrobotics.junction.AutoLog;
 import org.littletonrobotics.junction.Logger;
 
+import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
+import com.ctre.phoenix6.swerve.SwerveDrivetrain;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
@@ -31,6 +36,8 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.Units;
@@ -103,6 +110,52 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         BRAKE
     }
 
+    @AutoLog
+    public static class ModuleIOInputs {
+        public double driveSupplyCurrentAmps = 0.0;
+        public double driveStatorCurrentAmps = 0.0;
+        public double driveAppliedVolts = 0.0;
+        public double driveTemperature = 0.0;
+
+        public double steerSupplyCurrentAmps = 0.0;
+        public double steerStatorCurrentAmps = 0.0;
+        public double steerAppliedVolts = 0.0;
+        public double steerTemperature = 0.0;
+    }
+
+    @AutoLog
+    public static class SwerveIOInputs {
+        public Pose2d Pose = new Pose2d();
+        public ChassisSpeeds Speeds = new ChassisSpeeds();
+        public SwerveModuleState[] ModuleStates;
+        public SwerveModuleState[] ModuleTargets;
+        public SwerveModulePosition[] ModulePositions;
+        public Rotation2d RawHeading = new Rotation2d();
+        public double Timestamp;
+        public double OdometryPeriod;
+        public int SuccessfulDaqs;
+        public int FailedDaqs;
+
+        void logState(SwerveDrivetrain.SwerveDriveState state) {
+            this.Pose = state.Pose;
+            this.RawHeading = state.RawHeading;
+            this.ModuleStates = state.ModuleStates;
+            this.ModuleTargets = state.ModuleTargets;
+            this.ModulePositions = state.ModulePositions;
+            this.Speeds = state.Speeds;
+            this.SuccessfulDaqs = state.SuccessfulDaqs;
+            this.FailedDaqs = state.FailedDaqs;
+            this.OdometryPeriod = state.OdometryPeriod;
+            this.Timestamp = state.OdometryPeriod;
+        }
+    }
+
+    final SwerveIOInputsAutoLogged swerveInputs = new SwerveIOInputsAutoLogged();
+    ModuleIOInputsAutoLogged frontLeftInputs = new ModuleIOInputsAutoLogged();
+    ModuleIOInputsAutoLogged frontRightInputs = new ModuleIOInputsAutoLogged();
+    ModuleIOInputsAutoLogged backLeftInputs = new ModuleIOInputsAutoLogged();
+    ModuleIOInputsAutoLogged backRightInputs = new ModuleIOInputsAutoLogged();
+
     /// Current System State
     private SystemState mCurrentState = SystemState.IDLE;
     /// Targeted System State
@@ -121,6 +174,13 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private static final Rotation2d kRedAlliancePerspectiveRotation = Rotation2d.k180deg;
     /* Keep track if we've ever applied the operator perspective before or not */
     private boolean m_hasAppliedOperatorPerspective = false;
+
+    HashMap<String, BaseStatusSignal> frontLeftSignals = new HashMap<>();
+    HashMap<String, BaseStatusSignal> frontRightSignals = new HashMap<>();
+    HashMap<String, BaseStatusSignal> backLeftSignals = new HashMap<>();
+    HashMap<String, BaseStatusSignal> backRightSignals = new HashMap<>();
+
+    Map<Integer, HashMap<String, BaseStatusSignal>> signalsMap = new HashMap<>();
 
     public Field2d fieldLog = new Field2d();
 
@@ -279,6 +339,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             SwerveDrivetrainConstants drivetrainConstants, SwerveModuleConstants<?, ?, ?>... modules) {
         super(drivetrainConstants, modules);
         CommandScheduler.getInstance().registerSubsystem(this);
+        this.getModule(0);
 
         if (Utils.isSimulation()) {
             startSimThread();
@@ -287,10 +348,63 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         pathBuilder = initializeFollowPathBuilder();
         autoFactory = initializeChoreoAutoFactory();
         headingController.enableContinuousInput(-Math.PI, Math.PI);
+        configureSignals();
     }
 
     public FollowPath.Builder getPathBuilder() {
         return pathBuilder;
+    }
+
+    private void configureSignals() {
+        signalsMap.put(0, frontLeftSignals);
+        signalsMap.put(1, frontRightSignals);
+        signalsMap.put(2, backLeftSignals);
+        signalsMap.put(3, backRightSignals);
+
+        for (int i = 0; i < 4; i++) {
+            var driveMotor = this.getModule(i).getDriveMotor();
+            var steerMotor = this.getModule(i).getSteerMotor();
+
+            var moduleMap = signalsMap.get(i);
+
+            moduleMap.put("driveSupplyCurrentAmps", driveMotor.getSupplyCurrent());
+            moduleMap.put("driveStatorCurrentAmps", driveMotor.getStatorCurrent());
+            moduleMap.put("driveAppliedVolts", driveMotor.getMotorVoltage());
+            moduleMap.put("driveTemperature", driveMotor.getDeviceTemp());
+
+            moduleMap.put("steerSupplyCurrentAmps", steerMotor.getSupplyCurrent());
+            moduleMap.put("steerStatorCurrentAmps", steerMotor.getStatorCurrent());
+            moduleMap.put("steerAppliedVolts", steerMotor.getMotorVoltage());
+            moduleMap.put("steerTemperature", steerMotor.getDeviceTemp());
+        }
+    }
+
+    public void updateModuleInputs(ModuleIOInputs... inputs) {
+        refreshData();
+        for (int i = 0; i < 4; i++) {
+            var moduleMap = signalsMap.get(i);
+
+            inputs[i].driveSupplyCurrentAmps =
+                    moduleMap.get("driveSupplyCurrentAmps").getValueAsDouble();
+            inputs[i].driveStatorCurrentAmps =
+                    moduleMap.get("driveStatorCurrentAmps").getValueAsDouble();
+            inputs[i].driveAppliedVolts = moduleMap.get("driveAppliedVolts").getValueAsDouble();
+            inputs[i].driveTemperature = moduleMap.get("driveTemperature").getValueAsDouble();
+
+            inputs[i].steerSupplyCurrentAmps =
+                    moduleMap.get("steerSupplyCurrentAmps").getValueAsDouble();
+            inputs[i].steerStatorCurrentAmps =
+                    moduleMap.get("steerStatorCurrentAmps").getValueAsDouble();
+            inputs[i].steerAppliedVolts = moduleMap.get("steerAppliedVolts").getValueAsDouble();
+            inputs[i].steerTemperature = moduleMap.get("steerTemperature").getValueAsDouble();
+        }
+    }
+
+    public void refreshData() {
+        for (int i = 0; i < 4; i++) {
+            var moduleMap = signalsMap.get(i);
+            BaseStatusSignal.refreshAll(moduleMap.values().toArray(new BaseStatusSignal[] {}));
+        }
     }
 
     /**
@@ -320,6 +434,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         pathBuilder = initializeFollowPathBuilder();
         autoFactory = initializeChoreoAutoFactory();
         headingController.enableContinuousInput(-Math.PI, Math.PI);
+        configureSignals();
     }
 
     /**
@@ -363,6 +478,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         pathBuilder = initializeFollowPathBuilder();
         autoFactory = initializeChoreoAutoFactory();
         headingController.enableContinuousInput(-Math.PI, Math.PI);
+        configureSignals();
     }
 
     // Create a reusable builder with your robot's configuration
@@ -396,7 +512,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
         fieldLog.setRobotPose(mCurrentSwerveState.Pose);
         // apply the latest state
-        
+        applyStates(); 
         mCurrentSwerveState = this.getStateCopy();
         startTime = Timer.getFPGATimestamp();
         Logger.recordOutput("Drivetrain/currentPose", mCurrentSwerveState.Pose);
@@ -411,6 +527,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         Logger.recordOutput("Drivetrain/isInlineWithHub", isInlineWithHubY());
         
         Logger.recordOutput("Drivetrain/LoggingTime", Timer.getFPGATimestamp() - startTime);
+        this.updateModuleInputs(frontLeftInputs, frontRightInputs, backLeftInputs, backRightInputs);
+
+        Logger.processInputs("Subsystems/Drive/Module Data/Front Left", frontLeftInputs);
+        Logger.processInputs("Subsystems/Drive/Module Data/Front Right", frontRightInputs);
+        Logger.processInputs("Subsystems/Drive/Module Data/Back Left", backLeftInputs);
+        Logger.processInputs("Subsystems/Drive/Module Data/Back Right", backRightInputs);
 
         /*
          * Periodically try to apply the operator perspective.S
@@ -519,9 +641,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             case ROTATION_LOCK: {
                 ChassisSpeeds rotLockSpeeds = calculateSpeedsBasedOnJoystickInputs(RobotContainer.getInstance().driverOI);
                 this.setControl((driveAndPoint
-                            .withVelocityX(rotLockSpeeds.vxMetersPerSecond)
-                            .withVelocityY(rotLockSpeeds.vyMetersPerSecond)
-                            .withTargetDirection(snapToHeading)));
+                    .withVelocityX(rotLockSpeeds.vxMetersPerSecond)
+                    .withVelocityY(rotLockSpeeds.vyMetersPerSecond)
+                    .withTargetDirection(snapToHeading)));
                 break;
             }
             case DRIVE_TO_POINT:
