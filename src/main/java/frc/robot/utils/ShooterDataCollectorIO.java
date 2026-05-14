@@ -8,6 +8,7 @@ public interface ShooterDataCollectorIO {
         public double distanceMeters = 0.0;
         public double velocityRPS = 0.0;
         public double hoodAngleDegrees = 0.0;
+        public double timeOfFlight = 0.0;
         public boolean successful = false;
         public String notes = "";
         public boolean recordTrigger = false;

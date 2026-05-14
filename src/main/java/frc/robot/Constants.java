@@ -29,6 +29,7 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.units.measure.Time;
 
 public class Constants {
     private static Mode currentMode() {
@@ -302,9 +303,10 @@ public class Constants {
                         // Lerp each field: result = start + (end - start) * t
                         Angle dTheta = (end.hoodAngle.minus(start.hoodAngle)).times(t);
                         Angle interpolatedHoodAngle = start.hoodAngle.plus(dTheta);
+                        Time timeOfFlight = null;
                         AngularVelocity dOmega = (end.shooterVelocity.minus(start.shooterVelocity)).times(t);
                         AngularVelocity interpolatedFlywheelVelocity = start.shooterVelocity.plus(dOmega);
-                        return new AimValues(interpolatedHoodAngle, interpolatedFlywheelVelocity);
+                        return new AimValues(interpolatedHoodAngle, interpolatedFlywheelVelocity, timeOfFlight);
                     });
         public static InterpolatingTreeMap<Double, AimValues> lookUpTableShootHome =
                 new InterpolatingTreeMap<Double, AimValues>(
@@ -313,18 +315,21 @@ public class Constants {
                         // Lerp each field: result = start + (end - start) * t
                         Angle dTheta = (end.hoodAngle.minus(start.hoodAngle)).times(t);
                         Angle interpolatedHoodAngle = start.hoodAngle.plus(dTheta);
+                        Time timeOfFlight = null;
                         AngularVelocity dOmega = (end.shooterVelocity.minus(start.shooterVelocity)).times(t);
                         AngularVelocity interpolatedFlywheelVelocity = start.shooterVelocity.plus(dOmega);
-                        return new AimValues(interpolatedHoodAngle, interpolatedFlywheelVelocity);
+                        return new AimValues(interpolatedHoodAngle, interpolatedFlywheelVelocity, timeOfFlight);
                     });
 
         public static class AimValues {
             public final Angle hoodAngle;
             public final AngularVelocity shooterVelocity;
+            public final Time timeOfFlight;
 
-            public AimValues(Angle hoodAngle, AngularVelocity shooterVelocity) {
+            public AimValues(Angle hoodAngle, AngularVelocity shooterVelocity, Time timeOfFlight) {
                 this.hoodAngle = hoodAngle;
                 this.shooterVelocity = shooterVelocity;
+                this.timeOfFlight = timeOfFlight;
             }
         }
     }

@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.Filesystem;
 
 /**
@@ -62,7 +63,7 @@ public class ShooterLookupTableBuilder {
      * Record a new data point
      */
     public boolean recordDataPoint(
-            double distanceMeters, double velocityRPS, double hoodAngleDegrees, boolean successful, String notes) {
+            double distanceMeters, double velocityRPS, double hoodAngleDegrees, double timeOfFlight, boolean successful, String notes) {
         if (!initialized) {
             return false;
         }

@@ -52,6 +52,7 @@ public class ShooterDataCollector {
         double distance = inputs.distanceMeters;
         double velocity = inputs.velocityRPS;
         double hoodAngle = inputs.hoodAngleDegrees;
+        double timeOfFlight = inputs.timeOfFlight;
         boolean successful = inputs.successful;
         String notes = inputs.notes;
 
@@ -59,7 +60,7 @@ public class ShooterDataCollector {
         inputs.recordingStatus = true;
         io.setRecordingStatus(true);
 
-        boolean success = dataBuilder.recordDataPoint(distance, velocity, hoodAngle, successful, notes);
+        boolean success = dataBuilder.recordDataPoint(distance, velocity, hoodAngle, timeOfFlight, successful, notes);
 
         if (success) {
             totalRecordedPoints++;

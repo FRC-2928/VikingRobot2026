@@ -81,12 +81,14 @@ public class MatchRecorder {
                 double distanceMeters = Double.parseDouble(parts[0].trim());
                 double hoodAngleDeg   = Double.parseDouble(parts[1].trim());
                 double flywheelRPS    = Double.parseDouble(parts[2].trim());
+                double timeOfFlight   = Double.parseDouble(parts[3].trim());
 
                 lookUpTable.put(
                         distanceMeters,
                         new Constants.Shooter.AimValues(
                                 Units.Degrees.of(hoodAngleDeg),
-                                Units.RotationsPerSecond.of(flywheelRPS)));
+                                Units.RotationsPerSecond.of(flywheelRPS),
+                                Units.Seconds.of(timeOfFlight)));
                 rowsLoaded++;
             }
 
