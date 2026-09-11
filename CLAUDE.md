@@ -166,3 +166,17 @@ Rules:
 - Paths: BLine custom path follower (primary) + Choreo (available)
 - Motor control: CTRE Phoenix 6 (TalonFX)
 - Swerve: CTRE TunerSwerveDrivetrain base class
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs live in the FRC-2928/VikingRobot2026 GitHub repo (via the `gh` CLI). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default five-role vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context layout (`CONTEXT.md` + `docs/adr/` at the repo root). See `docs/agents/domain.md`.

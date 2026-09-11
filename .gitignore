@@ -182,3 +182,5 @@ org.eclipse.*
 # Simulation
 simgui-ds.json
 simgui.json
+# graphify knowledge graph output (per-developer, regenerable; contains machine-local paths)
+graphify-out/
