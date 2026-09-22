@@ -59,8 +59,8 @@ public class IndexerIOReal implements IndexerIO {
         indexerConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
         indexerConfig.CurrentLimits.StatorCurrentLimitEnable = true;
 
-        indexerConfig.CurrentLimits.SupplyCurrentLimit = 60.0;
-        indexerConfig.CurrentLimits.StatorCurrentLimit = 120.0;
+        indexerConfig.CurrentLimits.SupplyCurrentLimit = 25.0;
+        indexerConfig.CurrentLimits.StatorCurrentLimit = 45.0;
 
         starWheelConfig = indexerConfig.clone();
         starWheelConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
@@ -83,6 +83,8 @@ public class IndexerIOReal implements IndexerIO {
         // PID Values
         indexerConfig.Slot0 = indexerFloorSlot0Configs;
         starWheelConfig.Slot0 = starWheelSlt0Configs;
+        starWheelConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+        starWheelConfig.CurrentLimits.SupplyCurrentLimit = 35.0;
 
         indexer.getConfigurator().apply(indexerConfig); // apply the config settings; this selects the quadrature encode
         starWheels.getConfigurator().apply(starWheelConfig);
@@ -98,6 +100,8 @@ public class IndexerIOReal implements IndexerIO {
         this.starWheelsAngularVelocitySignal = this.starWheels.getVelocity();
         this.starWheelsStatorCurrentSignal = this.starWheels.getStatorCurrent();
         this.starWheelsSupplyCurrentSignal = this.starWheels.getSupplyCurrent();
+
+        BaseStatusSignal.setUpdateFrequencyForAll(100, indexerAngularVelocitySignal, indexerStatorCurrentSignal, indexerSupplyCurrentSignal, starWheelsAngularVelocitySignal, starWheelsStatorCurrentSignal, starWheelsSupplyCurrentSignal);
 
         this.mStatusSignals = List.of(
             indexerAngularVelocitySignal,
