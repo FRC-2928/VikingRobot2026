@@ -127,13 +127,13 @@ public class IntakeIOReal implements IntakeIO {
         HardwareLimitSwitchConfigs hardwareLimitSwitchConfigs = new HardwareLimitSwitchConfigs()
             // Forward Limits
             .withForwardLimitRemoteCANdiS1(Constants.CAN.INTAKE_CANDI.getInstance())
-            .withForwardLimitEnable(false)
+            .withForwardLimitEnable(true)
             .withForwardLimitAutosetPositionEnable(true)
             .withForwardLimitAutosetPositionValue(Constants.Intake.INTAKE_FORWARD_HARD_LIMIT)
             .withForwardLimitType(ForwardLimitTypeValue.NormallyOpen)
             // Reverse Limits
-            .withReverseLimitRemoteCANdiS1(Constants.CAN.INTAKE_CANDI.getInstance())
-            .withReverseLimitEnable(false)
+            .withReverseLimitRemoteCANdiS2(Constants.CAN.INTAKE_CANDI.getInstance())
+            .withReverseLimitEnable(true)
             .withReverseLimitAutosetPositionEnable(true)
             .withReverseLimitAutosetPositionValue(Units.Rotations.of(0))
             .withReverseLimitType(ReverseLimitTypeValue.NormallyOpen);

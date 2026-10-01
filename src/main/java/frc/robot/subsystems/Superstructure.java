@@ -453,7 +453,10 @@ public class Superstructure extends SubsystemBase {
     }
 
     public Command retractIntake() {
-        return new ParallelCommandGroup(new InstantCommand(() -> mRobotContainer.intake.setWantedState(Intake.WantedState.RETRACT)), mRobotContainer.drivetrain.freeDrive());
+        return new ParallelCommandGroup(new InstantCommand(
+            () -> mRobotContainer.intake.setWantedState(Intake.WantedState.RETRACT)),
+             mRobotContainer.drivetrain.freeDrive()
+             );
     }
 
     public Command autoIntake() {
