@@ -860,7 +860,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public void resetPose(final Pose2d newPose) {
         super.resetPose(newPose);
         for (var limelight : limelights) {
-            limelight.setIMUMode(Limelight.IMUMode.MODE_1_EXTERNAL_SEED);
+            // Only seed the angle from the known pose, do not change the IMU mode.
+            // applyLimelightIMUMode() controls the mode each loop.
             limelight.setRobotOrientation(newPose.getRotation().getMeasure());
         }
     }

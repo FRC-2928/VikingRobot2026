@@ -98,6 +98,9 @@ public class Robot extends LoggedRobot {
 
     @Override
     public void autonomousInit() {
+        // Set MODE_4 before CommandScheduler runs so applyLimelightIMUMode()
+        // never enters the MODE_1 tag-seeding branch during auto.
+        mRobotContainer.drivetrain.setLimelightIMUModesIntent(Limelight.IMUMode.MODE_4_INTERNAL_EXTERNAL_ASSIST);
         mAutonomousCommand = mRobotContainer.getAutonomousCommand();
         mRobotContainer.drivetrain.setState(CommandSwerveDrivetrain.WantedState.AUTONOMOUS);
 
