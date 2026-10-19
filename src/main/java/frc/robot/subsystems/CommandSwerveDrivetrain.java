@@ -647,9 +647,17 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             }
             case ROTATION_LOCK: {
                 ChassisSpeeds rotLockSpeeds = calculateSpeedsBasedOnJoystickInputs(RobotContainer.getInstance().driverOI);
+                // calculateSpeedsBasedOnJoystickInputs alliance-flips vx/vy (negates on red).
+                // FieldCentricFacingAngle applies the operator perspective (180° on red) to both
+                // withVelocityX/Y and withTargetDirection, so passing the already-flipped values
+                // would double-flip translation on red. Un-flip back to blue-origin so the operator
+                // perspective handles the alliance correction consistently for both.
+                boolean isRed = DriverStation.getAlliance().get() == Alliance.Red;
+                double blueVx = isRed ? -rotLockSpeeds.vxMetersPerSecond : rotLockSpeeds.vxMetersPerSecond;
+                double blueVy = isRed ? -rotLockSpeeds.vyMetersPerSecond : rotLockSpeeds.vyMetersPerSecond;
                 this.setControl((driveAndPoint
-                    .withVelocityX(rotLockSpeeds.vxMetersPerSecond)
-                    .withVelocityY(rotLockSpeeds.vyMetersPerSecond)
+                    .withVelocityX(blueVx)
+                    .withVelocityY(blueVy)
                     .withTargetDirection(snapToHeading)));
                 break;
             }
