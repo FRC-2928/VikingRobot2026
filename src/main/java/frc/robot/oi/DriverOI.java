@@ -82,8 +82,10 @@ public class DriverOI extends BaseOI {
         this.resetFOD.onTrue(new InstantCommand(() -> Logger.recordOutput("DriverOI/ResetFodPressed", true)));
         // this.resetAngle.onTrue(cont.drivetrain.runOnce(cont.drivetrain::zeroAngle));
         this.reseedLimeLights
-            .onTrue(new InstantCommand(
-                () -> cont.drivetrain.setLimelightIMUModesIntent(Limelight.IMUMode.MODE_1_EXTERNAL_SEED)))
+            .onTrue(new InstantCommand(() -> {
+                cont.drivetrain.clearAuthoritativePose();
+                cont.drivetrain.setLimelightIMUModesIntent(Limelight.IMUMode.MODE_1_EXTERNAL_SEED);
+            }))
             .onFalse(new InstantCommand(
                 () -> cont.drivetrain.setLimelightIMUModesIntent(Limelight.IMUMode.MODE_4_INTERNAL_EXTERNAL_ASSIST)));
         this.toggleRotationLockedMode
