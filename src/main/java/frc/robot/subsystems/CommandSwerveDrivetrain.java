@@ -250,6 +250,13 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     /// The desired IMU mode for all limelights, set via setLimelightIMUModesIntent()
     private Limelight.IMUMode mDesiredLimelightIMUMode = Limelight.IMUMode.MODE_1_EXTERNAL_SEED;
 
+    /// Pose latched by the last resetPose() (auto path start). While set, MT1 never re-seeds the
+    /// drivetrain heading or the limelights. Cleared when the driver requests a re-seed.
+    private Pose2d mAuthoritativePose = null;
+    /// The robot can't physically sit this close to the field origin corner, so an MT1 pose here is a
+    /// default/empty estimate rather than a real measurement.
+    private static final double kOriginRejectionRadiusMeters = 0.1;
+
     private double xSpeed;
     private double xSpeedPid;
     private double ySpeed;
@@ -640,9 +647,17 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             }
             case ROTATION_LOCK: {
                 ChassisSpeeds rotLockSpeeds = calculateSpeedsBasedOnJoystickInputs(RobotContainer.getInstance().driverOI);
+                // calculateSpeedsBasedOnJoystickInputs alliance-flips vx/vy (negates on red).
+                // FieldCentricFacingAngle applies the operator perspective (180° on red) to both
+                // withVelocityX/Y and withTargetDirection, so passing the already-flipped values
+                // would double-flip translation on red. Un-flip back to blue-origin so the operator
+                // perspective handles the alliance correction consistently for both.
+                boolean isRed = DriverStation.getAlliance().get() == Alliance.Red;
+                double blueVx = isRed ? -rotLockSpeeds.vxMetersPerSecond : rotLockSpeeds.vxMetersPerSecond;
+                double blueVy = isRed ? -rotLockSpeeds.vyMetersPerSecond : rotLockSpeeds.vyMetersPerSecond;
                 this.setControl((driveAndPoint
-                    .withVelocityX(rotLockSpeeds.vxMetersPerSecond)
-                    .withVelocityY(rotLockSpeeds.vyMetersPerSecond)
+                    .withVelocityX(blueVx)
+                    .withVelocityY(blueVy)
                     .withTargetDirection(snapToHeading)));
                 break;
             }
@@ -859,10 +874,46 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     @Override
     public void resetPose(final Pose2d newPose) {
         super.resetPose(newPose);
+        mAuthoritativePose = newPose;
+        Logger.recordOutput("Drivetrain/AuthoritativePose", newPose);
         for (var limelight : limelights) {
-            limelight.setIMUMode(Limelight.IMUMode.MODE_1_EXTERNAL_SEED);
+            // Only seed the angle from the known pose, do not change the IMU mode.
+            // applyLimelightIMUMode() controls the mode each loop.
             limelight.setRobotOrientation(newPose.getRotation().getMeasure());
         }
+    }
+
+    /** Driver-requested re-seed: let MT1 re-seed heading without checking against the authoritative pose. */
+    public void clearAuthoritativePose() {
+        mAuthoritativePose = null;
+        Logger.recordOutput("Drivetrain/AuthoritativePoseCleared", true);
+    }
+
+    /**
+     * An MT1 heading seed is rejected when it saw no tags (pose defaults to the origin), or when an
+     * authoritative pose has been latched. The heading disagreement is compared against the current
+     * heading rather than the latched pose because the robot may have turned since it was set.
+     */
+    private boolean isMT1HeadingSeedAcceptable(PoseEstimate mt1) {
+        if (mt1.tagCount == 0) {
+            Logger.recordOutput("Drivetrain/MT1SeedRejected", "NoTags");
+            return false;
+        }
+        // Belt and braces: tag count should catch these, but never seed from a non-finite or origin pose
+        if (!isUpdateable(mt1) || mt1.pose.getTranslation().getNorm() < kOriginRejectionRadiusMeters) {
+            Logger.recordOutput("Drivetrain/MT1SeedRejected", "InvalidPose");
+            return false;
+        }
+        if (mAuthoritativePose != null) {
+            // Logged only so camera-vs-authoritative disagreement can be judged after the fact
+            double disagreementDegrees = Math.abs(
+                    mt1.pose.getRotation().minus(mCurrentSwerveState.Pose.getRotation()).getDegrees());
+            Logger.recordOutput("Drivetrain/MT1HeadingDisagreementDegrees", disagreementDegrees);
+            Logger.recordOutput("Drivetrain/MT1SeedRejected", "AuthoritativePoseLatched");
+            return false;
+        }
+        Logger.recordOutput("Drivetrain/MT1SeedRejected", "Accepted");
+        return true;
     }
 
     @Deprecated
@@ -997,7 +1048,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                     //     highNumAprilTags = limelight.getNumberOfAprilTags();
                     // }
                 }
-                if (mostTrustedPose != null) {
+                if (mostTrustedPose != null && isMT1HeadingSeedAcceptable(mostTrustedPose)) {
                     Logger.recordOutput("Drivetrain/MostTrustedPose", mostTrustedPose.pose);
                     this.resetRotation(mostTrustedPose.pose.getRotation());
                     for (var limelight : limelights) {
