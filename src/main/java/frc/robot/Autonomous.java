@@ -271,7 +271,7 @@ public final class Autonomous {
             var pathBuilder = cont.drivetrain.getPathBuilder();
             Path right_pick_shoot_improved_part1 = new Path("right_pick_shoot_improved_part1");
             Path right_pick_shoot_improved_part2 = new Path("right_pick_shoot_improved_part2");
-            Path right_pick_shoot_improved_part11 = new Path("right_pick_shoot_improved_par11");
+            Path right_pick_shoot_improved_part11 = new Path("right_pick_shoot_improved_part11");
             return Commands.sequence(
                     cont.drivetrain.runOnce(() -> cont.drivetrain.seedFieldCentric(Rotation2d.kZero)),
                     //pathBuilder.build(right_pick_shoot_improved_part1),

@@ -82,16 +82,34 @@ public class DriverOI extends BaseOI {
         this.resetFOD.onTrue(new InstantCommand(() -> Logger.recordOutput("DriverOI/ResetFodPressed", true)));
         // this.resetAngle.onTrue(cont.drivetrain.runOnce(cont.drivetrain::zeroAngle));
         this.reseedLimeLights
-            .onTrue(new InstantCommand(
-                () -> cont.drivetrain.setLimelightIMUModesIntent(Limelight.IMUMode.MODE_1_EXTERNAL_SEED)))
+            .onTrue(new InstantCommand(() -> {
+                cont.drivetrain.clearAuthoritativePose();
+                cont.drivetrain.setLimelightIMUModesIntent(Limelight.IMUMode.MODE_1_EXTERNAL_SEED);
+            }))
             .onFalse(new InstantCommand(
                 () -> cont.drivetrain.setLimelightIMUModesIntent(Limelight.IMUMode.MODE_4_INTERNAL_EXTERNAL_ASSIST)));
+        // TOGGLE behavior (current): press once to enter target lock, press again to exit.
         this.toggleRotationLockedMode
             .onTrue(new ParallelCommandGroup(
-                        mSuperstructure.toggleStateIntent(Superstructure.StateIntent.ACTION_TOGGLE_TARGET_LOCK_MODE), 
+                        mSuperstructure.toggleStateIntent(Superstructure.StateIntent.ACTION_TOGGLE_TARGET_LOCK_MODE),
                         new InstantCommand(() -> { haptics.toggleRumble(); }),
                         new PrintCommand("Target Lock Trigger")
             ));
+        // HOLD behavior (alternative): hold left bumper to stay in target lock, release to exit.
+        // To enable: comment out the TOGGLE block above and uncomment this block.
+        // Also requires changing checkTransitionFromFreeDrive() and checkTransitionFromTargetLock()
+        // in Superstructure.java to use StateIntent.ACTION_TOGGLE_TARGET_LOCK_MODE.getIsInteded()
+        // instead of the mTargetLockRequested boolean.
+        // this.toggleRotationLockedMode
+        //     .onTrue(new ParallelCommandGroup(
+        //                 mSuperstructure.setIntent(Superstructure.StateIntent.ACTION_TOGGLE_TARGET_LOCK_MODE, true),
+        //                 new InstantCommand(() -> { haptics.startRumble(); }),
+        //                 new PrintCommand("Target Lock Trigger")
+        //     ))
+        //     .onFalse(new ParallelCommandGroup(
+        //                 mSuperstructure.setIntent(Superstructure.StateIntent.ACTION_TOGGLE_TARGET_LOCK_MODE, false),
+        //                 new InstantCommand(() -> { haptics.stopRumble(); })
+        //     ));
         this.shootOverride
             .onTrue(mSuperstructure.requestShootOverride())
             .onFalse(mSuperstructure.clearOverrideCommand());
