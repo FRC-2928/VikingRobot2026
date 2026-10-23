@@ -160,7 +160,7 @@ public class IntakeIOReal implements IntakeIO {
         intakeExpansionConfig
                 .withMotorOutput(intakeExpansionOutputConfigs)
                 .withCurrentLimits(intakeExpansionCurrentLimitsConfigs)
-                .withHardwareLimitSwitch(hardwareLimitSwitchConfigs)
+                // .withHardwareLimitSwitch(hardwareLimitSwitchConfigs)
                 .withSlot0(retractSlot0Configs)
                 .withSlot1(extendSlot1Configs);
 
