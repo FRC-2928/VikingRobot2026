@@ -58,6 +58,7 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Constants;
 import frc.robot.LimelightHelpers;
 import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.robot.RobotContainer;
@@ -1374,6 +1375,50 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         snapToHeading = isAtHome ? getRotationToHub() : new Rotation2d(Math.PI/2);
         Logger.recordOutput("Drivetrain/snapToHeading", snapToHeading);
         setState(WantedState.ROTATION_LOCK);
+    }
+
+    /**
+     * Latches a heading facing one of the alliance walls based on the robot's current zone, and
+     * rotation-locks to it. The heading is chosen once; crossing a zone line afterwards does not
+     * change it.
+     */
+    public void snapToWallHeading() {
+        snapToHeading = getWallHeadingForCurrentZone();
+        Logger.recordOutput("Drivetrain/snapToHeading", snapToHeading);
+        setState(WantedState.ROTATION_LOCK);
+    }
+
+    /**
+     * Picks which alliance wall to face. Zones mirror about midfield: inside either alliance zone,
+     * face that zone's wall; in the neutral zone, face the far wall.
+     *
+     * @return the heading in operator perspective (0 = toward the opposing wall, 180 = toward ours)
+     */
+    private Rotation2d getWallHeadingForCurrentZone() {
+        double fieldLengthInches = Constants.FIELD.fieldLength.in(Inches);
+        double allianceZoneDepthInches = Constants.FIELD.allianceZoneDepth.in(Inches);
+        double xInches = mCurrentSwerveState.Pose.getMeasureX().in(Inches);
+        boolean isRed = DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red;
+        double distanceFromOurWallInches = isRed ? fieldLengthInches - xInches : xInches;
+
+        boolean inOurAllianceZone = distanceFromOurWallInches < allianceZoneDepthInches;
+        boolean inOpposingAllianceZone = distanceFromOurWallInches > fieldLengthInches - allianceZoneDepthInches;
+        boolean acrossMidfield = distanceFromOurWallInches > fieldLengthInches / 2;
+
+        boolean faceOurWall = inOurAllianceZone || (acrossMidfield && !inOpposingAllianceZone);
+        Logger.recordOutput("Drivetrain/SnapToWall/FaceOurWall", faceOurWall);
+        return faceOurWall ? Rotation2d.k180deg : Rotation2d.kZero;
+    }
+
+    /**
+     * @return whether the robot's heading is within tolerance of the latched snap-to-wall heading
+     */
+    public boolean isAtSnapToWallHeading() {
+        // snapToHeading is operator-perspective; convert to blue-origin to compare against the pose
+        Rotation2d targetBlueOrigin = snapToHeading.plus(getOperatorForwardDirection());
+        double errorDegrees = mCurrentSwerveState.Pose.getRotation().minus(targetBlueOrigin).getDegrees();
+        Logger.recordOutput("Drivetrain/SnapToWall/ErrorDegrees", errorDegrees);
+        return Math.abs(errorDegrees) < 5.0;
     }
 
     /**

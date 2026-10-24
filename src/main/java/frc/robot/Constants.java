@@ -142,7 +142,8 @@ public class Constants {
         }
 
         public static final Distance fieldLength = Units.Inch.of(651.22);
-        public static final Distance distanceToMidField = Units.Inch.of(182.11);
+        /// Distance from an alliance wall to the edge of that alliance's zone
+        public static final Distance allianceZoneDepth = Units.Inch.of(182.11);
     }
 
     public static final class PWM {

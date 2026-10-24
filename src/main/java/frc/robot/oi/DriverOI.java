@@ -45,6 +45,9 @@ public class DriverOI extends BaseOI {
 
     public final Trigger climbTrigger;
 
+    /// One-shot rotate to face an alliance wall, chosen by which zone the robot is in
+    public final Trigger snapToWall;
+
     public final Haptics haptics;
 
     public DriverOI(final CommandXboxController controller, Superstructure superstructure) {
@@ -67,6 +70,7 @@ public class DriverOI extends BaseOI {
         this.lockWheels = this.controller.x();
         this.unjam = this.controller.povLeft();
         this.climbTrigger = this.controller.povUp();
+        this.snapToWall = this.controller.start();
 
         this.haptics = new BaseOI.Haptics(hid);
 
@@ -116,6 +120,8 @@ public class DriverOI extends BaseOI {
         this.shootAtPosition
             .onTrue(mSuperstructure.requestShootOverride())
             .onFalse(mSuperstructure.clearOverrideCommand());
+        this.snapToWall
+            .onTrue(mSuperstructure.requestSnapToWall());
         this.manualIntake
             .onTrue(
                 mSuperstructure.setIntent(Superstructure.StateIntent.ACTION_INTAKE_DRIVE, true)

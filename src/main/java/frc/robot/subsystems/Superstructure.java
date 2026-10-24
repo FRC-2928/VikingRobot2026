@@ -33,6 +33,7 @@ public class Superstructure extends SubsystemBase {
         ACTION_INTAKE_MANUAL,
         ACTION_INTAKE_AUTO,
         ACTION_INTAKE_DRIVE,
+        ACTION_SNAP_TO_WALL,
         ACTION_SHOOT_HOME,
         ACTION_SHOOT_HUB,
         ACTION_INTAKE_RETRACT,
@@ -69,6 +70,7 @@ public class Superstructure extends SubsystemBase {
         MANUAL_INTAKE,
         AUTO_INTAKE,
         INTAKE_DRIVE,
+        SNAP_TO_WALL,
         RETRACT_INTAKE,
         MID_FIELD,
         GET_READY_CLIMB,
@@ -187,6 +189,7 @@ public class Superstructure extends SubsystemBase {
         transitionFunctions.put(RobotState.MANUAL_INTAKE, this::checkManualIntakeTransition);
         transitionFunctions.put(RobotState.AUTO_INTAKE, this::checkTransitionFromAutoIntake);
         transitionFunctions.put(RobotState.INTAKE_DRIVE, this::checkTransitionFromIntakeDrive);
+        transitionFunctions.put(RobotState.SNAP_TO_WALL, this::checkTransitionFromSnapToWall);
         transitionFunctions.put(RobotState.RETRACT_INTAKE, this::checkTransitionFromRetractIntake);
         transitionFunctions.put(RobotState.GET_READY_CLIMB, this::checkTransitionFromClimber);
     }
@@ -211,6 +214,18 @@ public class Superstructure extends SubsystemBase {
 
     public Command setIntent(StateIntent intent, boolean intended) {
         return new InstantCommand(() -> intent.setIsIntended(intended));
+    }
+
+    /**
+     * Requests a one-shot snap to an alliance wall. Only honored from free drive; otherwise the
+     * request would sit pending and fire unexpectedly whenever the robot next returns to free drive.
+     */
+    public Command requestSnapToWall() {
+        return new InstantCommand(() -> {
+            if (currentState == RobotState.FREE_DRIVE) {
+                StateIntent.ACTION_SNAP_TO_WALL.setIsIntended(true);
+            }
+        });
     }
 
     public Command toggleStateIntent(StateIntent intent) {
@@ -519,6 +534,11 @@ public class Superstructure extends SubsystemBase {
             currentState = RobotState.DRIVE_TARGET_LOCK;
         } else if (StateIntent.ACTION_INTAKE_DRIVE.getIsInteded()) {
             currentState = RobotState.INTAKE_DRIVE;
+        } else if (StateIntent.ACTION_SNAP_TO_WALL.getIsInteded()) {
+            // Latch the heading on entry rather than in a state command: this loop re-checks the
+            // new state's transition immediately, before any state command would have run.
+            mRobotContainer.drivetrain.snapToWallHeading();
+            currentState = RobotState.SNAP_TO_WALL;
         } else if (StateIntent.ACTION_INTAKE_AUTO.getIsInteded()) {
             currentState = RobotState.AUTO_INTAKE;
         }
@@ -587,6 +607,17 @@ public class Superstructure extends SubsystemBase {
             mRobotContainer.intake.setWantedState(Intake.WantedState.STOP);
             mRobotContainer.drivetrain.setState(CommandSwerveDrivetrain.WantedState.TELEOP_DRIVE);
             currentState = RobotState.FREE_DRIVE;
+        }
+    }
+
+    /**
+     * Snap to wall is one-shot: once the latched heading is reached, return to free drive.
+     * A target lock request takes priority, like it does from intake drive.
+     */
+    private void checkTransitionFromSnapToWall() {
+        if (mTargetLockRequested || mRobotContainer.drivetrain.isAtSnapToWallHeading()) {
+            StateIntent.ACTION_SNAP_TO_WALL.setIsIntended(false);
+            currentState = mTargetLockRequested ? RobotState.DRIVE_TARGET_LOCK : RobotState.FREE_DRIVE;
         }
     }
 
