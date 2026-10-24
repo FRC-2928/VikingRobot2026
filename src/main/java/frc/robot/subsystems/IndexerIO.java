@@ -10,9 +10,12 @@ public interface IndexerIO {
     @AutoLog
     public static class IndexerIOInputs {
         public AngularVelocity angularVelocity;
-        public AngularVelocity indexerAngularVelocity = Units.RotationsPerSecond.zero();
-        public Current         indexerStatorCurrent = Units.Amps.zero();
-        public Current         indexerSupplyCurrent = Units.Amps.zero();
+        public AngularVelocity indexerUpAngularVelocity = Units.RotationsPerSecond.zero();
+        public Current         indexerUpStatorCurrent = Units.Amps.zero();
+        public Current         indexerUpSupplyCurrent = Units.Amps.zero();
+        public AngularVelocity indexerDownAngularVelocity = Units.RotationsPerSecond.zero();
+        public Current         indexerDownStatorCurrent = Units.Amps.zero();
+        public Current         indexerDownSupplyCurrent = Units.Amps.zero();
         public AngularVelocity starWheelsAngularVelocity = Units.RotationsPerSecond.zero();
         public Current         starWheelsStatorCurrent = Units.Amps.zero();
         public Current         starWheelsSupplyCurrent = Units.Amps.zero();
