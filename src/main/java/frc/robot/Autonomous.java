@@ -38,7 +38,7 @@ public final class Autonomous {
     }
 
     public static AutoChooser getChoreoAutoChooser(RobotContainer cont) {
-        final AutoChooser choreoChooser = new AutoChooser();
+        final AutoChooser choreoChooser = new LoggedAutoChooser();
         AutoFactory autoFactory = cont.drivetrain.getChoreoAutoFactory();
 
         choreoChooser.addCmd("BLine-ForwardBack", () -> {
