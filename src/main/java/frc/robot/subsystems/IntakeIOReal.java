@@ -3,7 +3,6 @@ package frc.robot.subsystems;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
-import com.ctre.phoenix6.configs.HardwareLimitSwitchConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.Slot1Configs;
@@ -14,11 +13,7 @@ import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.ForwardLimitTypeValue;
-import com.ctre.phoenix6.signals.ForwardLimitValue;
 import com.ctre.phoenix6.signals.InvertedValue;
-import com.ctre.phoenix6.signals.ReverseLimitTypeValue;
-import com.ctre.phoenix6.signals.ReverseLimitValue;
 import com.ctre.phoenix6.sim.ChassisReference;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
@@ -44,8 +39,6 @@ public class IntakeIOReal implements IntakeIO {
     // Intake rack signals
     private final StatusSignal<Angle>             intakePosition;
     private final StatusSignal<AngularVelocity>   intakeAngularVelocity;
-    private final StatusSignal<ReverseLimitValue> intakeReverseLimitSignal;
-    private final StatusSignal<ForwardLimitValue> intakeForwardLimitSignal;
     private final StatusSignal<Current>           intakeStatorCurrent;
     private final StatusSignal<Current>           intakeSupplyCurrent;
 
@@ -123,26 +116,13 @@ public class IntakeIOReal implements IntakeIO {
                 .withStatorCurrentLimitEnable(true)
                 .withSupplyCurrentLimitEnable(true);
 
-        // TODO determine correct limit switch values
-        HardwareLimitSwitchConfigs hardwareLimitSwitchConfigs = new HardwareLimitSwitchConfigs()
-            // Forward Limits
-            .withForwardLimitRemoteCANdiS1(Constants.CAN.INTAKE_CANDI.getInstance())
-            .withForwardLimitEnable(true)
-            .withForwardLimitAutosetPositionEnable(true)
-            .withForwardLimitAutosetPositionValue(Constants.Intake.INTAKE_FORWARD_HARD_LIMIT)
-            .withForwardLimitType(ForwardLimitTypeValue.NormallyOpen)
-            // Reverse Limits
-            .withReverseLimitRemoteCANdiS2(Constants.CAN.INTAKE_CANDI.getInstance())
-            .withReverseLimitEnable(true)
-            .withReverseLimitAutosetPositionEnable(true)
-            .withReverseLimitAutosetPositionValue(Units.Rotations.of(0))
-            .withReverseLimitType(ReverseLimitTypeValue.NormallyOpen);
-
         intakeExpansionConfig
             .SoftwareLimitSwitch
             .withForwardSoftLimitEnable(true)
-            .withForwardSoftLimitThreshold(Constants.Intake.INTAKE_FORWARD_SOFT_LIMIT)  // safety mechanism, in case switches fail
-            .withReverseSoftLimitEnable(true) // no reverse limit since there's a physical hard stop
+            // no hardware limit switches -- the soft limits are the only travel protection, so they depend on
+            // the encoder being zeroed at the retracted position
+            .withForwardSoftLimitThreshold(Constants.Intake.INTAKE_FORWARD_SOFT_LIMIT)
+            .withReverseSoftLimitEnable(true)
             .withReverseSoftLimitThreshold(Constants.Intake.INTAKE_RETRACTION_SOFT_LIMIT);
 
         intakeExpansionConfig.Feedback.
@@ -160,7 +140,6 @@ public class IntakeIOReal implements IntakeIO {
         intakeExpansionConfig
                 .withMotorOutput(intakeExpansionOutputConfigs)
                 .withCurrentLimits(intakeExpansionCurrentLimitsConfigs)
-                .withHardwareLimitSwitch(hardwareLimitSwitchConfigs)
                 .withSlot0(retractSlot0Configs)
                 .withSlot1(extendSlot1Configs);
 
@@ -169,8 +148,6 @@ public class IntakeIOReal implements IntakeIO {
         // Status Signals
         this.intakePosition = this.intakeExpansionMotor.getPosition();
         this.intakeAngularVelocity = this.intakeExpansionMotor.getRotorVelocity();
-        this.intakeReverseLimitSignal = this.intakeExpansionMotor.getReverseLimit();
-        this.intakeForwardLimitSignal = this.intakeExpansionMotor.getForwardLimit();
         this.intakeStatorCurrent = this.intakeExpansionMotor.getStatorCurrent();
         this.intakeSupplyCurrent = this.intakeExpansionMotor.getSupplyCurrent();
 
@@ -181,8 +158,6 @@ public class IntakeIOReal implements IntakeIO {
         BaseStatusSignal.setUpdateFrequencyForAll(Units.Hertz.of(100),
             intakePosition,
             intakeAngularVelocity,
-            intakeReverseLimitSignal,
-            intakeForwardLimitSignal,
             intakeStatorCurrent,
             intakeSupplyCurrent,
             intakeRollerAngularVelocity,
@@ -251,6 +226,11 @@ public class IntakeIOReal implements IntakeIO {
         intakeExpansionMotor.setControl(new VoltageOut(Units.Volts.zero()));
     }
 
+    @Override
+    public void resetPositionToRetracted() {
+        intakeExpansionMotor.setPosition(Constants.Intake.INTAKE_RETRACTED_POSITION);
+    }
+
     // @Override
     // public void extend() {
     //     intakeExpansionMotor.setControl(expansionPositionVoltage.withPosition(openAngle));
@@ -270,8 +250,6 @@ public class IntakeIOReal implements IntakeIO {
         BaseStatusSignal.refreshAll(
             this.intakePosition,
             this.intakeAngularVelocity,
-            this.intakeReverseLimitSignal,
-            this.intakeForwardLimitSignal,
             this.intakeStatorCurrent,
             this.intakeSupplyCurrent);
 
@@ -284,8 +262,6 @@ public class IntakeIOReal implements IntakeIO {
         inputs.intakePosition = Units.Inches.of(intakePosition.getValue().in(Units.Rotations));
         inputs.intakeAngularVelocity = intakeAngularVelocity.getValue();
         inputs.intakeRackSpeed = Units.InchesPerSecond.of(intakeAngularVelocity.getValue().in(Units.RotationsPerSecond));
-        inputs.isIntakeHomed = (intakeReverseLimitSignal.getValue() == ReverseLimitValue.ClosedToGround);
-        inputs.isIntakeMaxed = (intakeForwardLimitSignal.getValue() == ForwardLimitValue.ClosedToGround);
         inputs.intakeStatorCurrent = intakeStatorCurrent.getValue();
         inputs.intakeSupplyCurrent = intakeSupplyCurrent.getValue();
 
@@ -327,10 +303,6 @@ public class IntakeIOReal implements IntakeIO {
         //         rollerDCMotorSim.getAngularPosition().times(Constants.Intake.rollerMotorGearRatio));
         // rollerMotorSimState.setRotorVelocity(
         //         rollerDCMotorSim.getAngularVelocity().times(Constants.Intake.rollerMotorGearRatio));
-
-        // 5) Set the Limit Swiches
-        expansionMotorSimState.setReverseLimit(
-                expansionDCMotorSim.getAngularPosition().lte(Units.Rotations.zero()));
     }
 
     /**

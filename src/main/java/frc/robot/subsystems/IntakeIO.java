@@ -16,8 +16,6 @@ public interface IntakeIO {
         public Distance intakePosition = Units.Inches.zero();
         public AngularVelocity intakeAngularVelocity = Units.RotationsPerSecond.zero();
         public LinearVelocity intakeRackSpeed = Units.InchesPerSecond.zero();
-        public boolean isIntakeHomed = false;
-        public boolean isIntakeMaxed = false;
         public Current intakeStatorCurrent = Units.Amps.zero();
         public Current intakeSupplyCurrent = Units.Amps.zero();
         
@@ -32,6 +30,9 @@ public interface IntakeIO {
     public default void moveToPosition(final Distance position) {}
 
     public default void stopMotion() {}
+
+    /// Declares the current rack position to be fully retracted, re-establishing the reference the soft limits rely on
+    public default void resetPositionToRetracted() {}
 
     public default void extendForward(boolean ignoreSoftLimits) {}
 

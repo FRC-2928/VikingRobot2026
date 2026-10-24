@@ -24,6 +24,7 @@ public class OperatorOI extends BaseOI {
 
         this.extendIgnoreLimit = this.controller.rightTrigger();
         this.retractIgnoreLimit = this.controller.leftTrigger();
+        this.rezeroIntake = this.controller.start();
     }
 
     public final Trigger nudgeShooterAngleUp;
@@ -40,6 +41,7 @@ public class OperatorOI extends BaseOI {
 
     public final Trigger extendIgnoreLimit;
     public final Trigger retractIgnoreLimit;
+    public final Trigger rezeroIntake;
 
     /* 
     public final Trigger climberOverrideLower;
@@ -68,8 +70,16 @@ public class OperatorOI extends BaseOI {
 
         this.recordShot.onTrue(new InstantCommand(() -> RobotContainer.getInstance().matchRecorder.recordShot(RobotContainer.getInstance().drivetrain, RobotContainer.getInstance().shooter)));
 
-        this.extendIgnoreLimit.onTrue(new InstantCommand(RobotContainer.getInstance().intake::extendIgnoreLimit));
-        this.retractIgnoreLimit.onTrue(new InstantCommand(RobotContainer.getInstance().intake::retractIgnoreLimit));
+        // Derail recovery: drive the rack past the soft limits until it is back on its hard stop, then rezero
+        final Intake intake = RobotContainer.getInstance().intake;
+        this.extendIgnoreLimit
+            .onTrue(new InstantCommand(() -> intake.setWantedState(Intake.WantedState.EXTEND_IGNORE_LIMITS)))
+            .onFalse(new InstantCommand(() -> intake.setWantedState(Intake.WantedState.STOP)));
+        this.retractIgnoreLimit
+            .onTrue(new InstantCommand(() -> intake.setWantedState(Intake.WantedState.RETRACT_IGNORE_LIMITS)))
+            .onFalse(new InstantCommand(() -> intake.setWantedState(Intake.WantedState.STOP)));
+        // allowed while disabled so the pit crew can rezero after physically pushing the rack home
+        this.rezeroIntake.onTrue(new InstantCommand(intake::rezeroAtRetracted).ignoringDisable(true));
 
         // this.runOverrides.whileTrue(new ParallelCommandGroup(RobotContainer.getInstance().shooter.shootOverride(), new RunCommand(() -> Logger.recordOutput("Superstructure/triggerIsRunning", Timer.getFPGATimestamp()), null)));
     }

@@ -11,6 +11,8 @@ public class Intake extends SubsystemBase {
     public IntakeInputsAutoLogged intakeInputs = new IntakeInputsAutoLogged();
     private WantedState mDesiredState = WantedState.STOP;
     private SystemState mCurrentState = SystemState.STOP;
+    /// number of times the operator has manually rezeroed the rack -- logged so rezeros are visible in match logs
+    private int mManualRezeroCount = 0;
 
     // Intake States
     public enum WantedState {
@@ -21,7 +23,6 @@ public class Intake extends SubsystemBase {
         RETRACT,
         RETRACT_AND_RUN_ROLLER,
         REVERSE_ROLLER,
-        RETRACT_AND_STOP,
         EXTEND_IGNORE_LIMITS,
         RETRACT_IGNORE_LIMITS
     }
@@ -34,7 +35,6 @@ public class Intake extends SubsystemBase {
         RETRACT,
         REVERSE_ROLLER,
         RETRACT_AND_RUN_ROLLER,
-        RETRACT_AND_STOP,
         EXTEND_IGNORE_LIMITS,
         RETRACT_IGNORE_LIMITS
     }
@@ -56,16 +56,24 @@ public class Intake extends SubsystemBase {
         // return new InstantCommand(() -> intakeIO.moveToPosition(Constants.Intake.INTAKE_FORWARD_DISTANCE_LIMIT), this);
     }
 
-    public void retractIgnoreLimit() {
-        // TODO: use this when the intake is fixed to be able to retract fully
+    // Manual recovery moves -- the rack position comes only from the motor's internal encoder, so if the rack
+    // derails the soft limits are wrong. These ignore the soft limits, so nothing limits travel while they run.
+    private void retractIgnoreLimit() {
         intakeIO.retract(true);
-        // intakeIO.moveToPosition(Constants.Intake.INTAKE_RETRACTION_LIMIT);
     }
 
-    public void extendIgnoreLimit() {
-        // intakeIO.moveToPosition(Constants.Intake.INTAKE_FORWARD_DISTANCE_LIMIT);
+    private void extendIgnoreLimit() {
         intakeIO.extendForward(true);
-        // return new InstantCommand(() -> intakeIO.moveToPosition(Constants.Intake.INTAKE_FORWARD_DISTANCE_LIMIT), this);
+    }
+
+    /**
+     * Declares the rack's current position to be fully retracted so the soft limits are valid again.
+     * Only call this with the intake physically at its retracted hard stop.
+     */
+    public void rezeroAtRetracted() {
+        intakeIO.resetPositionToRetracted();
+        mManualRezeroCount++;
+        Logger.recordOutput("Intake/ManualRezeroCount", mManualRezeroCount);
     }
 
 
@@ -93,12 +101,6 @@ public class Intake extends SubsystemBase {
         return false;
     }
 
-    private boolean checkRetracted() {
-        // Rotations value is actually inches because of configured gear ratio
-        // TODO: Find acutal retracted value
-        return intakeInputs.isIntakeHomed;
-    }
-
     public void setWantedState(WantedState state) {
         mDesiredState = state;
     }
@@ -124,13 +126,6 @@ public class Intake extends SubsystemBase {
                 yield SystemState.EXTEND_AND_RUN;
             }
             case RETRACT -> {
-                yield SystemState.RETRACT;
-            }
-            case RETRACT_AND_STOP -> {
-                if(intakeInputs.isIntakeHomed){
-                    yield SystemState.STOP;
-                }
-
                 yield SystemState.RETRACT;
             }
             case REVERSE_ROLLER -> {
@@ -186,7 +181,6 @@ public class Intake extends SubsystemBase {
         Logger.recordOutput("Intake/Intakevelocity", this.intakeInputs.intakeAngularVelocity);
         Logger.recordOutput("Intake/position", this.intakeInputs.intakePosition);
         Logger.recordOutput("Intake/RackVelocity", this.intakeInputs.intakeRackSpeed);
-        Logger.recordOutput("Intake/isIntakeHomedSwitch", intakeInputs.isIntakeHomed);
         this.intakeIO.updateInputs(this.intakeInputs);
         Logger.processInputs("Intake", this.intakeInputs);
 

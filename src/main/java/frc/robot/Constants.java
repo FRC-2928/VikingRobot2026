@@ -2,17 +2,9 @@ package frc.robot;
 
 import org.littletonrobotics.junction.Logger;
 
-import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.AudioConfigs;
-import com.ctre.phoenix6.configs.CANdiConfiguration;
-import com.ctre.phoenix6.configs.DigitalInputsConfigs;
 import com.ctre.phoenix6.configs.SlotConfigs;
-import com.ctre.phoenix6.hardware.CANdi;
-import com.ctre.phoenix6.signals.S1CloseStateValue;
-import com.ctre.phoenix6.signals.S1FloatStateValue;
-import com.ctre.phoenix6.signals.S2CloseStateValue;
-import com.ctre.phoenix6.signals.S2FloatStateValue;
 import com.pathplanner.lib.config.PIDConstants;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
@@ -140,40 +132,6 @@ public class Constants {
             
 
             public static final int candle = 99;
-        }
-
-        public static final class INTAKE_CANDI {
-            /// Singleton instance of the CANdi for the Intake
-            private static CANdi sInstance = null;
-            /// CAN ID of the CANdi bridging the intake limit switch to the CAN bus
-            private static final int canId = 32;
-            /// Digital Inputs Configs for the CANdi
-            private static final DigitalInputsConfigs dioConfigs = new DigitalInputsConfigs()
-                    // S1In --> Expansion??
-                    .withS1CloseState(
-                            S1CloseStateValue.CloseWhenLow) // Intake Expansion limit switch -- closed when low
-                    .withS1FloatState(S1FloatStateValue.PullHigh) // Intake Expansion limit switch -- high when open
-                    // S2In --> Retraction??
-                    .withS2CloseState(
-                            S2CloseStateValue.CloseWhenLow) // Intake Retraction limit switch -- closed when low
-                    .withS2FloatState(S2FloatStateValue.PullHigh); // Intake Retraction limit switch -- high when open
-
-            public static synchronized CANdi getInstance() {
-                if (sInstance != null) {
-                    return sInstance;
-                }
-
-                // create the CANdi instance
-                sInstance = new CANdi(canId, CTRE.bus);
-                // set up the configuration with the internal config we defined above
-                CANdiConfiguration candiConfig = new CANdiConfiguration().withDigitalInputs(INTAKE_CANDI.dioConfigs);
-                sInstance.getConfigurator().apply(candiConfig);
-
-                // Set the update frequency for the status frames for the CANdi signals
-                BaseStatusSignal.setUpdateFrequencyForAll(
-                        Units.Hertz.of(100), sInstance.getS1State(), sInstance.getS2State());
-                return sInstance;
-            }
         }
     }
 
@@ -355,10 +313,11 @@ public class Constants {
         }
 
         public static final Angle INTAKE_FORWARD_SOFT_LIMIT = Units.Rotations.of(19.00);
-        public static final Angle INTAKE_FORWARD_HARD_LIMIT = Units.Rotations.of(2.35);
         public static final Distance INTAKE_FORWARD_DISTANCE_LIMIT = Units.Inches.of(2.20);
         public static final Distance INTAKE_RETRACTION_LIMIT = Units.Inches.of(0.818);  // TODO: figure out this value
         public static final Angle INTAKE_RETRACTION_SOFT_LIMIT = Units.Rotations.of(0.25);
+        /// Position of the fully retracted intake -- the operator rezero sets the encoder to this value
+        public static final Angle INTAKE_RETRACTED_POSITION = Units.Rotations.of(0);
         private static final Distance GEAR_DIAMETER = Units.Inches.of(2.0);
         private static final double INTAKE_RACK_GEARING = 25/3.0;
         public static final double DISTANCE_CONVERSION_RATIO = (Math.PI * GEAR_DIAMETER.in(Units.Inches)) / INTAKE_RACK_GEARING;
