@@ -75,7 +75,7 @@ public class Robot extends LoggedRobot {
 
         boolean enabled = isEnabled();
         if (enabled != m_lastEnabledState) {
-            mRobotContainer.drivetrain.setAllLimelightThrottleRates(enabled ? 0 : 100);
+            mRobotContainer.drivetrain.setAllLimelightThrottleRates(enabled ? 0 : 25);
             m_lastEnabledState = enabled;
             mRobotContainer.drivetrain.setLimelightIMUModesIntent(
                     enabled ? Limelight.IMUMode.MODE_4_INTERNAL_EXTERNAL_ASSIST : Limelight.IMUMode.MODE_1_EXTERNAL_SEED);

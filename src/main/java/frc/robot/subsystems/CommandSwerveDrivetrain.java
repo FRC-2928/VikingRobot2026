@@ -1040,6 +1040,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                         Logger.recordOutput("Drivetrain/LL_MT1_" + limelight.getLimelightName(), mt1.pose);
                     }
 
+                    
                     if (limelight.getLimelightName().equals("limelight-left")) {
                         Logger.recordOutput("UpdatedTrustedFromLeftLL", true);
                         mostTrustedPose = mt1;
