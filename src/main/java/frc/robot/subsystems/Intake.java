@@ -3,10 +3,16 @@ package frc.robot.subsystems;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
 import frc.robot.Constants.Intake.IntakeStates;
 
 public class Intake extends SubsystemBase {
-    // --- Goal / state machine ---------
+    private IntakeIO intakeIO;
+    public IntakeInputsAutoLogged intakeInputs = new IntakeInputsAutoLogged();
+    private WantedState mDesiredState = WantedState.STOP;
+    private SystemState mCurrentState = SystemState.STOP;
+
+    // Intake States
     public enum WantedState {
         INTAKE,
         STOP,
@@ -33,15 +39,8 @@ public class Intake extends SubsystemBase {
         RETRACT_IGNORE_LIMITS
     }
 
-    private WantedState mDesiredState = WantedState.STOP;
-    private SystemState mCurrentState = SystemState.STOP;
-
-    // --- IO / inputs ---------
-    private IntakeIO intakeIO;
-    public IntakeInputsAutoLogged intakeInputs = new IntakeInputsAutoLogged();
-
     public Intake() {
-        this.intakeIO = new IntakeIO();
+        this.intakeIO = new IntakeIOReal();
         //initDefaultCommand();
     }
 
