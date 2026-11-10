@@ -409,7 +409,7 @@ public class ShooterIOReal implements ShooterIO {
         // all signals should have been refreshed via the list -- update the inputs now
         // hood signals
         inputs.hoodAngle = this.hoodAngleSignal.getValue();
-        var isHoodAngleInTolerance = inputs.hoodAngle.isNear(this.targetHoodAngle, Constants.Shooter.hoodAngleTolerance);
+        boolean isHoodAngleInTolerance = inputs.hoodAngle.isNear(this.targetHoodAngle, Constants.Shooter.hoodAngleTolerance);
         inputs.hoodAngleInTolerance = isHoodAngleInTolerance;
         inputs.targetHoodAngle = targetHoodAngle;
         inputs.hoodAngularVelocity = hoodAngularVelocitySignal.getValue();
@@ -421,7 +421,7 @@ public class ShooterIOReal implements ShooterIO {
         inputs.shooterAStatorCurrent = this.flywheelAStatorCurrentSignal.getValue();
         inputs.shooterASupplyCurrent = this.flywheelASupplyCurrentSignal.getValue();
         inputs.targetFlywheelVelocity = targetFlywheeVelocity;
-        var isFlywheelSpeedInTolerance = inputs.shooterAVelocity.isNear(this.targetFlywheeVelocity, Constants.Shooter.shooterVelocityTolerance);
+        boolean isFlywheelSpeedInTolerance = inputs.shooterAVelocity.isNear(this.targetFlywheeVelocity, Constants.Shooter.shooterVelocityTolerance);
         inputs.flywheelsInTolerance = isFlywheelSpeedInTolerance;
 
         // Flywheel B signals

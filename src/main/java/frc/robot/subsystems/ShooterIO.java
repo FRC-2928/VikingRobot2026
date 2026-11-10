@@ -2,6 +2,8 @@ package frc.robot.subsystems;
 
 import org.littletonrobotics.junction.AutoLog;
 
+import com.ctre.phoenix6.BaseStatusSignal;
+
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -38,6 +40,8 @@ public interface ShooterIO {
         public Current         kickerSupplyCurrent = Units.Amps.zero();
     }
 
+    default BaseStatusSignal[] getStatusSignals() { return new BaseStatusSignal[0]; }
+    
     public default void rotateHood(Angle hoodAngle) {}
 
     public default void runFlywheels() {}

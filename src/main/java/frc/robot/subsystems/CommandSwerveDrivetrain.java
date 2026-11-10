@@ -60,12 +60,15 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.LimelightHelpers;
 import frc.robot.LimelightHelpers.PoseEstimate;
-import frc.robot.RobotContainer;
 import frc.robot.generated.TunerConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
+import frc.robot.RobotContainer;
 import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
 import frc.robot.oi.BaseOI;
+import frc.robot.subsystems.ModuleIOInputsAutoLogged;
+import frc.robot.subsystems.SwerveIOInputsAutoLogged;
+import frc.robot.superstructure.SuperstructureContext;
 import frc.robot.vision.Limelight;
 
 /**
@@ -1384,4 +1387,28 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         Logger.recordOutput("Drivetrain/AutoAim/IsRotationInTolerance", inRange);
         return inRange;
     }
+
+    public void applyGoal(SuperstructureContext ctx) {
+        //TODO: implement here
+        return;
+    }
+
+    // ── State snapshot (used by SuperstructureContext and auto routines) ───────
+
+    /**
+     * Read-only snapshot of shooter state for {@link frc.robot.superstructure.SuperstructureContext}.
+     *
+     * @param isAtHome is the robot in home area
+     * @param distanceFromHub the distance from hub -_-
+     */
+    public record DrivetrainState(boolean isAtHome, Distance distanceFromHub, Distance distanceFromHome) {}
+
+    public DrivetrainState getStateSnapshot() {
+        boolean isAtHome = this.isAtHome();
+        Distance distanceFromHub = getDistanceFromHub();
+        Distance distanceFromHome = getDistanceFromHome();
+        return new DrivetrainState(isAtHome, distanceFromHub, distanceFromHome);
+    }
+    
+    
 }
