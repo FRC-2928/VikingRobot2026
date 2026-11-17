@@ -1,6 +1,7 @@
 package frc.robot.superstructure;
 
 import frc.robot.subsystems.DriveGoal;
+import frc.robot.subsystems.hopperfloor.HopperFloorGoal;
 import frc.robot.subsystems.shooter.ShooterGoal;
 
 /**
@@ -24,7 +25,7 @@ import frc.robot.subsystems.shooter.ShooterGoal;
  *     .build();
  * </pre>
  */
-public record RobotGoal(DriveGoal drive, ShooterGoal shooter) {
+public record RobotGoal(DriveGoal drive, ShooterGoal shooter, HopperFloorGoal hopperFloor) {
 
     // -------------------------------------------------------------------------
     // Factory methods
@@ -65,12 +66,14 @@ public record RobotGoal(DriveGoal drive, ShooterGoal shooter) {
         // Safe defaults
         private DriveGoal   drive   = DriveGoal.TELEOP;
         private ShooterGoal shooter = ShooterGoal.HOME;
+        private HopperFloorGoal hopperFloor = HopperFloorGoal.IDLE;
 
         private Builder() {}
 
         private Builder(RobotGoal base) {
             this.drive   = base.drive;
             this.shooter = base.shooter;
+            this.hopperFloor = base.hopperFloor;
         }
 
         public Builder withDrive(DriveGoal drive) {
@@ -82,9 +85,13 @@ public record RobotGoal(DriveGoal drive, ShooterGoal shooter) {
             this.shooter = shooter;
             return this;
         }
+        public Builder withHopperFloor(HopperFloorGoal hopperFloor) {
+            this.hopperFloor = hopperFloor;
+            return this;
+        }
 
         public RobotGoal build() {
-            return new RobotGoal(drive, shooter);
+            return new RobotGoal(drive, shooter, hopperFloor);
         }
     }
 }

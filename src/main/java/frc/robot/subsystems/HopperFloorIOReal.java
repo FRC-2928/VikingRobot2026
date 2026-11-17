@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 
 import frc.robot.Constants;
+import frc.robot.utils.SignalBundle;
 import frc.robot.Tuning;
 import frc.robot.subsystems.ShooterIO.ShooterIOInputs;
 
@@ -40,8 +41,7 @@ public class HopperFloorIOReal implements HopperFloorIO {
 
     final VelocityVoltage hopperVelocityVoltage;
 
-    // Collection of all status signals
-    private List<BaseStatusSignal> mStatusSignals;
+    private final SignalBundle<HopperFloorIOInputs> signalBundle;
 
     // --------------------Simulation----------------------
     private DCMotorSim floorDCMotorSim = new DCMotorSim(
@@ -80,11 +80,17 @@ public class HopperFloorIOReal implements HopperFloorIO {
 
         BaseStatusSignal.setUpdateFrequencyForAll(100, hopperAngularVelocitySignal, hopperStatorCurrentSignal, hopperSupplyCurrentSignal);
 
-        this.mStatusSignals = List.of(
-            hopperAngularVelocitySignal,
-            hopperStatorCurrentSignal,
-            hopperSupplyCurrentSignal
-        );
+        this.signalBundle = new SignalBundle<>(
+                new BaseStatusSignal[] {
+                    hopperAngularVelocitySignal,
+                    hopperStatorCurrentSignal,
+                    hopperSupplyCurrentSignal
+                },
+                inputs -> {
+                    inputs.hopperAngularVelocity = hopperAngularVelocitySignal.getValue();
+                    inputs.hopperStatorCurrent = hopperStatorCurrentSignal.getValue();
+                    inputs.hopperSupplyCurrent = hopperSupplyCurrentSignal.getValue();
+                });
 
         // create a velocity closed-loop request, voltage output, slot 0 configs
         this.hopperVelocityVoltage = new VelocityVoltage(0).withSlot(0);
@@ -98,33 +104,24 @@ public class HopperFloorIOReal implements HopperFloorIO {
         hopper.setControl(this.hopperVelocityVoltage.withVelocity(angularVelocity));
         Logger.recordOutput("HopperFloorIOReal/setSpeed", angularVelocity);
     }
-
     @Override
-    public void runHopper() {
-        // hopper.setControl(new DutyCycleOut(MathUtil.clamp(Tuning.hopperVelocity.get(), -1, 1)));
-        //hopper.setControl(new VoltageOut(Units.Volts.of(5)));
-        // set velocity to 8 rps, add 0.5 V to overcome gravity
-        hopper.setControl(hopperVelocityVoltage.withVelocity(45));
-        Logger.recordOutput("HopperFloorIOReal/runHopper", Tuning.hopperVelocity.get());
+    public void setVoltage(double voltage) {
+        hopper.setControl(new VoltageOut(voltage));
+        Logger.recordOutput("HopperFloorIOReal/setVoltage", voltage);
     }
-
-    @Override
-    public void runHopperReverse() {
-        hopper.setControl(new VoltageOut(Units.Volts.of(-5)));
-    }
-
+    //TODO: remove this method when we remove command usage
     @Override
     public void halt() {
         hopper.setControl(new DutyCycleOut(0.0));
     }
-
     @Override
     public void updateInputs(HopperFloorIOInputs hopperInputs) {
-        BaseStatusSignal.refreshAll(mStatusSignals);
+        signalBundle.update(hopperInputs);
+    }
 
-        hopperInputs.hopperAngularVelocity = hopperAngularVelocitySignal.getValue();
-        hopperInputs.hopperStatorCurrent = hopperStatorCurrentSignal.getValue();
-        hopperInputs.hopperSupplyCurrent = hopperSupplyCurrentSignal.getValue();
+    @Override
+    public BaseStatusSignal[] getStatusSignals() {
+        return signalBundle.signals();
     }
 
     @Override

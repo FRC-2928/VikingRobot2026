@@ -2,6 +2,7 @@ package frc.robot.superstructure;
 
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.subsystems.DriveGoal;
+import frc.robot.subsystems.hopperfloor.HopperFloorGoal;
 import frc.robot.subsystems.shooter.ShooterGoal;
 
 /**
@@ -22,6 +23,7 @@ public class GoalResolver {
     // Per-subsystem intent storage — default to safe values
     private DriveGoal   driveIntent   = DriveGoal.TELEOP;
     private ShooterGoal shooterIntent = ShooterGoal.HOME;
+    private HopperFloorGoal hopperIntent = HopperFloorGoal.IDLE;
 
     // -------------------------------------------------------------------------
     // Intent setters (called by Superstructure on behalf of OI)
@@ -34,6 +36,9 @@ public class GoalResolver {
     public void setShooterIntent(ShooterGoal intent) {
         shooterIntent = intent;
     }
+    public void setHopperIntent(HopperFloorGoal hopperIntent) {
+		this.hopperIntent = hopperIntent;
+	}
 
     /**
      * Overrides all intents to match the given goal. Used by auto routines via
@@ -42,6 +47,7 @@ public class GoalResolver {
     public void setGoal(RobotGoal goal) {
         driveIntent   = goal.drive();
         shooterIntent = goal.shooter();
+        hopperIntent = goal.hopperFloor();
     }
 
     // -------------------------------------------------------------------------
@@ -66,11 +72,13 @@ public class GoalResolver {
      */
     public RobotGoal resolve() {
         final DriveGoal drive = DriverStation.isAutonomous() ? DriveGoal.AUTONOMOUS : driveIntent;
-		final ShooterGoal shooter = shooterIntent;
+        final ShooterGoal shooter = shooterIntent;
+        final HopperFloorGoal hopperFloor = hopperIntent;
 
         return RobotGoal.builder()
                 .withDrive(drive)
                 .withShooter(shooter)
+                .withHopperFloor(hopperFloor)
                 .build();
     }
 }

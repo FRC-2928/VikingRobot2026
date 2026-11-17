@@ -6,6 +6,8 @@ import edu.wpi.first.units.measure.Current;
 
 import org.littletonrobotics.junction.AutoLog;
 
+import com.ctre.phoenix6.BaseStatusSignal;
+
 public interface HopperFloorIO {
     @AutoLog
     public static class HopperFloorIOInputs {
@@ -16,17 +18,15 @@ public interface HopperFloorIO {
 
     public default void setSpeed(double angularVelocity) {}
 
-    public default void updateInputs(HopperFloorIOInputs hoperFloorInputs) {}
+    public default void setVoltage(double voltage) {}
 
-    public default void halt() {}
+    public default void updateInputs(HopperFloorIOInputs hoperFloorInputs) {}
 
     public default void simPeriodic() {}
 
     public default void simulationInit() {}
+    //TODO: remove this method when we remove command usage
+    public default void halt() {}
 
-    public default void runHopper() {}
-
-    public default void runHopperReverse() {}
-
-    //public default void updateInputs(final HopperFloorIOInputs inputs) {}
+    public default BaseStatusSignal[] getStatusSignals() { return new BaseStatusSignal[0]; }
 }

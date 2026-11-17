@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.subsystems.HopperFloor;
 import frc.robot.subsystems.Climber;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Shooter;
@@ -34,6 +35,7 @@ public class Superstructure extends SubsystemBase {
 
     private CommandSwerveDrivetrain drivetrain;
     private Shooter shooter;
+    private HopperFloor hopperFloor;
     public final GoalResolver resolver = new GoalResolver();
 
     // Per-subsystem signal registration. Preserves insertion order for diagnostics.
@@ -44,9 +46,14 @@ public class Superstructure extends SubsystemBase {
 
     public Superstructure() {}
 
-    public void setSubsystems(CommandSwerveDrivetrain drivetrain, Shooter shooter, Climber climber) {
+    public void setSubsystems(
+            CommandSwerveDrivetrain drivetrain,
+            Shooter shooter,
+            Climber climber,
+            HopperFloor hopperFloor) {
         this.drivetrain = drivetrain;
         this.shooter    = shooter;
+        this.hopperFloor = hopperFloor;
     }
 
     /**
@@ -79,9 +86,10 @@ public class Superstructure extends SubsystemBase {
         }
 
         RobotGoal goal = resolver.resolve();
-        SuperstructureContext ctx = new SuperstructureContext(goal, shooter.getState(), drivetrain.getStateSnapshot());
+        SuperstructureContext ctx = new SuperstructureContext(goal, shooter.getState(), drivetrain.getStateSnapshot(), hopperFloor.getState());
         drivetrain.applyGoal(ctx);
         shooter.applyGoal(ctx);
+        hopperFloor.applyGoal(ctx);
     }
 
     // -------------------------------------------------------------------------
